@@ -27,6 +27,9 @@ readfiles_part2 <- function(participant, scenes){
   
   emdat_export.df <- read.csv(paste("tobiiv3_sample_features_P",  participant, ".tsv", sep=""), sep="\t")
   
+  
+  #add some code here to read in seg file just like part1
+  
   scenes_all <- c(scenes, paste(participant,"_allsc", sep=""))
   
   
@@ -124,6 +127,10 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene){
   try(if( internal_value  != output_value)
     stop(paste("Error: fixationrate does not match for participant:", participant, " and scene: ", a_scene)))
   
+  
+  #  numsegments
+  # Would be th eonly place, for now.... that we need to use #segments as read in from the .seg file
+  
 }
 
 
@@ -186,11 +193,12 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene){
 #  stddevpupilvelocity
 
 
-
-#Scene, Segment
-
 P16 <- readfiles_part2("16", c("part1","part2"),1,1)
 P17 <- readfiles_part2("17", c("part1","part2"),1,1)
 P18 <- readfiles_part2("18", c("main_task"), 2)
 
+#refactor to make these work like this:    Can steal code from part1 testing (needs to dogenerate a list of scene names, and calculate #segements per scene)
+#P16 <- readfiles_part2("16", "TobiiV3_sample_16.seg")
+#P17 <- readfiles_part2("17", "TobiiV3_sample_17.seg")
+#P18 <- readfiles_part2("18", "TobiiV3_sample_18.seg")
 
