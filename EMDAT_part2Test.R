@@ -38,7 +38,7 @@ readfiles_part2 <- function(participant, seg_file){
     
     emdat_export.df.scene <- subset(emdat_export.df, Sc_id == a_scene)
     
-    # checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene, 
+    # checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
     #                                          segment.names)
     # checked_result2 <- check_correctness_sac(emdat_export.df.scene, participant, a_scene)
     #checked_result3 <- check_correctness_eve(...)
@@ -193,8 +193,6 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   
 ###  sumabspathangles ###
   
-  # Assumption: two successive fixation points do not have the same coordinate, i.e. no delta_x == 0
-  #             and delta_y == 0 case
   
   find_abs_angle_vector<- function(x_cord_vector, y_cord_vector){
     
@@ -204,46 +202,34 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
       
       delta_x <- x_cord_vector[i+1] - x_cord_vector[i]
       delta_y <- y_cord_vector[i+1] - y_cord_vector[i]
-      
-      # vertical move cases
-      if(delta_x == 0){
+       
+      if(delta_x == 0 & delta_y == 0){ # no movement case
         
-        if(delta_y < 0){
+        abs_angle_vector[i] <- 0
+      } 
+      else if(delta_x == 0){ # vertical move cases
           
-          abs_angle_vector[i] <- 3*pi/2
-          
-        } else{
-            abs_angle_vector[i] <- pi/2
-        }
-      } # horizontal move cases
-      else if(delta_y == 0){
+          abs_angle_vector[i] <- pi/2
+      } 
+      else if(delta_y == 0){ # horizontal move cases
         
-        if(delta_x < 0){
-          
-          abs_angle_vector[i] <- pi
-          
-        } else{
-            abs_angle_vector[i] <- 0
-        }
-      } # first quadrant case
-      else if(delta_x > 0 & delta_y > 0) {
+          abs_angle_vector[i] <-  0
+      } 
+      else if(delta_x > 0 & delta_y > 0) { # first quadrant case
         
         abs_angle_vector[i] <- atan(delta_y/delta_x)
-        
-      } # second quadrant case
-      else if (delta_x < 0 & delta_y > 0) {
-        
-        abs_angle_vector[i] <- pi+atan(delta_y/delta_x)
-        
-      } # third quadrant case
-      else if (delta_x < 0 & delta_y < 0) {
+      } 
+      else if (delta_x < 0 & delta_y > 0) { # second quadrant case
         
         abs_angle_vector[i] <- pi+atan(delta_y/delta_x)
+      } 
+      else if (delta_x < 0 & delta_y < 0) { # third quadrant case
         
-      } # fourth quadrant case (delta_x > 0 & delta_y < 0)
-      else {
+        abs_angle_vector[i] <- pi-atan(delta_y/delta_x)
+      } 
+      else { # fourth quadrant case (delta_x > 0 & delta_y < 0)
         
-        abs_angle_vector[i] <- 2*pi+atan(delta_y/delta_x)
+        abs_angle_vector[i] <- -atan(delta_y/delta_x)
       } 
     }
     return(abs_angle_vector)
@@ -253,7 +239,7 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
                                             internal_data.df$mappedfixationpointy)
   
   output_value <- subset(emdat_output.df, select = sumabspathangles)[1,]
-  internal_value <- sum(abs_angle_vector)
+  internal_value <- signif(sum(abs_angle_vector), digits = 10)
   
   try(if(internal_value  != output_value)
         stop(paste("Error: sumabspathangles does not match for participant:", participant, " and scene: ", a_scene))
@@ -428,22 +414,24 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene){
 # This function checks the correctness of pupil and head distance
 # LIST OF COLUMS TO TEST:
 #  numsamples
-#  enddistance (Assumed that the enddistance is the last valid headdistance)
-#  endpupilsize (Assumed that the endpupilsize is the last valid rawpupilsize )
+#  enddistance (Assumed: the enddistance is the last valid headdistance)
+#  endpupilsize (Assumed: the endpupilsize is the last valid rawpupilsize)
+#  maxdistance (Assumed:only valied values considered)
+#  maxpupilsize (Assumed:only valied values considered)
+#  maxpupilvelocity (Assumed: -1 values are disregarded)
+#  meanpupilsize (Assumed:only valied values considered)
+#  meanpupilvelocity (Assumed: -1 values are disregarded. Note: R 'round' rather than 'signif' is used here)
+#  mindistance (Assumed:only valied values considered)
+#  minpupilsize (Assumed:only valied values considered)
+#  minpupilvelocity (Assumed: -1 values are disregarded)
+#  startdistance (Assumed: the startdistance is the first valid headdistance)
+#  startpupilsize (Assumed: the startpupilsize is the first valid rawpupilsize)
+
+# TO REVISIT:
+#  meandistance (Error for P 18. Assumed: only valid values considered)
+#  stddevdistance (Error for P 18. Assumed: only valid values considered)
 
 #  TODO:
-#  maxdistance
-#  maxpupilsize
-#  maxpupilvelocity
-#  meandistance
-#  meanpupilsize
-#  meanpupilvelocity
-#  mindistance
-#  minpupilsize
-#  minpupilvelocity
-#  startdistance
-#  startpupilsize
-#  stddevdistance
 #  stddevpupilsize
 #  stddevpupilvelocity
 
@@ -487,7 +475,148 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene){
   try(if(internal_value != output_value)
     stop(paste("Error: endpupilsize does not match for participant:", participant, " and scene: ", a_scene))
   )
+
+### maxdistance ###
+  output_value <- subset(emdat_output.df, select=maxdistance)[1,]
+  
+  # Since the max happens to be non-negative in this case, the is_valid_headdistance==TRUE condition
+  # does not make difference. But the internal value does not match the output_value in the 
+  # corresponding  mindistancetest without that condition. So to be consistent, the condition 
+  # is added here as well.
+  internal_value <- max(subset(internal_data.df, select=headdistance, is_valid_headdistance==TRUE)$headdistance)
+  
+  try(if(internal_value != output_value)
+    stop(paste("Error: maxdistance does not match for participant:", participant, " and scene: ", a_scene))
+  )
+
+###  maxpupilsize ###
+  output_value <- subset(emdat_output.df, select=maxpupilsize)[1,]
+  
+  # Remark similar to the above on the condition of R subset operation holds here as well.   
+  internal_value <- max(subset(internal_data.df, select=rawpupilsize, is_valid_pupil==TRUE)$rawpupilsize)
+  
+  try(if(internal_value != output_value)
+    stop(paste("Error: maxpupilsize does not match for participant:", participant, " and scene: ", a_scene))
+  )
+  
+### maxpupilvelocity ###
+  output_value <- subset(emdat_output.df, select=maxpupilvelocity)[1,]
+  
+  # The condition in the subet operaiton does not make practical difference here. But, the convention
+  # is followed in computing the mean and min, so that it is added here for consistency.      
+  internal_value <- max(subset(internal_data.df, select=pupilvelocity, pupilvelocity != -1)$pupilvelocity)
+  
+  try(if(internal_value != output_value)
+    stop(paste("Error: maxpupilvelocity does not match for participant:", participant, " and scene: ", a_scene))
+  )
+  
+### meandistance(NEEDS FIX) ###
+  
+  # Error for P18: internal_value = 624.6470933, output_value = 625.018883
+  # Assumption: only valid values are considered
+  
+  output_value <- subset(emdat_output.df, select=meandistance)[1,]
+  internal_value <- signif(
+    mean(subset(internal_data.df, select=headdistance, is_valid_headdistance==TRUE)$headdistance),
+    digits = 10)
+  
+  try(if(internal_value != output_value)
+    stop(paste("Error: meandistance does not match for participant:", participant, " and scene: ", a_scene))
+  )
+  
+### meanpupilsize ###
+  
+  # Assumption: only valid values are considered
+  
+  output_value <- subset(emdat_output.df, select=meanpupilsize)[1,]
+  internal_value <- signif(
+    mean(subset(internal_data.df, select=rawpupilsize, is_valid_pupil==TRUE)$rawpupilsize),
+    digits = 10)
+  
+  try(if(internal_value != output_value)
+    stop(paste("Error: meanpupilsize does not match for participant:", participant, " and scene: ", a_scene))
+  )
+
+### meanpupilvelocity ###
+  
+  # Assumption: the value -1 is disregarded  
+  
+  output_value <- subset(emdat_output.df, select=meanpupilvelocity)[1,]
+  internal_value <- round(
+    mean(subset(internal_data.df, select=pupilvelocity, pupilvelocity != -1)$pupilvelocity),
+    digits = 9)
+  
+  try(if(internal_value != output_value)
+    stop(paste("Error: meanpupilvelocity does not match for participant:", participant, " and scene: ", a_scene))
+  )
+  
+### mindistance ###
+  output_value <- subset(emdat_output.df, select=mindistance)[1,]
+  internal_value <- min(subset(internal_data.df, select=headdistance, is_valid_headdistance==TRUE)$headdistance)
+  
+  try(if(internal_value != output_value)
+    stop(paste("Error: mindistance does not match for participant:", participant, " and scene: ", a_scene))
+  )
+  
+### minpupilsize ###
+  output_value <- subset(emdat_output.df, select=minpupilsize)[1,]
+  internal_value <- min(subset(internal_data.df, select=rawpupilsize, is_valid_pupil==TRUE)$rawpupilsize)
+  
+  try(if(internal_value != output_value)
+    stop(paste("Error: minpupilsize does not match for participant:", participant, " and scene: ", a_scene))
+  )
+  
+### minpupilvelocity ###
+  
+  # Assumption: the value -1 is disregarded 
+  
+  output_value <- subset(emdat_output.df, select=minpupilvelocity)[1,]
+  internal_value <- min(subset(internal_data.df, select=pupilvelocity, pupilvelocity != -1)$pupilvelocity)
+  
+  try(if(internal_value != output_value)
+    stop(paste("Error: minpupilvelocity does not match for participant:", participant, " and scene: ", a_scene))
+  )
+  
+### startdistance ###
+  
+  # Assumption: startdistance is the first valid headdistance
+  
+  output_value <- subset(emdat_output.df, select=startdistance)[1,]
+  internal_value <- head(
+    subset(internal_data.df, select=headdistance, is_valid_headdistance==TRUE)$headdistance, 1)
+  
+  try(if(internal_value != output_value)
+    stop(paste("Error: startdistance does not match for participant:", participant, " and scene: ", a_scene))
+  )
+  
+### startpupilsize ###
+
+  # Assumption: startpupilsize is the first valid rawpupilsize
+
+  output_value <- subset(emdat_output.df, select=startpupilsize)[1,]
+  internal_value <- head(
+    subset(internal_data.df, select=rawpupilsize, is_valid_pupil==TRUE)$rawpupilsize, 1)
+
+  try(if(internal_value != output_value)
+    stop(paste("Error: startpupilsize does not match for participant:", participant, " and scene: ", a_scene))
+  )
+  
+### stddevdistance (NEEDS FIX)###
+  
+  # Error for P18: internal_value = 28.4432276, output_value = 28.12112579
+  # Assumption: only valid values are considered
+  
+  output_value <- subset(emdat_output.df, select=stddevdistance)[1,]
+  internal_value <- signif(
+    sd(subset(internal_data.df, select=headdistance, is_valid_headdistance==TRUE)$headdistance),
+    digits = 10)
+  
+  try(if(internal_value != output_value)
+    stop(paste("Error: stddevdistance does not match for participant:", participant, " and scene: ", a_scene))
+  )
+  
 }
+
 
 P16 <- readfiles_part2("16", "TobiiV3_sample_16.seg")
 P17 <- readfiles_part2("17", "TobiiV3_sample_17.seg")
