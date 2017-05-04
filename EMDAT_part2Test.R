@@ -40,10 +40,9 @@ readfiles_part2 <- function(participant, seg_file){
     
     # checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene, 
     #                                          segment.names)
-    checked_result2 <- check_correctness_sac(emdat_export.df.scene, participant, a_scene, 
-                                              segment.names)
+    # checked_result2 <- check_correctness_sac(emdat_export.df.scene, participant, a_scene)
     #checked_result3 <- check_correctness_eve(...)
-    #checked_result4 <- check_correctness_gazesample(...)
+    checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene)
     
     #browser()
     }
@@ -263,8 +262,6 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   
 }
 
-
-
 # This function checks the correctness of saccades
 # LIST OF COLUMS TO TEST:
 #  longestsaccadedistance
@@ -285,7 +282,7 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
 
 #  TODO
 
-check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment.names){
+check_correctness_sac <- function(emdat_output.df, participant, a_scene){
   
   # read in the corresponding internal EMDAT data file
   internal_data.df <- read.csv(paste("EMDATdata_sac_P", participant, ".tsv", sep=""), sep="\t")
@@ -404,7 +401,7 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
   output_value <- subset(emdat_output.df, select=minsaccadespeed)[1,]
   internal_value <- min(subset(internal_data.df, select=saccadespeed)$saccadespeed)
   
-  try(if(internal_value  != output_value)
+  try(if(internal_value != output_value)
     stop(paste("Error: minsaccadespeed does not match for participant:", participant, " and scene: ", a_scene))
   )
 }  
@@ -431,8 +428,10 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
 # This function checks the correctness of pupil and head distance
 # LIST OF COLUMS TO TEST:
 #  numsamples
-#  enddistance
-#  endpupilsize
+#  enddistance (Assumed that the enddistance is the last valid headdistance)
+#  endpupilsize (Assumed that the endpupilsize is the last valid rawpupilsize )
+
+#  TODO:
 #  maxdistance
 #  maxpupilsize
 #  maxpupilvelocity
@@ -448,11 +447,48 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
 #  stddevpupilsize
 #  stddevpupilvelocity
 
-# P16 <- readfiles_part2("16", c("part1","part2"),1,1)
-# P17 <- readfiles_part2("17", c("part1","part2"),1,1)
-# P18 <- readfiles_part2("18", c("main_task"), 2)
+check_correctness_gazesample <- function(emdat_output.df, participant, a_scene){
+  
+  # read in the corresponding internal EMDAT data file
+  internal_data.df <- read.csv(paste("EMDATdata_gazesample_P", participant, ".tsv", sep=""), sep="\t")
+  
+  # keeps all segments belonging to the scene
+  # only one data set (P18) contains a scene consisting of multiple segments     
+  internal_data.df <- subset(internal_data.df, grepl(a_scene, scene))
+  
+### numsamples ###
+  output_value <- subset(emdat_output.df, select=numsamples)[1,]
+  internal_value <- nrow(internal_data.df)
+  
+  try(if(internal_value != output_value)
+    stop(paste("Error: numsamples does not match for participant:", participant, " and scene: ", a_scene))
+  )
+  
+### enddistance ###
+  
+  # Assumption: enddistance is the last valid headdistance
+  
+  output_value <- subset(emdat_output.df, select=enddistance)[1,]
+  internal_value <- tail(
+    subset(internal_data.df, select=headdistance, is_valid_headdistance==TRUE)$headdistance, 1)
+  
+  try(if(internal_value != output_value)
+    stop(paste("Error: enddistance does not match for participant:", participant, " and scene: ", a_scene))
+  )
 
-#refactor to make these work like this:    Can steal code from part1 testing (needs to dogenerate a list of scene names, and calculate #segements per scene)
+### endpupilsize ###
+  
+  # Assumption: endpupilsize is the last valid rawpupilsize
+  
+  output_value <- subset(emdat_output.df, select=endpupilsize)[1,]
+  internal_value <- tail(
+    subset(internal_data.df, select=rawpupilsize, is_valid_pupil==TRUE)$rawpupilsize, 1)
+  
+  try(if(internal_value != output_value)
+    stop(paste("Error: endpupilsize does not match for participant:", participant, " and scene: ", a_scene))
+  )
+}
+
 P16 <- readfiles_part2("16", "TobiiV3_sample_16.seg")
 P17 <- readfiles_part2("17", "TobiiV3_sample_17.seg")
 P18 <- readfiles_part2("18", "TobiiV3_sample_18.seg")
