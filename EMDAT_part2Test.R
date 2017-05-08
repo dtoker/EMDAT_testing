@@ -20,7 +20,7 @@ VALID_SAMPLES_PROP_SACCADE = 1
 
 # C:/Users/admin/Dropbox/PhD/EMDAT-testing/Part2_EMDATInternal_EMDATOutput
 setwd("C:/git00/EMDAT_testing_actual/Part2_EMDATInternal_EMDATOutput")
-
+source("C:/git00/EMDAT_testing_actual/EMDAT_test_utils.R")
 
 readfiles_part2 <- function(participant, seg_file){
   
@@ -38,10 +38,10 @@ readfiles_part2 <- function(participant, seg_file){
     
     emdat_export.df.scene <- subset(emdat_export.df, Sc_id == a_scene)
     
-    # checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
-    #                                           segment.names)
+    checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
+                                              segment.names)
     # checked_result2 <- check_correctness_sac(emdat_export.df.scene, participant, a_scene)
-    checked_result3 <- check_correctness_eve(emdat_export.df.scene, participant, a_scene)
+    #checked_result3 <- check_correctness_eve(emdat_export.df.scene, participant, a_scene)
     #checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene)
     
     #browser()
@@ -79,40 +79,37 @@ readfiles_part2 <- function(participant, seg_file){
 
 check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment.names){
   
-  #read in the corresponding internal EMDAT data file
+  # reads in the corresponding internal EMDAT data file
   internal_data.df <- read.csv(paste("EMDATdata_fix_P", participant, ".tsv", sep=""), sep="\t")
  
-  # keeps all segments belonging to the scene
+  # keeps all segments belonging to the scene in a vector 
   # only one data set (P18) contains a scene consisting of multiple segments     
   internal_data.df <- subset(internal_data.df, grepl(a_scene, scene))
+  internal_data_vector <- c()
+  for(i in 1:length(segment.names)) {
+    
+    internal_data_vector[[i]] <- subset(internal_data.df, grepl(segment.names[i], scene))
+  }
  
-  # numfixations
+### numfixations ###
   output_value <- subset(emdat_output.df, select=numfixations)[1,]
-  try(if(nrow(internal_data.df) != output_value)
-    stop(paste("Error: numfixation does not match for participant:", participant, " and scene: ", a_scene)))
+  verify_equivalence(nrow(internal_data.df),output_value, participant, a_scene, "numfixation")
   
-  # sumfixationduration
+### sumfixationduration ###
   internal_value <- sum(subset(internal_data.df, select=fixationduration))
   output_value <- subset(emdat_output.df, select=sumfixationduration)[1,]
-  try(if( internal_value  != output_value)
-    stop(paste("Error: sumfixationduration does not match for participant:", participant, " and scene: ", a_scene)))
+  verify_equivalence(internal_value, output_value, participant, a_scene, "sumfixationduration")
   
-  #browser()
-  
-  # stddevfixationduration
+### stddevfixationduration ###
   internal_value <- round(sd(subset(internal_data.df, select=fixationduration)$fixationduration), digits=9)
   output_value <- subset(emdat_output.df, select=stddevfixationduration)[1,]
-  try(if( internal_value  != output_value)
-    stop(paste("Error: stddevfixationduration does not match for participant:", participant, " and scene: ", a_scene)))
+  verify_equivalence(internal_value, output_value, participant, a_scene, "stddevfixationduration")
   
-  #  meanfixationduration
+### meanfixationduration ###
   internal_value <- round(mean(subset(internal_data.df, select=fixationduration)$fixationduration), digits=9)
   output_value <- subset(emdat_output.df, select=meanfixationduration)[1,]
-  try(if( internal_value  != output_value)
-    stop(paste("Error: meanfixationduration does not match for participant:", participant, " and scene: ", a_scene)))
-  
+  verify_equivalence(internal_value, output_value, participant, a_scene, "meanfixationduration")
 
-  
 ###  fixationrate (NEEDS FIX) ###
   
   #  error: internal_value = 0.00377927507, output_value = 0.00370856
@@ -123,72 +120,81 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   internal_value <- signif((nrow(internal_data.df) / (segment_end_time - segment_start_time)), digits=9)
   output_value <- subset(emdat_output.df, select=fixationrate)[1,]
   
-  # browser()
   # try(if( internal_value  != output_value)
   #   stop(paste("Error: fixationrate does not match for participant:", participant, " and scene: ", a_scene)))
   
 ###  numsegments ###
-  
   output_value <- subset(emdat_output.df, select=numsegments)[1,]
   internal_value <- length(segment.names)
-  
-  try(if( internal_value  != output_value)
-        stop(paste("Error: numsegments do not match for participant:", participant, " and scene: ", a_scene))
-  )
+  verify_equivalence(internal_value, output_value, participant, a_scene, "numsegments")
 
-###  sumpathdistance (NEEDS FIX) ###
+### sumpathdistance ###
+### meanpathdistance ###  
+  output_value_sum <- subset(emdat_output.df, select=sumpathdistance)[1,]
+  output_value_mean <- subset(emdat_output.df, select = meanpathdistance)[1,]
   
-  #  error for P18: internal_value =  110079.973656, output_value = 109847.973656
+  internal_value_sum <- 0
+  internal_value_mean_numerator <- 0
+  internal_value_mean_denominator <- 1
   
-  output_value <- subset(emdat_output.df, select = sumpathdistance)[1,]
-  
-  # path_length is the saccade distance between two sucessive coordinates
-  find_path_length_vector<- function(x_cord_vector, y_cord_vector) {
+  for(i in 1:length(segment.names)){
     
-    path_length_vector <- c()
+    path_length_vector <- find_path_length_vector(
+      internal_data_vector[[i]]$mappedfixationpointx,
+      internal_data_vector[[i]]$mappedfixationpointy
+    )
     
-    for(i in 1:(length(x_cord_vector)-1)){
-      
-      path_length_vector[i] <- 
-        sqrt((x_cord_vector[i+1] - x_cord_vector[i])^2 + (y_cord_vector[i+1] - y_cord_vector[i])^2)
-    }
-    return(path_length_vector)
+    internal_value_sum <- internal_value_sum + sum(path_length_vector)
+    internal_value_mean_numerator <- internal_value_mean_numerator+ 
+                                     length(path_length_vector)*mean(path_length_vector)
+    internal_value_mean_denominator <- internal_value_mean_denominator+length(path_length_vector)
   }
   
-  path_length_vector <- find_path_length_vector(
-                          internal_data.df$mappedfixationpointx,
-                          internal_data.df$mappedfixationpointy
-                        )
+  internal_value_sum <- signif(internal_value_sum, digits = 12)
+  internal_value_mean_temp <- internal_value_mean_numerator/internal_value_mean_denominator
+  internal_value_mean <- signif(internal_value_mean_temp, digits = 12)
   
-  internal_value <- signif(sum(path_length_vector), digits = 12)
-  
-  try(if(internal_value  != output_value)
-        stop(paste("Error: sumpathdistance does not match for participant:", participant, " and scene: ", a_scene))
-  )
-
-###  meanpathdistance (NEEDS FIX) ###
-  
-  # error for P18: internal_value =  142.222188186, output_value = 142.106046127
-  # This is expected since the same path_length_vector as in the above is used
-  
-  output_value <- subset(emdat_output.df, select = meanpathdistance)[1,]
-  internal_value <- signif(mean(path_length_vector), digits = 12) 
-  
-  try(if(internal_value  != output_value)
-        stop(paste("Error: meanpathdistance does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  verify_equivalence(internal_value_sum, output_value_sum, participant, a_scene, "sumpathdistance")
+  verify_equivalence(internal_value_mean, output_value_mean, participant, a_scene, "meanpathdistance")
 
 ### stddevpathdistance (NEEDS FIX) ###
+  # output_value_sd <- subset(emdat_output.df, select = stddevpathdistance)[1,]
+  # internal_value_sd_numerator <- 0
+  # internal_value_sd_denominator <- 1
+  # 
+  # for(i in 1:length(segment.names)){
+  #   
+  #   path_length_vector <- find_path_length_vector(
+  #     internal_data_vector[[i]]$mappedfixationpointx,
+  #     internal_data_vector[[i]]$mappedfixationpointy
+  #   )
+  #   
+  #   internal_value_sd_numerator <- internal_value_sd_numerator+
+  #                                  (length(path_length_vector)-1)*(sd(path_length_vector)^2)+
+  #                                  length(path_length_vector)*(mean(path_length_vector)-internal_value_mean_temp)^2
+  #   internal_value_sd_denominator <- internal_value_sd_denominator+length(path_length_vector)
+  #                                       
+  # }
+  
+  internal_value_sd <- signif(internal_value_sd_numerator/internal_value_sd_denominator, digits = 12)
+  verify_equivalence(internal_value_sd, output_value_sd, participant, a_scene, "stddevpathdistance")
+  # for obj in obj_list:
+  #   t = eval('obj.'+totalfeat)
+  # if t > 0:
+  #   sd = eval('obj.'+sdfeat)
+  # if math.isnan(sd): sd = 0
+  # meanobj = eval('obj.'+meanfeat)
+  # 
+  # num += (t-1) * sd**2 + t * (meanobj-meanscene)**2
+  # den += t
+  # 
+  # if den > 1:
+  #   return math.sqrt(float(num)/(den-1))
+  # return 0	
   
   # error for P18: internal_value =  134.333673837, output_value = 134.381758361
   # This is expected since the same path_length_vector as in the above is used
   
-  output_value <- subset(emdat_output.df, select = stddevpathdistance)[1,]
-  internal_value <- signif(sd(path_length_vector), digits = 12)
-  
-  try(if(internal_value  != output_value)
-        stop(paste("Error: stddevpathdistance does not match for participant:", participant, " and scene: ", a_scene))
-  )
   
 ###  sumabspathangles(NEEDS FIX) ###
   
@@ -463,7 +469,7 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene){
         x_coords <- as.numeric(as.character(subset(click_rate.df, select=x_coord)$x_coord))
         y_coords <- as.numeric(as.character(subset(click_rate.df, select=y_coord)$y_coord))
     
-        is_double_click <- FALSE
+        is_double_click <- TRUE
         double_click_count <- 0
         left_click_count <- 1 # first left click is not counted in the loop
     
