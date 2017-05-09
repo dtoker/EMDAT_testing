@@ -17,7 +17,6 @@
 # EMDAT PARAMS UTILIZED
 VALID_SAMPLES_PROP_SACCADE = 1
 
-
 # C:/Users/admin/Dropbox/PhD/EMDAT-testing/Part2_EMDATInternal_EMDATOutput
 setwd("C:/git00/EMDAT_testing_actual/Part2_EMDATInternal_EMDATOutput")
 source("C:/git00/EMDAT_testing_actual/EMDAT_test_utils.R")
@@ -41,7 +40,8 @@ readfiles_part2 <- function(participant, seg_file){
     # checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
     #                                          segment.names)
     #checked_result2 <- check_correctness_sac(emdat_export.df.scene, participant, a_scene)
-    checked_result3 <- check_correctness_eve(emdat_export.df.scene, participant, a_scene)
+    checked_result3 <- check_correctness_eve(emdat_export.df.scene, participant, a_scene, 
+                                             segment.names)
     # checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene,
     #                                                 segment.names)
     
@@ -63,11 +63,8 @@ readfiles_part2 <- function(participant, seg_file){
 #  sumabspathangles
 #  meanabspathangles
 #  stddevabspathangles
-
-#  TO BE REVISITED:
-#  fixationrate ONGOING (due to an unfixed error, commented out for now)
-#  fixationsaccadetimeratio(this seems to be just the ratio: sumfixationduration/sumsaccadeduration
-#     ;if this value is to be tested, needs to get the value from the saccade file)
+#  fixationrate
+#  fixationsaccadetimeratio
 
 #  TODO:
 #  abspathanglesrate
@@ -79,16 +76,26 @@ readfiles_part2 <- function(participant, seg_file){
 
 check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment.names){
   
-  # reads in the corresponding internal EMDAT data file
+  # reads in the needed internal EMDAT data files
   internal_data.df <- read.csv(paste("EMDATdata_fix_P", participant, ".tsv", sep=""), sep="\t")
- 
+  gazesample_data.df <- read.csv(paste("EMDATdata_gazesample_P", participant, ".tsv", sep=""), sep="\t")
+  saccade_data.df <- read.csv(paste("EMDATdata_sac_P", participant, ".tsv", sep=""), sep="\t")
+  
   # keeps all segments belonging to the scene in a vector 
   # only one data set (P18) contains a scene consisting of multiple segments     
   internal_data.df <- subset(internal_data.df, grepl(a_scene, scene))
+  gazesample_data.df <- subset(gazesample_data.df, grepl(a_scene, scene))
+  saccade_data.df <- subset(saccade_data.df, grepl(a_scene, scene))
+  
   internal_data_vector <- c()
+  gazesample_data_vector <- c()
+  saccade_data_vector <- c()
+  
   for(i in 1:length(segment.names)) {
     
     internal_data_vector[[i]] <- subset(internal_data.df, grepl(segment.names[i], scene))
+    gazesample_data_vector[[i]] <- subset(gazesample_data.df, grepl(segment.names[i], scene))
+    saccade_data_vector[[i]] <- subset(saccade_data.df, grepl(segment.names[i], scene))
   }
  
 ### numfixations ###
@@ -110,18 +117,12 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   output_value <- subset(emdat_output.df, select=meanfixationduration)[1,]
   verify_equivalence(internal_value, output_value, participant, a_scene, "meanfixationduration")
 
-###  fixationrate (NEEDS FIX) ###
-  
-  #  error: internal_value = 0.00377927507, output_value = 0.00370856
-  #  pass for now
-  
-  segment_start_time <- subset(head(internal_data.df,1), select=timestamp)[1,]
-  segment_end_time <- subset(tail(internal_data.df,1), select=timestamp)[1,]
-  internal_value <- signif((nrow(internal_data.df) / (segment_end_time - segment_start_time)), digits=9)
+###  fixationrate ###
   output_value <- subset(emdat_output.df, select=fixationrate)[1,]
+  scene_length <- compute_scene_length(segment.names, gazesample_data_vector)
+  internal_value <- signif((nrow(internal_data.df) / scene_length), digits=12)
   
-  # try(if( internal_value  != output_value)
-  #   stop(paste("Error: fixationrate does not match for participant:", participant, " and scene: ", a_scene)))
+  verify_equivalence(internal_value, output_value, participant, a_scene, "fixationrate")
   
 ###  numsegments ###
   output_value <- subset(emdat_output.df, select=numsegments)[1,]
@@ -254,6 +255,21 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   }
   internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevabspathangles")
+  
+### fixationsaccadetimeratio ###
+  output_value <- subset(emdat_output.df, select=fixationsaccadetimeratio)[1,]
+  numerator <- 0
+  segs_size <- length(segment.names)
+  
+  for(i in 1:segs_size){
+    
+    fix_sum <- sum(subset(internal_data_vector[[i]], select=fixationduration))
+    sac_sum <- sum(subset(saccade_data_vector[[i]], select=saccadeduration))
+    numerator <- numerator + fix_sum/sac_sum
+  }
+  internal_value <- signif(numerator/segs_size, digits=12) 
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, "fixationsaccadetimeratio")
 }
 
 # This function checks the correctness of saccades
@@ -272,7 +288,7 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
 #  minsaccadespeed
 
 # TO BE REVISITED:
-#  sumsaccadedistance (error for P16 part2: last digit off by 1)
+#  sumsaccadedistance (error for P16 part2: last digit off by 0.00001)
 
 check_correctness_sac <- function(emdat_output.df, participant, a_scene){
   
@@ -400,19 +416,17 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene){
 
 # This function checks the correctness of events
 # LIST OF COLUMS TO TEST:
-#  doubleclicrate(No error for p18 but this is because double click count = 0; there is discrepancy in 
-#                 length as found in gazesample test)
+#  doubleclicrate
+#  leftclicrate
+#  keypressedrate
+#  numkeypressed
+#  numdoubleclic
+#  numleftclic
 
 # TO REVISIT
-#  leftclicrate(error for P18 probably due to use of length) 
 
 #  TO DO:
-#  keypressedrate
-#  leftclicrate
-#  numdoubleclic
 #  numevents
-#  numkeypressed
-#  numleftclic
 #  numrightclic
 #  rightclicrate
 #  timetofirstdoubleclic
@@ -420,86 +434,77 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene){
 #  timetofirstleftclic
 #  timetofirstrightclic
 
-check_correctness_eve <- function(emdat_output.df, participant, a_scene){
+check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment.names){
   
-  # read in the corresponding internal EMDAT data file
+  # read in the needed internal EMDAT data files
   internal_data.df <- read.csv(paste("EMDATdata_eve_P", participant, ".tsv", sep=""), sep="\t")
-  
-  # also read in gazesample file for computaiton of segment length needed for rate tests 
-  gaze_data.df <- read.csv(paste("EMDATdata_gazesample_P", participant, ".tsv", sep=""), sep="\t")
+  gazesample_data.df <- read.csv(paste("EMDATdata_gazesample_P", participant, ".tsv", sep=""), sep="\t")
   
   # keeps all segments belonging to the scene
   # only one data set (P18) contains a scene consisting of multiple segments     
   internal_data.df <- subset(internal_data.df, grepl(a_scene, scene))
+  gazesample_data.df <- subset(gazesample_data.df, grepl(a_scene, scene))
   
-  # find length for the scene
-  gaze_data_time_stamps <- subset(gaze_data.df, select=timestamp, grepl(a_scene, scene))$timestamp
-  length <- tail(gaze_data_time_stamps, 1) - head(gaze_data_time_stamps, 1)
+  internal_data_vector <- c()
+  gazesample_data_vector <- c()
   
-### doubleclicrate ###
-  
-  find_double_and_left_click_rates <- function(internal_data.df){
+  for(i in 1:length(segment.names)) {
     
-    click_rate.df <- subset(internal_data.df, event == "LeftMouseClick")
-    click_rates <- c() # c[1]: double click rate, c[2]: left click rate
-    
-    if(nrow(click_rate.df) == 0){
-      click_rates[1] <- 0
-      click_rates[2] <- 0
-      return(click_rates)
-      
-    } else if(nrow(click_rate.df) == 1){
-        click_rates[1] <- 0
-        click_rates[2] <- 1
-        return(click_rates)
-        
-    } else{
-        time_stamps <- subset(click_rate.df, select=timestamp)$timestamp
-        x_coords <- as.numeric(as.character(subset(click_rate.df, select=x_coord)$x_coord))
-        y_coords <- as.numeric(as.character(subset(click_rate.df, select=y_coord)$y_coord))
-    
-        is_double_click <- TRUE
-        double_click_count <- 0
-        left_click_count <- 1 # first left click is not counted in the loop
-    
-      for(i in 1:(length(x_coords)-1)) {
-      
-        if(is_double_click & 
-           (time_stamps[i+1] - time_stamps[i]) <= 700 & 
-           (x_coords[i+1] - x_coords[i]) <= 10 &
-           (y_coords[i+1] - y_coords[i]) <= 10
-           ){
-              double_click_count <- double_click_count + 1
-              left_click_count <- left_click_count - 1
-              is_double_click <- FALSE
-        } else{
-            left_click_count <- left_click_count + 1
-            is_double_click <- TRUE
-        }
-      } 
-      click_rates[1] <- double_click_count/length
-      click_rates[2] <- left_click_count/length
-      return(click_rates)
-    }
+    internal_data_vector[[i]] <- subset(internal_data.df, grepl(segment.names[i], scene))
+    gazesample_data_vector[[i]] <- subset(gazesample_data.df, grepl(segment.names[i], scene))
   }
   
-  output_value <- subset(emdat_output.df, select=doubleclicrate)[1,]
-  internal_value <- signif(find_double_and_left_click_rates(internal_data.df)[1], digits = 12)
-  
-  try(if(internal_value != output_value)
-    stop(paste("Error: doubleclicrate does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  length <- compute_scene_length(segment.names, gazesample_data_vector)
 
+### numdoubleclic ###
+  output_value <- subset(emdat_output.df, select=numdoubleclic)[1,]
+  double_clicks <- 0
+  left_clicks <- 0
+
+  for(i in 1:length(segment.names)){
+
+    clicks <- find_double_and_left_clicks(internal_data_vector[[i]])
+    double_clicks <- double_clicks + clicks[1]
+    left_clicks <- left_clicks + clicks[2]
+  }
+  internal_value <- double_clicks
+
+  verify_equivalence(internal_value, output_value, participant, a_scene, "numdoubleclic")
+  
+### doubleclicrate ###
+  output_value <- subset(emdat_output.df, select=doubleclicrate)[1,]
+  internal_value <- signif(double_clicks/length, digits=12)
+
+  verify_equivalence(internal_value, output_value, participant, a_scene, "doubleclicrate")
+
+### numleftclic ###
+  output_value <- subset(emdat_output.df, select=numleftclic)[1,]
+  internal_value <- left_clicks
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, "numleftclic")
+  
 ### leftclicrate ###
-  
-  # Error for P18: internal_value = 0.000190334133514, output_value = 0.000190340048323
-  
   output_value <- subset(emdat_output.df, select=leftclicrate)[1,]
-  internal_value <- signif(find_double_and_left_click_rates(internal_data.df)[2], digits = 12)
+  internal_value <- signif(left_clicks/length, digits=12)
   
-  try(if(internal_value != output_value)
-    stop(paste("Error: leftclicrate does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  verify_equivalence(internal_value, output_value, participant, a_scene, "leftclicrate")  
+
+### numkeypressed ###  
+  output_value <- subset(emdat_output.df, select=numkeypressed)[1,]
+  keypress.df <- subset(internal_data.df, event=="KeyPress")
+  
+  if(is.null(keypress.df)){
+    internal_value <- 0
+  } else{
+    internal_value <- nrow(keypress.df)
+  }
+  verify_equivalence(internal_value, output_value, participant, a_scene, "numkeypressed")
+
+### keypressedrate ###
+  output_value <- subset(emdat_output.df, select=keypressedrate)[1,]
+  internal_value <- signif(internal_value/length, digits=12) # where internal_value = keypress counts from above
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, "keypressedrate")
 }
 
 
@@ -520,16 +525,17 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene){
 #  startpupilsize (Assumed: the startpupilsize is the first valid rawpupilsize)
 #  stddevpupilsize (Note: R 'round' rather than 'signif' is used here)
 #  stddevpupilvelocity (Assumed: -1 values are disregarded. Note: R 'round' rather than 'signif' is used here)
+#  length 
 
 # TO REVISIT:
 #  meandistance (Error for P 18. Assumed: only valid values considered)
 #  stddevdistance (Error for P 18. Assumed: only valid values considered)
-#  length (Error for P 18)
+
 
 
 check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, segment.names){
   
-  # read in the corresponding internal EMDAT data file
+  # read in the needed internal EMDAT data file
   internal_data.df <- read.csv(paste("EMDATdata_gazesample_P", participant, ".tsv", sep=""), sep="\t")
   
   # keeps all segments belonging to the scene in the vetor format  
@@ -761,18 +767,13 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
     stop(paste("Error: stddevpupilvelocity does not match for participant:", participant, " and scene: ", a_scene))
   )
   
-### length (NEEDS FIX)###
-  
-  # Error for P18: internal_value = 257442, output_value = 257434  
+### length ###
   
   output_value <- subset(emdat_output.df, select=length)[1,]
+  internal_value <- compute_scene_length(segment.names, internal_data_vector)
   
-  time_stamp_vector <- subset(internal_data.df, select=timestamp)$timestamp
-  internal_value <- tail(time_stamp_vector, 1) - head(time_stamp_vector, 1)
+  verify_equivalence(internal_value, output_value, participant, a_scene, "length")
   
-  try(if(internal_value != output_value)
-    stop(paste("Error: length does not match for participant:", participant, " and scene: ", a_scene))
-  )
 }
 
 P16 <- readfiles_part2("16", "TobiiV3_sample_16.seg")
