@@ -11,7 +11,8 @@ find_path_length_vector <- function(x_cord_vector, y_cord_vector){
   return(path_length_vector)
 }
 
-# Checks whether the value computed from the internal data actually matches EMDAT output value     
+# Checks whether the value computed from the internal data actually matches EMDAT output value
+# First argument: expected value. Second: actual value.  
 verify_equivalence <- function(internal_value, output_value, participant, a_scene, error_name){ 
   
   error_specification <- paste("Error: ", error_name, " does not match for participant:")
@@ -71,7 +72,9 @@ compute_scene_length <- function(segment_names,internal_data_vector){
 find_double_and_left_clicks <- function(internal_data.df){
   
   clicks.df <- subset(internal_data.df, event == "LeftMouseClick")
-  clicks <- c() # c[1]: double click count, c[2]: left click count
+  clicks <- c() # c[1]: double click count, c[2]: left click count, 
+  clicks[3] <- -1    # c[3]: time of first double click, with default being -1
+  clicks[4] <- -1    # c[4]: time of first left click, with default being -1
   
   if(nrow(clicks.df) == 0){
     clicks[1] <- 0
@@ -81,6 +84,7 @@ find_double_and_left_clicks <- function(internal_data.df){
   } else if(nrow(clicks.df) == 1){
     clicks[1] <- 0
     clicks[2] <- 1
+    clicks[4] <- subset(clicks.df, select=timestamp)[1,]
     return(clicks)
     
   } else{
@@ -91,6 +95,8 @@ find_double_and_left_clicks <- function(internal_data.df){
     is_double_click <- TRUE
     double_click_count <- 0
     left_click_count <- 1 # first left click is not counted in the loop
+    double_click_index <- 1000000
+    left_click_index <- 1000000
     
     for(i in 1:(length(x_coords)-1)) {
       
@@ -102,9 +108,17 @@ find_double_and_left_clicks <- function(internal_data.df){
         double_click_count <- double_click_count + 1
         left_click_count <- left_click_count - 1
         is_double_click <- FALSE
+        if(i < double_click_index){
+          clicks[3] <- time_stamps[i+1]
+          double_click_index <- i
+        }
       } else{
         left_click_count <- left_click_count + 1
         is_double_click <- TRUE
+        if(i < left_click_index){
+          clicks[4] <- time_stamps[i]
+          left_click_index <- i
+        }
       }
     } 
     clicks[1] <- double_click_count

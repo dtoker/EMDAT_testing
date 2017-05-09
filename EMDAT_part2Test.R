@@ -40,10 +40,10 @@ readfiles_part2 <- function(participant, seg_file){
     # checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
     #                                          segment.names)
     #checked_result2 <- check_correctness_sac(emdat_export.df.scene, participant, a_scene)
-    checked_result3 <- check_correctness_eve(emdat_export.df.scene, participant, a_scene, 
-                                             segment.names)
-    # checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene,
-    #                                                 segment.names)
+    # checked_result3 <- check_correctness_eve(emdat_export.df.scene, participant, a_scene, 
+    #                                          segment.names)
+    checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene,
+                                                    segment.names)
     
     #browser()
     }
@@ -422,19 +422,20 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene){
 #  numkeypressed
 #  numdoubleclic
 #  numleftclic
-
-# TO REVISIT
-
-#  TO DO:
-#  numevents
 #  numrightclic
 #  rightclicrate
+#  numevents
 #  timetofirstdoubleclic
-#  timetofirstkeypressed
 #  timetofirstleftclic
+#  timetofirstkeypressed
 #  timetofirstrightclic
 
+#  TO DO:
+
+
 check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment.names){
+  
+### set up the tests ###
   
   # read in the needed internal EMDAT data files
   internal_data.df <- read.csv(paste("EMDATdata_eve_P", participant, ".tsv", sep=""), sep="\t")
@@ -466,10 +467,20 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment
     clicks <- find_double_and_left_clicks(internal_data_vector[[i]])
     double_clicks <- double_clicks + clicks[1]
     left_clicks <- left_clicks + clicks[2]
+    if(i == 1){
+      first_double_click <- clicks[3]
+      first_left_click <- clicks[4]
+    }
   }
   internal_value <- double_clicks
 
   verify_equivalence(internal_value, output_value, participant, a_scene, "numdoubleclic")
+
+### timetofirstdoubleclic ###
+  output_value <- subset(emdat_output.df, select=timetofirstdoubleclic)[1,]
+  internal_value <- first_double_click
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, "timetofirstdoubleclic")
   
 ### doubleclicrate ###
   output_value <- subset(emdat_output.df, select=doubleclicrate)[1,]
@@ -482,6 +493,12 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment
   internal_value <- left_clicks
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "numleftclic")
+
+### timetofirstleftclic ###
+  output_value <- subset(emdat_output.df, select=timetofirstleftclic)[1,]
+  internal_value <- first_left_click
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, "timetofirstleftclic")
   
 ### leftclicrate ###
   output_value <- subset(emdat_output.df, select=leftclicrate)[1,]
@@ -493,20 +510,65 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment
   output_value <- subset(emdat_output.df, select=numkeypressed)[1,]
   keypress.df <- subset(internal_data.df, event=="KeyPress")
   
-  if(is.null(keypress.df)){
-    internal_value <- 0
-  } else{
-    internal_value <- nrow(keypress.df)
-  }
+  keypress <- nrow(keypress.df)
+  
+  internal_value <- keypress
   verify_equivalence(internal_value, output_value, participant, a_scene, "numkeypressed")
 
+### timetofirstkeypressed ###
+  output_value <- subset(emdat_output.df, select=timetofirstkeypressed)[1,]
+  first_keypress.df <- subset(internal_data_vector[[1]], event=="KeyPress")
+  
+  if(nrow(first_keypress.df) == 0){
+    first_keypressed <- -1
+  }else{
+    first_keypressed <- subset(first_keypress.df, select=timestamp)[1,]
+  }
+  internal_value <- first_keypressed
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, "timetofirstkeypressed")
+  
 ### keypressedrate ###
   output_value <- subset(emdat_output.df, select=keypressedrate)[1,]
-  internal_value <- signif(internal_value/length, digits=12) # where internal_value = keypress counts from above
+  internal_value <- signif(keypress/length, digits=12) 
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "keypressedrate")
+  
+### numrightclic ###  
+  output_value <- subset(emdat_output.df, select=numrightclic)[1,]
+  rightclicks.df <- subset(internal_data.df, event=="RightMouseClick")
+  
+  rightclicks <- nrow(rightclicks.df)
+  
+  internal_value <- rightclicks
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, "numrightclic")
+  
+### timetofirstrightclic ###
+  output_value <- subset(emdat_output.df, select=timetofirstrightclic)[1,]
+  first_rightclick.df <- subset(internal_data_vector[[1]], event=="RightMouseClick")
+  
+  if(nrow(first_rightclick.df) == 0){
+    first_rightclick <- -1
+  }else{
+    first_rightclick <- subset(first_rightclick.df, select=timestamp)[1,]
+  }
+  internal_value <- first_rightclick
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, "timetofirstrightclic")
+  
+### rightclicrate ###
+  output_value <- subset(emdat_output.df, select=rightclicrate)[1,]
+  internal_value <- signif(rightclicks/length, digits=12) 
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, "rightclicrate")
+  
+### numevents ###
+  output_value <- subset(emdat_output.df, select=numevents)[1,]
+  internal_value <- double_clicks + left_clicks + keypress + rightclicks
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, "numevents")
 }
-
 
 # This function checks the correctness of pupil and head distance
 # LIST OF COLUMS TO TEST:
