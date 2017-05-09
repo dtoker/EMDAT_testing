@@ -38,11 +38,12 @@ readfiles_part2 <- function(participant, seg_file){
     
     emdat_export.df.scene <- subset(emdat_export.df, Sc_id == a_scene)
     
-    checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
-                                              segment.names)
-    # checked_result2 <- check_correctness_sac(emdat_export.df.scene, participant, a_scene)
-    #checked_result3 <- check_correctness_eve(emdat_export.df.scene, participant, a_scene)
-    #checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene)
+    # checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
+    #                                          segment.names)
+    #checked_result2 <- check_correctness_sac(emdat_export.df.scene, participant, a_scene)
+    checked_result3 <- check_correctness_eve(emdat_export.df.scene, participant, a_scene)
+    # checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene,
+    #                                                 segment.names)
     
     #browser()
     }
@@ -55,19 +56,18 @@ readfiles_part2 <- function(participant, seg_file){
 #  sumfixationduration
 #  stddevfixationduration
 #  meanfixationduration
-
 #  numsegments
+#  sumpathdistance
+#  meanpathdistance
+#  stddevpathdistance
+#  sumabspathangles
+#  meanabspathangles
+#  stddevabspathangles
 
 #  TO BE REVISITED:
 #  fixationrate ONGOING (due to an unfixed error, commented out for now)
-#  sumpathdistance (fails for P18)
-#  meanpathdistance(also fails for P18, due to the use of the same value)
-#  stddevpathdistance(also fails for P18, due to the use of the same value)
 #  fixationsaccadetimeratio(this seems to be just the ratio: sumfixationduration/sumsaccadeduration
 #     ;if this value is to be tested, needs to get the value from the saccade file)
-#  sumabspathangles(fails for P18)
-#  meanabspathangles(fails for P18)
-#  stddevabspathangles(fails for P18)
 
 #  TODO:
 #  abspathanglesrate
@@ -134,8 +134,8 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   output_value_mean <- subset(emdat_output.df, select = meanpathdistance)[1,]
   
   internal_value_sum <- 0
-  internal_value_mean_numerator <- 0
-  internal_value_mean_denominator <- 1
+  numerator <- 0
+  denominator <- 0
   
   for(i in 1:length(segment.names)){
     
@@ -145,39 +145,18 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
     )
     
     internal_value_sum <- internal_value_sum + sum(path_length_vector)
-    internal_value_mean_numerator <- internal_value_mean_numerator+ 
-                                     length(path_length_vector)*mean(path_length_vector)
-    internal_value_mean_denominator <- internal_value_mean_denominator+length(path_length_vector)
+    numerator <- numerator+length(path_length_vector)*mean(path_length_vector)
+    denominator <- denominator+length(path_length_vector)
   }
   
   internal_value_sum <- signif(internal_value_sum, digits = 12)
-  internal_value_mean_temp <- internal_value_mean_numerator/internal_value_mean_denominator
+  internal_value_mean_temp <- numerator/denominator
   internal_value_mean <- signif(internal_value_mean_temp, digits = 12)
   
   verify_equivalence(internal_value_sum, output_value_sum, participant, a_scene, "sumpathdistance")
   verify_equivalence(internal_value_mean, output_value_mean, participant, a_scene, "meanpathdistance")
 
-### stddevpathdistance (NEEDS FIX) ###
-  # output_value_sd <- subset(emdat_output.df, select = stddevpathdistance)[1,]
-  # internal_value_sd_numerator <- 0
-  # internal_value_sd_denominator <- 1
-  # 
-  # for(i in 1:length(segment.names)){
-  #   
-  #   path_length_vector <- find_path_length_vector(
-  #     internal_data_vector[[i]]$mappedfixationpointx,
-  #     internal_data_vector[[i]]$mappedfixationpointy
-  #   )
-  #   
-  #   internal_value_sd_numerator <- internal_value_sd_numerator+
-  #                                  (length(path_length_vector)-1)*(sd(path_length_vector)^2)+
-  #                                  length(path_length_vector)*(mean(path_length_vector)-internal_value_mean_temp)^2
-  #   internal_value_sd_denominator <- internal_value_sd_denominator+length(path_length_vector)
-  #                                       
-  # }
-  
-  internal_value_sd <- signif(internal_value_sd_numerator/internal_value_sd_denominator, digits = 12)
-  verify_equivalence(internal_value_sd, output_value_sd, participant, a_scene, "stddevpathdistance")
+### stddevpathdistance ###
   # for obj in obj_list:
   #   t = eval('obj.'+totalfeat)
   # if t > 0:
@@ -190,81 +169,91 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   # 
   # if den > 1:
   #   return math.sqrt(float(num)/(den-1))
-  # return 0	
+  # return 0
   
-  # error for P18: internal_value =  134.333673837, output_value = 134.381758361
-  # This is expected since the same path_length_vector as in the above is used
-  
-  
-###  sumabspathangles(NEEDS FIX) ###
-  
-  # error for P18: internal_value = 1082.84640593, output_value = 1081.27560961
-  
-  find_abs_angle_vector<- function(x_cord_vector, y_cord_vector){
+  output_value <- subset(emdat_output.df, select = stddevpathdistance)[1,]
+  numerator <- 0
+  denominator <- 0
+
+  for(i in 1:length(segment.names)){
+
+    path_length_vector <- find_path_length_vector(
+      internal_data_vector[[i]]$mappedfixationpointx,
+      internal_data_vector[[i]]$mappedfixationpointy
+    )
+
+    numerator <- numerator+(length(path_length_vector)-1)*(sd(path_length_vector)^2)+
+                                   length(path_length_vector)*(mean(path_length_vector)-internal_value_mean_temp)^2
     
-    abs_angle_vector <- c()
+    denominator <- denominator+length(path_length_vector)
+
+  }
+  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
+  verify_equivalence(internal_value, output_value, participant, a_scene, "stddevpathdistance")
+  
+  
+### sumabspathangles ###
+### meanabspathangles ###  
+  
+  output_sum_absangle <- subset(emdat_output.df, select = sumabspathangles)[1,]
+  internal_sum_absangle <-0
+  
+  output_mean_absangle <- subset(emdat_output.df, select = meanabspathangles)[1,]
+  internal_mean_absangle <-0
+  numerator <- 0
+  denominator <- 0
+  
+  for(i in 1:length(segment.names)){
     
-    for(i in 1:(length(x_cord_vector)-1)){
-      
-      delta_x <- x_cord_vector[i+1] - x_cord_vector[i]
-      delta_y <- y_cord_vector[i+1] - y_cord_vector[i]
-       
-      if(delta_x == 0 & delta_y == 0){ # no movement case
-        abs_angle_vector[i] <- 0
-      } 
-      else if(delta_x == 0){ # vertical move cases
-        abs_angle_vector[i] <- pi/2
-      } 
-      else if(delta_y == 0){ # horizontal move cases
-        abs_angle_vector[i] <-  0
-      } 
-      else if(delta_x > 0 & delta_y > 0) { # first quadrant case
-        abs_angle_vector[i] <- atan(delta_y/delta_x)
-      } 
-      else if (delta_x < 0 & delta_y > 0) { # second quadrant case
-        abs_angle_vector[i] <- pi+atan(delta_y/delta_x)
-      } 
-      else if (delta_x < 0 & delta_y < 0) { # third quadrant case
-        abs_angle_vector[i] <- pi-atan(delta_y/delta_x)
-      } 
-      else { # fourth quadrant case (delta_x > 0 & delta_y < 0)
-        abs_angle_vector[i] <- -atan(delta_y/delta_x)
-      } 
-    }
-    return(abs_angle_vector)
+    abs_angle_vector <- find_abs_angle_vector(internal_data_vector[[i]]$mappedfixationpointx,
+                                              internal_data_vector[[i]]$mappedfixationpointy)
+    
+    internal_sum_absangle <- internal_sum_absangle + sum(abs_angle_vector)
+    
+    numerator <- numerator+ 
+      length(abs_angle_vector)*mean(abs_angle_vector)
+    denominator <- denominator+length(abs_angle_vector)
   }
   
-  abs_angle_vector <- find_abs_angle_vector(internal_data.df$mappedfixationpointx,
-                                            internal_data.df$mappedfixationpointy)
+  internal_sum_absangle <- signif(internal_sum_absangle, digits = 12)
+  internal__mean_absangle_temp <- numerator/denominator
+  internal_mean_absangle <- signif(internal__mean_absangle_temp, digits = 12)
   
-  output_value <- subset(emdat_output.df, select = sumabspathangles)[1,]
-  internal_value <- signif(sum(abs_angle_vector), digits = 12)
-  
-  try(if(internal_value  != output_value)
-        stop(paste("Error: sumabspathangles does not match for participant:", participant, " and scene: ", a_scene))
-  )
-  
-### meanabspathangles(NEEDS FIX) ###
-  
-  # Error for P18: internal_value = 1.39902636426, output_value = 1.39880415214
-  
-  output_value <- subset(emdat_output.df, select = meanabspathangles)[1,]
-  internal_value <- signif(mean(abs_angle_vector), digits = 12)
-  
-  try(if(internal_value  != output_value)
-    stop(paste("Error: meanabspathangles does not match for participant:", participant, " and scene: ", a_scene))
-  )
-  
-### stddevabspathangles(NEEDS FIX) ###
-  
-  # Error for P18: internal_value = 1.23488538262, output_value = 1.23566943529
+  verify_equivalence(internal_sum_absangle, output_sum_absangle, participant, a_scene, "sumabspathangles")
+  verify_equivalence(internal_mean_absangle, output_mean_absangle, participant, a_scene, "meanabspathangles")
+
+### stddevabspathangles ###
+  # for obj in obj_list:
+  #   t = eval('obj.'+totalfeat)
+  # if t > 0:
+  #   sd = eval('obj.'+sdfeat)
+  # if math.isnan(sd): sd = 0
+  # meanobj = eval('obj.'+meanfeat)
+  # 
+  # num += (t-1) * sd**2 + t * (meanobj-meanscene)**2
+  # den += t
+  # 
+  # if den > 1:
+  #   return math.sqrt(float(num)/(den-1))
+  # return 0
   
   output_value <- subset(emdat_output.df, select = stddevabspathangles)[1,]
-  internal_value <- signif(sd(abs_angle_vector), digits = 12)
+  numerator <- 0
+  denominator <- 0
   
-  try(if(internal_value  != output_value)
-    stop(paste("Error: stddevabspathangles does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  for(i in 1:length(segment.names)){
+    
+    abs_angle_vector <- find_abs_angle_vector(internal_data_vector[[i]]$mappedfixationpointx,
+                                              internal_data_vector[[i]]$mappedfixationpointy)
+    
+    numerator <- numerator+(length(abs_angle_vector)-1)*(sd(abs_angle_vector)^2)+
+      length(abs_angle_vector)*(mean(abs_angle_vector)-internal__mean_absangle_temp)^2
+    
+    denominator <- denominator+length(abs_angle_vector)
+    
+  }
+  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
+  verify_equivalence(internal_value, output_value, participant, a_scene, "stddevabspathangles")
 }
 
 # This function checks the correctness of saccades
@@ -296,7 +285,7 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene){
  
 ### longestsaccadedistance ###
   output_value <- subset(emdat_output.df, select=longestsaccadedistance)[1,]
-  internal_value <- max(subset(internal_data.df, select=saccadedistance)$saccadedistance)
+  internal_value <- signif(max(subset(internal_data.df, select=saccadedistance)$saccadedistance), digits = 12)
   
   try(if(internal_value  != output_value)
     stop(paste("Error: longestsaccadedistance does not match for participant:", participant, " and scene: ", a_scene))
@@ -538,14 +527,20 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene){
 #  length (Error for P 18)
 
 
-check_correctness_gazesample <- function(emdat_output.df, participant, a_scene){
+check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, segment.names){
   
   # read in the corresponding internal EMDAT data file
   internal_data.df <- read.csv(paste("EMDATdata_gazesample_P", participant, ".tsv", sep=""), sep="\t")
   
-  # keeps all segments belonging to the scene
+  # keeps all segments belonging to the scene in the vetor format  
   # only one data set (P18) contains a scene consisting of multiple segments     
   internal_data.df <- subset(internal_data.df, grepl(a_scene, scene))
+  internal_data_vector <- c()
+  for(i in 1:length(segment.names)) {
+    
+    internal_data_vector[[i]] <- subset(internal_data.df, grepl(segment.names[i], scene))
+  }
+  
   
 ### numsamples ###
   output_value <- subset(emdat_output.df, select=numsamples)[1,]
@@ -613,19 +608,38 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene){
     stop(paste("Error: maxpupilvelocity does not match for participant:", participant, " and scene: ", a_scene))
   )
   
-### meandistance(NEEDS FIX) ###
+### meandistance(NEEDS FIX) ### ##
   
   # Error for P18: internal_value = 624.6470933, output_value = 625.018883
   # Assumption: only valid values are considered
   
   output_value <- subset(emdat_output.df, select=meandistance)[1,]
-  internal_value <- signif(
-    mean(subset(internal_data.df, select=headdistance, is_valid_headdistance==TRUE)$headdistance),
-    digits = 10)
   
-  try(if(internal_value != output_value)
-    stop(paste("Error: meandistance does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  numerator <- 0
+  denominator <- 0
+  
+  for(i in 1:length(segment.names)){
+    
+    valid_data = subset(internal_data_vector[[i]], select=headdistance, is_valid_headdistance==TRUE)
+    numerator <- numerator+nrow(valid_data)*mean(subset(valid_data)$headdistance)
+    denominator <- denominator+nrow(valid_data)
+  }
+  
+  internal_mean_dist_temp <- numerator/denominator
+  internal_mean_dist <- signif(internal_mean_dist_temp, digits = 10)
+  
+  verify_equivalence(internal_mean_dist, output_value, participant, a_scene, "meandistance")
+  
+  
+  
+  # output_value <- subset(emdat_output.df, select=meandistance)[1,]
+  # internal_value <- signif(
+  #   mean(subset(internal_data.df, select=headdistance, is_valid_headdistance==TRUE)$headdistance),
+  #   digits = 10)
+  # 
+  # try(if(internal_value != output_value)
+  #   stop(paste("Error: meandistance does not match for participant:", participant, " and scene: ", a_scene))
+  # )
   
 ### meanpupilsize ###
   
