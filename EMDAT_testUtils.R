@@ -150,8 +150,6 @@ compute_segsd_with_weight <- function(feature_value_vector, scene_mean){
 }
 
 # Helper funciton for computing the numerator of scence mean
-#nrow(valid_data)*mean(subset(valid_data)$headdistance)
-
 compute_segmean_with_weight <- function(feature_value_vector){
   
   numerator <- length(feature_value_vector)*mean(feature_value_vector)

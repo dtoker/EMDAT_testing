@@ -147,13 +147,13 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
     )
     
     internal_value_sum <- internal_value_sum + sum(path_length_vector)
-    numerator <- numerator+length(path_length_vector)*mean(path_length_vector)
+    numerator <- numerator + compute_segmean_with_weight(path_length_vector)
     denominator <- denominator+length(path_length_vector)
   }
   
   internal_value_sum <- signif(internal_value_sum, digits = 12)
-  internal_value_mean_temp <- numerator/denominator
-  internal_value_mean <- signif(internal_value_mean_temp, digits = 12)
+  internal_mean_temp <- numerator/denominator
+  internal_value_mean <- signif(internal_mean_temp, digits = 12)
   
   verify_equivalence(internal_value_sum, output_value_sum, participant, a_scene, "sumpathdistance")
   verify_equivalence(internal_value_mean, output_value_mean, participant, a_scene, "meanpathdistance")
@@ -169,7 +169,7 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
       internal_data_vector[[i]]$mappedfixationpointx,
       internal_data_vector[[i]]$mappedfixationpointy
     )
-    numerator <- numerator + compute_segsd_with_weight(path_length_vector,internal_value_mean_temp)
+    numerator <- numerator + compute_segsd_with_weight(path_length_vector,internal_mean_temp)
     denominator <- denominator + length(path_length_vector)
 
   }
@@ -193,15 +193,13 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
                                               internal_data_vector[[i]]$mappedfixationpointy)
     
     internal_sum_absangle <- internal_sum_absangle + sum(abs_angle_vector)
-    
-    numerator <- numerator+ 
-      length(abs_angle_vector)*mean(abs_angle_vector)
+    numerator <- numerator + compute_segmean_with_weight(abs_angle_vector)
     denominator <- denominator+length(abs_angle_vector)
   }
   
   internal_sum_absangle <- signif(internal_sum_absangle, digits = 12)
-  internal__mean_absangle_temp <- numerator/denominator
-  internal_mean_absangle <- signif(internal__mean_absangle_temp, digits = 12)
+  internal__mean_temp <- numerator/denominator
+  internal_mean_absangle <- signif(internal__mean_temp, digits = 12)
   
   verify_equivalence(internal_sum_absangle, output_sum_absangle, participant, a_scene, "sumabspathangles")
   verify_equivalence(internal_mean_absangle, output_mean_absangle, participant, a_scene, "meanabspathangles")
@@ -216,7 +214,7 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
     abs_angle_vector <- find_abs_angle_vector(internal_data_vector[[i]]$mappedfixationpointx,
                                               internal_data_vector[[i]]$mappedfixationpointy)
     
-    numerator <- numerator + compute_segsd_with_weight(abs_angle_vector, internal__mean_absangle_temp)
+    numerator <- numerator + compute_segsd_with_weight(abs_angle_vector, internal__mean_temp)
     denominator <- denominator+length(abs_angle_vector)
   }
   internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
