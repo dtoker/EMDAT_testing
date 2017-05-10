@@ -40,10 +40,10 @@ readfiles_part2 <- function(participant, seg_file){
     # checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
     #                                          segment.names)
     #checked_result2 <- check_correctness_sac(emdat_export.df.scene, participant, a_scene)
-    # checked_result3 <- check_correctness_eve(emdat_export.df.scene, participant, a_scene, 
-    #                                          segment.names)
-    checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene,
-                                                    segment.names)
+    checked_result3 <- check_correctness_eve(emdat_export.df.scene, participant, a_scene,
+                                             segment.names)
+    # checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene,
+    #                                                 segment.names)
     
     #browser()
     }

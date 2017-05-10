@@ -70,38 +70,38 @@ compute_scene_length <- function(segment_names,internal_data_vector){
 }
 
 find_double_and_left_clicks <- function(internal_data.df){
-  
+
   clicks.df <- subset(internal_data.df, event == "LeftMouseClick")
-  clicks <- c() # c[1]: double click count, c[2]: left click count, 
+  clicks <- c() # c[1]: double click count, c[2]: left click count,
   clicks[3] <- -1    # c[3]: time of first double click, with default being -1
   clicks[4] <- -1    # c[4]: time of first left click, with default being -1
-  
+
   if(nrow(clicks.df) == 0){
     clicks[1] <- 0
     clicks[2] <- 0
     return(clicks)
-    
+
   } else if(nrow(clicks.df) == 1){
     clicks[1] <- 0
     clicks[2] <- 1
     clicks[4] <- subset(clicks.df, select=timestamp)[1,]
     return(clicks)
-    
+
   } else{
     time_stamps <- subset(clicks.df, select=timestamp)$timestamp
     x_coords <- as.numeric(as.character(subset(clicks.df, select=x_coord)$x_coord))
     y_coords <- as.numeric(as.character(subset(clicks.df, select=y_coord)$y_coord))
-    
+
     is_double_click <- TRUE
     double_click_count <- 0
     left_click_count <- 1 # first left click is not counted in the loop
     double_click_index <- 1000000
     left_click_index <- 1000000
-    
+
     for(i in 1:(length(x_coords)-1)) {
-      
-      if(is_double_click & 
-         (time_stamps[i+1] - time_stamps[i]) <= 700 & 
+
+      if(is_double_click &
+         (time_stamps[i+1] - time_stamps[i]) <= 700 &
          (x_coords[i+1] - x_coords[i]) <= 10 &
          (y_coords[i+1] - y_coords[i]) <= 10
       ){
@@ -120,9 +120,79 @@ find_double_and_left_clicks <- function(internal_data.df){
           left_click_index <- i
         }
       }
-    } 
+    }
     clicks[1] <- double_click_count
     clicks[2] <- left_click_count
+    return(clicks)
+  }
+}
+find_double_and_left_clicks <- function(internal_data.df){
+
+  clicks.df <- subset(internal_data.df, event == "LeftMouseClick")
+  clicks <- c() # c[1]: double click count, c[2]: left click count,
+  clicks[3] <- -1    # c[3]: time of first double click, with default being -1
+  clicks[4] <- -1    # c[4]: time of first left click, with default being -1
+
+  if(nrow(clicks.df) == 0){
+    clicks[1] <- 0
+    clicks[2] <- 0
+    return(clicks)
+
+  } else if(nrow(clicks.df) == 1){
+    clicks[1] <- 0
+    clicks[2] <- 1
+    clicks[4] <- subset(clicks.df, select=timestamp)[1,]
+    return(clicks)
+
+  } else{
+    time_stamps <- subset(clicks.df, select=timestamp)$timestamp
+    x_coords <- as.numeric(as.character(subset(clicks.df, select=x_coord)$x_coord))
+    y_coords <- as.numeric(as.character(subset(clicks.df, select=y_coord)$y_coord))
+    
+    # "D for double and "L" for left. Keep track of double and left clicks
+    #  Used for determining the first double and left
+    #  first element is always not double
+    double_left_marker <- c()
+    double_left_marker[1] <- "L" 
+    
+    is_double_click <- TRUE
+    double_click_count <- 0
+    left_click_count <- 1 # first left click is not counted in the loop
+    
+    for(i in 1:(length(x_coords)-1)) {
+
+      if(is_double_click &
+         (time_stamps[i+1] - time_stamps[i]) <= 700 &
+         (x_coords[i+1] - x_coords[i]) <= 10 &
+         (y_coords[i+1] - y_coords[i]) <= 10)
+      {
+        double_click_count <- double_click_count + 1
+        left_click_count <- left_click_count - 1
+        is_double_click <- FALSE
+        double_left_marker[i+1] <- "D"
+      }
+      else{
+        left_click_count <- left_click_count + 1
+        is_double_click <- TRUE
+        double_left_marker[i+1] <- "L"
+      }
+    }
+    clicks[1] <- double_click_count
+    clicks[2] <- left_click_count
+    
+    first_double <- TRUE
+    first_left <- TRUE
+    for(j in 1:(length(double_left_marker)-1)){
+      
+      if(double_left_marker[j+1]=="D" & first_double){
+        clicks[3] <- time_stamps[j+1]
+        first_double <- FALSE
+      }
+      if(double_left_marker[j]=="L" & double_left_marker[j+1]!="D" & first_left){
+        clicks[4] <- time_stamps[j]
+        first_left <- FALSE
+      }
+    }
     return(clicks)
   }
 }
