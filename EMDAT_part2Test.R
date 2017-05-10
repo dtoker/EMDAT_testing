@@ -19,7 +19,7 @@ VALID_SAMPLES_PROP_SACCADE = 1
 
 # C:/Users/admin/Dropbox/PhD/EMDAT-testing/Part2_EMDATInternal_EMDATOutput
 setwd("C:/git00/EMDAT_testing_actual/Part2_EMDATInternal_EMDATOutput")
-source("C:/git00/EMDAT_testing_actual/EMDAT_test_utils.R")
+source("C:/git00/EMDAT_testing_actual/EMDAT_testUtils.R")
 
 readfiles_part2 <- function(participant, seg_file){
   
@@ -37,15 +37,14 @@ readfiles_part2 <- function(participant, seg_file){
     
     emdat_export.df.scene <- subset(emdat_export.df, Sc_id == a_scene)
     
-    # checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
-    #                                          segment.names)
-    #checked_result2 <- check_correctness_sac(emdat_export.df.scene, participant, a_scene)
-    checked_result3 <- check_correctness_eve(emdat_export.df.scene, participant, a_scene,
+    checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
                                              segment.names)
+    # checked_result2 <- check_correctness_sac(emdat_export.df.scene, participant, a_scene,
+    #                                          segment.names)
+    # checked_result3 <- check_correctness_eve(emdat_export.df.scene, participant, a_scene,
+    #                                          segment.names)
     # checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene,
     #                                                 segment.names)
-    
-    #browser()
     }
 }
 
@@ -75,6 +74,8 @@ readfiles_part2 <- function(participant, seg_file){
 #  sumrelpathangles
 
 check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment.names){
+  
+### set up the tests ###
   
   # reads in the needed internal EMDAT data files
   internal_data.df <- read.csv(paste("EMDATdata_fix_P", participant, ".tsv", sep=""), sep="\t")
@@ -158,20 +159,6 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   verify_equivalence(internal_value_mean, output_value_mean, participant, a_scene, "meanpathdistance")
 
 ### stddevpathdistance ###
-  # for obj in obj_list:
-  #   t = eval('obj.'+totalfeat)
-  # if t > 0:
-  #   sd = eval('obj.'+sdfeat)
-  # if math.isnan(sd): sd = 0
-  # meanobj = eval('obj.'+meanfeat)
-  # 
-  # num += (t-1) * sd**2 + t * (meanobj-meanscene)**2
-  # den += t
-  # 
-  # if den > 1:
-  #   return math.sqrt(float(num)/(den-1))
-  # return 0
-  
   output_value <- subset(emdat_output.df, select = stddevpathdistance)[1,]
   numerator <- 0
   denominator <- 0
@@ -182,17 +169,13 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
       internal_data_vector[[i]]$mappedfixationpointx,
       internal_data_vector[[i]]$mappedfixationpointy
     )
-
-    numerator <- numerator+(length(path_length_vector)-1)*(sd(path_length_vector)^2)+
-                                   length(path_length_vector)*(mean(path_length_vector)-internal_value_mean_temp)^2
-    
-    denominator <- denominator+length(path_length_vector)
+    numerator <- numerator + compute_segsd_with_weight(path_length_vector,internal_value_mean_temp)
+    denominator <- denominator + length(path_length_vector)
 
   }
   internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevpathdistance")
-  
-  
+
 ### sumabspathangles ###
 ### meanabspathangles ###  
   
@@ -224,20 +207,6 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   verify_equivalence(internal_mean_absangle, output_mean_absangle, participant, a_scene, "meanabspathangles")
 
 ### stddevabspathangles ###
-  # for obj in obj_list:
-  #   t = eval('obj.'+totalfeat)
-  # if t > 0:
-  #   sd = eval('obj.'+sdfeat)
-  # if math.isnan(sd): sd = 0
-  # meanobj = eval('obj.'+meanfeat)
-  # 
-  # num += (t-1) * sd**2 + t * (meanobj-meanscene)**2
-  # den += t
-  # 
-  # if den > 1:
-  #   return math.sqrt(float(num)/(den-1))
-  # return 0
-  
   output_value <- subset(emdat_output.df, select = stddevabspathangles)[1,]
   numerator <- 0
   denominator <- 0
@@ -247,11 +216,8 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
     abs_angle_vector <- find_abs_angle_vector(internal_data_vector[[i]]$mappedfixationpointx,
                                               internal_data_vector[[i]]$mappedfixationpointy)
     
-    numerator <- numerator+(length(abs_angle_vector)-1)*(sd(abs_angle_vector)^2)+
-      length(abs_angle_vector)*(mean(abs_angle_vector)-internal__mean_absangle_temp)^2
-    
+    numerator <- numerator + compute_segsd_with_weight(abs_angle_vector, internal__mean_absangle_temp)
     denominator <- denominator+length(abs_angle_vector)
-    
   }
   internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevabspathangles")
@@ -290,7 +256,9 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
 # TO BE REVISITED:
 #  sumsaccadedistance (error for P16 part2: last digit off by 0.00001)
 
-check_correctness_sac <- function(emdat_output.df, participant, a_scene){
+check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment.names){
+
+### set up the tests ###
   
   # read in the corresponding internal EMDAT data file
   internal_data.df <- read.csv(paste("EMDATdata_sac_P", participant, ".tsv", sep=""), sep="\t")
@@ -298,65 +266,139 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene){
   # keeps all segments belonging to the scene
   # only one data set (P18) contains a scene consisting of multiple segments     
   internal_data.df <- subset(internal_data.df, grepl(a_scene, scene))
+  
+  internal_data_vector <- c()
+  
+  for(i in 1:length(segment.names)) {
+    
+    internal_data_vector[[i]] <- subset(internal_data.df, grepl(segment.names[i], scene))
+  }
  
 ### longestsaccadedistance ###
   output_value <- subset(emdat_output.df, select=longestsaccadedistance)[1,]
   internal_value <- signif(max(subset(internal_data.df, select=saccadedistance)$saccadedistance), digits = 12)
   
-  try(if(internal_value  != output_value)
-    stop(paste("Error: longestsaccadedistance does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  verify_equivalence(internal_value, output_value, participant, a_scene, "longestsaccadedistance")
   
 ### longestsaccadeduration ###
   output_value <- subset(emdat_output.df, select=longestsaccadeduration)[1,]
   internal_value <- max(subset(internal_data.df, select=saccadeduration)$saccadeduration)
   
-  try(if(internal_value  != output_value)
-    stop(paste("Error: longestsaccadeduration does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  verify_equivalence(internal_value, output_value, participant, a_scene, "longestsaccadeduration")
   
 ### maxsaccadespeed ###  
   output_value <- subset(emdat_output.df, select=maxsaccadespeed)[1,]
   internal_value <- max(subset(internal_data.df, select=saccadespeed)$saccadespeed)
   
-  try(if(internal_value  != output_value)
-    stop(paste("Error: maxsaccadespeed does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  verify_equivalence(internal_value, output_value, participant, a_scene, "maxsaccadespeed")
 
 ### numsaccades ###
   output_value <- subset(emdat_output.df, select=numsaccades)[1,]
   internal_value <- nrow(internal_data.df)
   
-  try(if(internal_value  != output_value)
-    stop(paste("Error: numsaccades does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  verify_equivalence(internal_value, output_value, participant, a_scene, "numsaccades")
+
+### meansaccadedistance ###
+  output_value <- subset(emdat_output.df, select=meansaccadedistance)[1,]
   
+  numerator <- 0
+  denominator <- 0
+  
+  for(i in 1:length(segment.names)){
+    
+    valid_data = subset(
+      internal_data_vector[[i]], select=saccadedistance)$saccadedistance
+    numerator <- numerator + compute_segmean_with_weight(valid_data)
+    denominator <- denominator+length(valid_data)
+  }
+  internal_mean_temp <- numerator/denominator
+  internal_value <- signif(internal_mean_temp, digits = 10)
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, "meansaccadedistance")
+    
 ### stddevsaccadedistance ###
   output_value <- subset(emdat_output.df, select=stddevsaccadedistance)[1,]
-  internal_value <- signif(sd(subset(internal_data.df, select=saccadedistance)$saccadedistance), 
-                           digits = 10)
+  numerator <- 0
+  denominator <- 0
   
-  try(if(internal_value  != output_value)
-    stop(paste("Error: stddevsaccadedistance does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  for(i in 1:length(segment.names)){
+    
+    valid_data = subset(
+      internal_data_vector[[i]], select=saccadedistance)$saccadedistance
+    
+    numerator <- numerator + compute_segsd_with_weight(valid_data, internal_mean_temp)
+    denominator <- denominator+length(valid_data)
+  }
+  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 10)
+  verify_equivalence(internal_value, output_value, participant, a_scene, "stddevsaccadedistance")
+
+### meansaccadeduration ###
+  output_value <- subset(emdat_output.df, select=meansaccadeduration)[1,]
   
+  numerator <- 0
+  denominator <- 0
+  
+  for(i in 1:length(segment.names)){
+    
+    valid_data = subset(
+      internal_data_vector[[i]], select=saccadeduration)$saccadeduration
+    numerator <- numerator + compute_segmean_with_weight(valid_data)
+    denominator <- denominator+length(valid_data)
+  }
+  internal_mean_temp <- numerator/denominator
+  internal_value <- signif(internal_mean_temp, digits = 10)
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, "meansaccadeduration")
+
 ### stddevsaccadeduration ###
   output_value <- subset(emdat_output.df, select=stddevsaccadeduration)[1,]
-  internal_value <- signif(sd(subset(internal_data.df, select=saccadeduration)$saccadeduration), 
-                           digits = 10)
+  numerator <- 0
+  denominator <- 0
   
-  try(if(internal_value  != output_value)
-    stop(paste("Error: stddevsaccadeduration does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  for(i in 1:length(segment.names)){
+    
+    valid_data = subset(
+      internal_data_vector[[i]], select=saccadeduration)$saccadeduration
+    
+    numerator <- numerator + compute_segsd_with_weight(valid_data, internal_mean_temp)
+    denominator <- denominator+length(valid_data)
+  }
+  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 10)
+  verify_equivalence(internal_value, output_value, participant, a_scene, "stddevsaccadeduration")
 
+### meansaccadespeed ###
+  output_value <- subset(emdat_output.df, select=meansaccadespeed)[1,]
+  
+  numerator <- 0
+  denominator <- 0
+  
+  for(i in 1:length(segment.names)){
+    
+    valid_data = subset(
+      internal_data_vector[[i]], select=saccadespeed)$saccadespeed
+    numerator <- numerator + compute_segmean_with_weight(valid_data)
+    denominator <- denominator+length(valid_data)
+  }
+  internal_mean_temp <- numerator/denominator
+  internal_value <- signif(internal_mean_temp, digits = 10)
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, "meansaccadespeed")
+  
 ### stddevsaccadespeed ###
   output_value <- subset(emdat_output.df, select=stddevsaccadespeed)[1,]
-  internal_value <- signif(sd(subset(internal_data.df, select=saccadespeed)$saccadespeed), 
-                           digits = 10)
+  numerator <- 0
+  denominator <- 0
   
-  try(if(internal_value  != output_value)
-    stop(paste("Error: stddevsaccadespeed does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  for(i in 1:length(segment.names)){
+    
+    valid_data = subset(
+      internal_data_vector[[i]], select=saccadespeed)$saccadespeed
+    
+    numerator <- numerator + compute_segsd_with_weight(valid_data, internal_mean_temp)
+    denominator <- denominator+length(valid_data)
+  }
+  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 10)
+  verify_equivalence(internal_value, output_value, participant, a_scene, "stddevsaccadespeed")
   
 ### sumsaccadedistance (NEEDS FIX)###
   
@@ -366,52 +408,19 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene){
   internal_value <- signif(sum(subset(internal_data.df, select=saccadedistance)$saccadedistance),
                            digits = 10)
   
-  try(if(internal_value != output_value)
-    stop(paste("Error: sumsaccadedistance does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  verify_equivalence(internal_value, output_value, participant, a_scene, "sumsaccadedistance")
   
 ### sumsaccadeduration ###
   output_value <- subset(emdat_output.df, select=sumsaccadeduration)[1,]
   internal_value <- sum(subset(internal_data.df, select=saccadeduration)$saccadeduration)
   
-  try(if(internal_value != output_value)
-    stop(paste("Error: sumsaccadeduration does not match for participant:", participant, " and scene: ", a_scene))
-  )
-  
-### meansaccadedistance ###
-  output_value <- subset(emdat_output.df, select=meansaccadedistance)[1,]
-  internal_value <- signif(mean(subset(internal_data.df, select=saccadedistance)$saccadedistance),
-                           digits = 10)
-  
-  try(if(internal_value != output_value)
-    stop(paste("Error: meansaccadedistance does not match for participant:", participant, " and scene: ", a_scene))
-  )
-
-### meansaccadeduration ###
-  output_value <- subset(emdat_output.df, select=meansaccadeduration)[1,]
-  internal_value <- signif(mean(subset(internal_data.df, select=saccadeduration)$saccadeduration),
-                           digits = 10)
-  
-  try(if(internal_value != output_value)
-    stop(paste("Error: meansaccadeduration does not match for participant:", participant, " and scene: ", a_scene))
-  )
-
-### meansaccadespeed ###
-  output_value <- subset(emdat_output.df, select=meansaccadespeed)[1,]
-  internal_value <- signif(mean(subset(internal_data.df, select=saccadespeed)$saccadespeed),
-                           digits = 10)
-  
-  try(if(internal_value != output_value)
-    stop(paste("Error: meansaccadespeed does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  verify_equivalence(internal_value, output_value, participant, a_scene, "sumsaccadeduration")
   
 ### minsaccadespeed ###  
   output_value <- subset(emdat_output.df, select=minsaccadespeed)[1,]
   internal_value <- min(subset(internal_data.df, select=saccadespeed)$saccadespeed)
   
-  try(if(internal_value != output_value)
-    stop(paste("Error: minsaccadespeed does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  verify_equivalence(internal_value, output_value, participant, a_scene, "minsaccadespeed")
 }  
 
 # This function checks the correctness of events
@@ -431,7 +440,6 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene){
 #  timetofirstrightclic
 
 #  TO DO:
-
 
 check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment.names){
   
@@ -579,23 +587,24 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment
 #  maxpupilsize (Assumed:only valied values considered)
 #  maxpupilvelocity (Assumed: -1 values are disregarded)
 #  meanpupilsize (Assumed:only valied values considered)
-#  meanpupilvelocity (Assumed: -1 values are disregarded. Note: R 'round' rather than 'signif' is used here)
 #  mindistance (Assumed:only valied values considered)
 #  minpupilsize (Assumed:only valied values considered)
 #  minpupilvelocity (Assumed: -1 values are disregarded)
 #  startdistance (Assumed: the startdistance is the first valid headdistance)
 #  startpupilsize (Assumed: the startpupilsize is the first valid rawpupilsize)
-#  stddevpupilsize (Note: R 'round' rather than 'signif' is used here)
-#  stddevpupilvelocity (Assumed: -1 values are disregarded. Note: R 'round' rather than 'signif' is used here)
+#  stddevpupilsize (Assumed: only valid values considered)
 #  length 
+#  meandistance (Assumed: only valid values considered)
+#  stddevdistance (Assumed: only valid values considered)
 
-# TO REVISIT:
-#  meandistance (Error for P 18. Assumed: only valid values considered)
-#  stddevdistance (Error for P 18. Assumed: only valid values considered)
-
-
+# TO REVISIT: (test again when internal data files are updated)
+#  meanpupilvelocity (Assumed: -1 values are disregarded)
+#  stddevpupilvelocity (Assumed: -1 values are disregarded)
+#  maxpupilvelocity(for P17 part 2)
 
 check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, segment.names){
+
+### set up the tests ###    
   
   # read in the needed internal EMDAT data file
   internal_data.df <- read.csv(paste("EMDATdata_gazesample_P", participant, ".tsv", sep=""), sep="\t")
@@ -609,14 +618,11 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
     internal_data_vector[[i]] <- subset(internal_data.df, grepl(segment.names[i], scene))
   }
   
-  
 ### numsamples ###
   output_value <- subset(emdat_output.df, select=numsamples)[1,]
   internal_value <- nrow(internal_data.df)
   
-  try(if(internal_value != output_value)
-    stop(paste("Error: numsamples does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  verify_equivalence(internal_value, output_value, participant, a_scene, "numsamples")
   
 ### enddistance ###
   
@@ -626,9 +632,7 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   internal_value <- tail(
     subset(internal_data.df, select=headdistance, is_valid_headdistance==TRUE)$headdistance, 1)
   
-  try(if(internal_value != output_value)
-    stop(paste("Error: enddistance does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  verify_equivalence(internal_value, output_value, participant, a_scene, "enddistance")
 
 ### endpupilsize ###
   
@@ -638,9 +642,7 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   internal_value <- tail(
     subset(internal_data.df, select=rawpupilsize, is_valid_pupil==TRUE)$rawpupilsize, 1)
   
-  try(if(internal_value != output_value)
-    stop(paste("Error: endpupilsize does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  verify_equivalence(internal_value, output_value, participant, a_scene, "endpupilsize")
 
 ### maxdistance ###
   output_value <- subset(emdat_output.df, select=maxdistance)[1,]
@@ -651,34 +653,27 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   # is added here as well.
   internal_value <- max(subset(internal_data.df, select=headdistance, is_valid_headdistance==TRUE)$headdistance)
   
-  try(if(internal_value != output_value)
-    stop(paste("Error: maxdistance does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  verify_equivalence(internal_value, output_value, participant, a_scene, "maxdistance")
 
-###  maxpupilsize ###
+### maxpupilsize ###
   output_value <- subset(emdat_output.df, select=maxpupilsize)[1,]
   
   # Remark similar to the above on the condition of R subset operation holds here as well.   
   internal_value <- max(subset(internal_data.df, select=rawpupilsize, is_valid_pupil==TRUE)$rawpupilsize)
   
-  try(if(internal_value != output_value)
-    stop(paste("Error: maxpupilsize does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  verify_equivalence(internal_value, output_value, participant, a_scene, "maxpupilsize")
   
-### maxpupilvelocity ###
+### maxpupilvelocity (NEEDS FIX) ###
   output_value <- subset(emdat_output.df, select=maxpupilvelocity)[1,]
   
   # The condition in the subet operaiton does not make practical difference here. But, the convention
   # is followed in computing the mean and min, so that it is added here for consistency.      
   internal_value <- max(subset(internal_data.df, select=pupilvelocity, pupilvelocity != -1)$pupilvelocity)
   
-  try(if(internal_value != output_value)
-    stop(paste("Error: maxpupilvelocity does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  verify_equivalence(internal_value, output_value, participant, a_scene, "maxpupilvelocity")
   
-### meandistance(NEEDS FIX) ### ##
+### meandistance ###
   
-  # Error for P18: internal_value = 624.6470933, output_value = 625.018883
   # Assumption: only valid values are considered
   
   output_value <- subset(emdat_output.df, select=meandistance)[1,]
@@ -688,69 +683,128 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   
   for(i in 1:length(segment.names)){
     
-    valid_data = subset(internal_data_vector[[i]], select=headdistance, is_valid_headdistance==TRUE)
-    numerator <- numerator+nrow(valid_data)*mean(subset(valid_data)$headdistance)
-    denominator <- denominator+nrow(valid_data)
+    valid_data = subset(
+      internal_data_vector[[i]], select=headdistance, is_valid_headdistance==TRUE)$headdistance
+    numerator <- numerator + compute_segmean_with_weight(valid_data)
+    denominator <- denominator+length(valid_data)
   }
+  internal_mean_temp <- numerator/denominator
+  internal_value <- signif(internal_mean_temp, digits = 12)
   
-  internal_mean_dist_temp <- numerator/denominator
-  internal_mean_dist <- signif(internal_mean_dist_temp, digits = 10)
+  verify_equivalence(internal_value, output_value, participant, a_scene, "meandistance")
+
+### stddevdistance ###
   
-  verify_equivalence(internal_mean_dist, output_value, participant, a_scene, "meandistance")
+  # Assumption: only valid values are considered
   
+  output_value <- subset(emdat_output.df, select=stddevdistance)[1,]
+  numerator <- 0
+  denominator <- 0
   
-  
-  # output_value <- subset(emdat_output.df, select=meandistance)[1,]
-  # internal_value <- signif(
-  #   mean(subset(internal_data.df, select=headdistance, is_valid_headdistance==TRUE)$headdistance),
-  #   digits = 10)
-  # 
-  # try(if(internal_value != output_value)
-  #   stop(paste("Error: meandistance does not match for participant:", participant, " and scene: ", a_scene))
-  # )
-  
+  for(i in 1:length(segment.names)){
+    
+    valid_data = subset(
+      internal_data_vector[[i]], select=headdistance, is_valid_headdistance==TRUE)$headdistance
+    
+    numerator <- numerator + compute_segsd_with_weight(valid_data, internal_mean_temp)
+    denominator <- denominator+length(valid_data)
+  }
+  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
+  verify_equivalence(internal_value, output_value, participant, a_scene, "stddevdistance")
+
 ### meanpupilsize ###
   
   # Assumption: only valid values are considered
   
   output_value <- subset(emdat_output.df, select=meanpupilsize)[1,]
-  internal_value <- signif(
-    mean(subset(internal_data.df, select=rawpupilsize, is_valid_pupil==TRUE)$rawpupilsize),
-    digits = 10)
   
-  try(if(internal_value != output_value)
-    stop(paste("Error: meanpupilsize does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  numerator <- 0
+  denominator <- 0
+  
+  for(i in 1:length(segment.names)){
+    
+    valid_data = subset(
+      internal_data_vector[[i]], select=rawpupilsize, is_valid_pupil==TRUE)$rawpupilsize
+    
+    numerator <- numerator + compute_segmean_with_weight(valid_data)
+    denominator <- denominator+length(valid_data)
+  }
+  internal_mean_temp <- numerator/denominator
+  internal_value <- signif(internal_mean_temp, digits = 12)
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, "meanpupilsize")
 
-### meanpupilvelocity ###
+### stddevpupilsize ###
+  
+  # Assumption: only valid values are considered
+  
+  output_value <- subset(emdat_output.df, select=stddevpupilsize)[1,]
+  numerator <- 0
+  denominator <- 0
+  
+  for(i in 1:length(segment.names)){
+    
+    valid_data = subset(
+      internal_data_vector[[i]], select=rawpupilsize, is_valid_pupil==TRUE)$rawpupilsize
+    
+    numerator <- numerator + compute_segsd_with_weight(valid_data, internal_mean_temp)
+    denominator <- denominator+length(valid_data)
+  }
+  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
+  verify_equivalence(internal_value, output_value, participant, a_scene, "stddevpupilsize")
+  
+### meanpupilvelocity (NEEDS FIX)###
   
   # Assumption: the value -1 is disregarded
-  # Note: round rather than siginf is used 
   
   output_value <- subset(emdat_output.df, select=meanpupilvelocity)[1,]
-  internal_value <- round(
-    mean(subset(internal_data.df, select=pupilvelocity, pupilvelocity != -1)$pupilvelocity),
-    digits = 9)
   
-  try(if(internal_value != output_value)
-    stop(paste("Error: meanpupilvelocity does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  numerator <- 0
+  denominator <- 0
   
+  for(i in 1:length(segment.names)){
+    
+    valid_data = subset(
+      internal_data_vector[[i]], select=pupilvelocity, pupilvelocity != -1)$pupilvelocity
+    
+    numerator <- numerator + compute_segmean_with_weight(valid_data)
+    denominator <- denominator+length(valid_data)
+  }
+  internal_mean_temp <- numerator/denominator
+  internal_value <- signif(internal_mean_temp, digits = 12)
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, "meanpupilvelocity")
+
+### stddevpupilvelocity (NEEDS FIX)###
+  
+  # Assumption: pupilvelocity = -1 is disregarded
+  
+  output_value <- subset(emdat_output.df, select=stddevpupilvelocity)[1,]
+  numerator <- 0
+  denominator <- 0
+  
+  for(i in 1:length(segment.names)){
+    
+    valid_data = subset(
+      internal_data_vector[[i]], select=pupilvelocity, pupilvelocity != -1)$pupilvelocity
+    
+    numerator <- numerator + compute_segsd_with_weight(valid_data, internal_mean_temp)
+    denominator <- denominator+length(valid_data)
+  }
+  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
+  verify_equivalence(internal_value, output_value, participant, a_scene, "stddevpupilvelocity")
+     
 ### mindistance ###
   output_value <- subset(emdat_output.df, select=mindistance)[1,]
   internal_value <- min(subset(internal_data.df, select=headdistance, is_valid_headdistance==TRUE)$headdistance)
   
-  try(if(internal_value != output_value)
-    stop(paste("Error: mindistance does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  verify_equivalence(internal_value, output_value, participant, a_scene, "mindistance")
   
 ### minpupilsize ###
   output_value <- subset(emdat_output.df, select=minpupilsize)[1,]
   internal_value <- min(subset(internal_data.df, select=rawpupilsize, is_valid_pupil==TRUE)$rawpupilsize)
   
-  try(if(internal_value != output_value)
-    stop(paste("Error: minpupilsize does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  verify_equivalence(internal_value, output_value, participant, a_scene, "minpupilsize")
   
 ### minpupilvelocity ###
   
@@ -759,9 +813,7 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   output_value <- subset(emdat_output.df, select=minpupilvelocity)[1,]
   internal_value <- min(subset(internal_data.df, select=pupilvelocity, pupilvelocity != -1)$pupilvelocity)
   
-  try(if(internal_value != output_value)
-    stop(paste("Error: minpupilvelocity does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  verify_equivalence(internal_value, output_value, participant, a_scene, "minpupilvelocity")
   
 ### startdistance ###
   
@@ -771,9 +823,7 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   internal_value <- head(
     subset(internal_data.df, select=headdistance, is_valid_headdistance==TRUE)$headdistance, 1)
   
-  try(if(internal_value != output_value)
-    stop(paste("Error: startdistance does not match for participant:", participant, " and scene: ", a_scene))
-  )
+  verify_equivalence(internal_value, output_value, participant, a_scene, "startdistance")
   
 ### startpupilsize ###
 
@@ -783,60 +833,15 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   internal_value <- head(
     subset(internal_data.df, select=rawpupilsize, is_valid_pupil==TRUE)$rawpupilsize, 1)
 
-  try(if(internal_value != output_value)
-    stop(paste("Error: startpupilsize does not match for participant:", participant, " and scene: ", a_scene))
-  )
-  
-### stddevdistance (NEEDS FIX)###
-  
-  # Error for P18: internal_value = 28.4432276, output_value = 28.12112579
-  # Assumption: only valid values are considered
-  
-  output_value <- subset(emdat_output.df, select=stddevdistance)[1,]
-  internal_value <- signif(
-    sd(subset(internal_data.df, select=headdistance, is_valid_headdistance==TRUE)$headdistance),
-    digits = 10)
-  
-  try(if(internal_value != output_value)
-    stop(paste("Error: stddevdistance does not match for participant:", participant, " and scene: ", a_scene))
-  )
-  
-### stddevpupilsize ###
-  
-  # Assumption: only valid values are considered
-  # Note: round rather than signif is used
-  
-  output_value <- subset(emdat_output.df, select=stddevpupilsize)[1,]
-  internal_value <- round(
-    sd(subset(internal_data.df, select=rawpupilsize, is_valid_pupil==TRUE)$rawpupilsize),
-    digits = 9)
-  
-  try(if(internal_value != output_value)
-    stop(paste("Error: stddevpupilsize does not match for participant:", participant, " and scene: ", a_scene))
-  )
-  
-### stddevpupilvelocity ###
-  
-  # Assumption: pupilvelocity = -1 is disregarded
-  # Note: round rather than signif is used
-  
-  output_value <- subset(emdat_output.df, select=stddevpupilvelocity)[1,]
-  internal_value <- round(
-    sd(subset(internal_data.df, select=pupilvelocity, pupilvelocity != -1)$pupilvelocity),
-    digits = 9)
-  
-  try(if(internal_value != output_value)
-    stop(paste("Error: stddevpupilvelocity does not match for participant:", participant, " and scene: ", a_scene))
-  )
-  
+  verify_equivalence(internal_value, output_value, participant, a_scene, "startpupilsize")
+
 ### length ###
-  
   output_value <- subset(emdat_output.df, select=length)[1,]
   internal_value <- compute_scene_length(segment.names, internal_data_vector)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "length")
-  
 }
+
 
 P16 <- readfiles_part2("16", "TobiiV3_sample_16.seg")
 P17 <- readfiles_part2("17", "TobiiV3_sample_17.seg")

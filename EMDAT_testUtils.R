@@ -140,5 +140,22 @@ find_double_and_left_clicks <- function(internal_data.df){
   }
 }
 
+# Helper funciton for computing the numerator of aggregated sd
+compute_segsd_with_weight <- function(feature_value_vector, scene_mean){
+  
+  numerator <- (length(feature_value_vector)-1)*(sd(feature_value_vector)^2)+
+                length(feature_value_vector)*(mean(feature_value_vector)-scene_mean)^2
+  
+  return(numerator)
+}
+
+# Helper funciton for computing the numerator of scence mean
+#nrow(valid_data)*mean(subset(valid_data)$headdistance)
+
+compute_segmean_with_weight <- function(feature_value_vector){
+  
+  numerator <- length(feature_value_vector)*mean(feature_value_vector)
+  return(numerator)
+} 
 
 
