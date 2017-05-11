@@ -37,14 +37,14 @@ readfiles_part2 <- function(participant, seg_file){
     
     emdat_export.df.scene <- subset(emdat_export.df, Sc_id == a_scene)
     
-    # checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
-    #                                          segment.names)
+    checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
+                                             segment.names)
     # checked_result2 <- check_correctness_sac(emdat_export.df.scene, participant, a_scene,
     #                                          segment.names)
     # checked_result3 <- check_correctness_eve(emdat_export.df.scene, participant, a_scene,
     #                                          segment.names)
-    checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene,
-                                                    segment.names)
+    # checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene,
+    #                                                 segment.names)
     }
 }
 
@@ -64,14 +64,14 @@ readfiles_part2 <- function(participant, seg_file){
 #  stddevabspathangles
 #  fixationrate
 #  fixationsaccadetimeratio
+#  sumrelpathangles
+#  meanrelpathangles
+#  stddevrelpathangles
 
 #  TODO:
 #  abspathanglesrate
 #  eyemovementvelocity
-#  meanrelpathangles
 #  relpathanglesrate
-#  stddevrelpathangles
-#  sumrelpathangles
 
 check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment.names){
   
@@ -132,10 +132,10 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
 
 ### sumpathdistance ###
 ### meanpathdistance ###  
-  output_value_sum <- subset(emdat_output.df, select=sumpathdistance)[1,]
-  output_value_mean <- subset(emdat_output.df, select = meanpathdistance)[1,]
+  output_sum <- subset(emdat_output.df, select=sumpathdistance)[1,]
+  output_mean <- subset(emdat_output.df, select = meanpathdistance)[1,]
   
-  internal_value_sum <- 0
+  internal_sum <- 0
   numerator <- 0
   denominator <- 0
   
@@ -146,17 +146,17 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
       internal_data_vector[[i]]$mappedfixationpointy
     )
     
-    internal_value_sum <- internal_value_sum + sum(path_length_vector)
+    internal_sum <- internal_sum + sum(path_length_vector)
     numerator <- numerator + compute_segmean_with_weight(path_length_vector)
     denominator <- denominator+length(path_length_vector)
   }
   
-  internal_value_sum <- signif(internal_value_sum, digits = 12)
+  internal_sum <- signif(internal_sum, digits = 12)
   internal_mean_temp <- numerator/denominator
-  internal_value_mean <- signif(internal_mean_temp, digits = 12)
+  internal_mean <- signif(internal_mean_temp, digits = 12)
   
-  verify_equivalence(internal_value_sum, output_value_sum, participant, a_scene, "sumpathdistance")
-  verify_equivalence(internal_value_mean, output_value_mean, participant, a_scene, "meanpathdistance")
+  verify_equivalence(internal_sum, output_sum, participant, a_scene, "sumpathdistance")
+  verify_equivalence(internal_mean, output_mean, participant, a_scene, "meanpathdistance")
 
 ### stddevpathdistance ###
   output_value <- subset(emdat_output.df, select = stddevpathdistance)[1,]
@@ -177,13 +177,12 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevpathdistance")
 
 ### sumabspathangles ###
-### meanabspathangles ###  
+### meanabspathangles ###
+  output_sum <- subset(emdat_output.df, select = sumabspathangles)[1,]
+  internal_sum <-0
   
-  output_sum_absangle <- subset(emdat_output.df, select = sumabspathangles)[1,]
-  internal_sum_absangle <-0
-  
-  output_mean_absangle <- subset(emdat_output.df, select = meanabspathangles)[1,]
-  internal_mean_absangle <-0
+  output_mean <- subset(emdat_output.df, select = meanabspathangles)[1,]
+  internal_mean <-0
   numerator <- 0
   denominator <- 0
   
@@ -192,17 +191,17 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
     abs_angle_vector <- find_abs_angle_vector(internal_data_vector[[i]]$mappedfixationpointx,
                                               internal_data_vector[[i]]$mappedfixationpointy)
     
-    internal_sum_absangle <- internal_sum_absangle + sum(abs_angle_vector)
+    internal_sum <- internal_sum + sum(abs_angle_vector)
     numerator <- numerator + compute_segmean_with_weight(abs_angle_vector)
     denominator <- denominator+length(abs_angle_vector)
   }
   
-  internal_sum_absangle <- signif(internal_sum_absangle, digits = 12)
-  internal__mean_temp <- numerator/denominator
-  internal_mean_absangle <- signif(internal__mean_temp, digits = 12)
+  internal_sum <- signif(internal_sum, digits = 12)
+  internal_mean_temp <- numerator/denominator
+  internal_mean <- signif(internal_mean_temp, digits = 12)
   
-  verify_equivalence(internal_sum_absangle, output_sum_absangle, participant, a_scene, "sumabspathangles")
-  verify_equivalence(internal_mean_absangle, output_mean_absangle, participant, a_scene, "meanabspathangles")
+  verify_equivalence(internal_sum, output_sum, participant, a_scene, "sumabspathangles")
+  verify_equivalence(internal_mean, output_mean, participant, a_scene, "meanabspathangles")
 
 ### stddevabspathangles ###
   output_value <- subset(emdat_output.df, select = stddevabspathangles)[1,]
@@ -214,7 +213,7 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
     abs_angle_vector <- find_abs_angle_vector(internal_data_vector[[i]]$mappedfixationpointx,
                                               internal_data_vector[[i]]$mappedfixationpointy)
     
-    numerator <- numerator + compute_segsd_with_weight(abs_angle_vector, internal__mean_temp)
+    numerator <- numerator + compute_segsd_with_weight(abs_angle_vector, internal_mean_temp)
     denominator <- denominator+length(abs_angle_vector)
   }
   internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
@@ -234,6 +233,50 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   internal_value <- signif(numerator/segs_size, digits=12) 
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "fixationsaccadetimeratio")
+  
+### sumrelpathangles ###
+### meanrelpathangles ###  
+  output_sum <- subset(emdat_output.df, select=sumrelpathangles)[1,]
+  internal_sum <- 0
+  
+  output_mean <- subset(emdat_output.df, select=meanrelpathangles)[1,]
+  internal_mean <-0
+  numerator <- 0
+  denominator <- 0
+  
+  for(i in 1:length(segment.names)){
+    
+    rel_angle_vector <- find_rel_angle_vector(internal_data_vector[[i]]$mappedfixationpointx,
+                                              internal_data_vector[[i]]$mappedfixationpointy)
+    
+    internal_sum <- internal_sum + sum(rel_angle_vector)
+    numerator <- numerator + compute_segmean_with_weight(rel_angle_vector)
+    denominator <- denominator+length(rel_angle_vector)
+  }
+  internal_sum <- signif(internal_sum, digits = 12)
+  internal_mean_temp <- numerator/denominator
+  internal_mean <- signif(internal_mean_temp, digits = 12)
+  
+  verify_equivalence(internal_sum, output_sum, participant, a_scene, "sumrelpathangles")
+  verify_equivalence(internal_sum, output_sum, participant, a_scene, "meanrelpathangles")
+  
+### stddevrelpathangles ###
+  output_value <- subset(emdat_output.df, select = stddevrelpathangles)[1,]
+  numerator <- 0
+  denominator <- 0
+  
+  for(i in 1:length(segment.names)){
+    
+    rel_angle_vector <- find_rel_angle_vector(internal_data_vector[[i]]$mappedfixationpointx,
+                                              internal_data_vector[[i]]$mappedfixationpointy)
+    
+    numerator <- numerator + compute_segsd_with_weight(rel_angle_vector, internal_mean_temp)
+    denominator <- denominator+length(rel_angle_vector)
+  }
+  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, "stddevrelpathangles")  
+
 }
 
 # This function checks the correctness of saccades

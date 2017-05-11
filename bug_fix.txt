@@ -14,10 +14,9 @@ Record of Bugs Found so far during the Second Phase of the EMDAT_testing Project
                                                                                   of Scene.py, affecting the computed mean head distance. A diffent variable was created
                                                                                   for demarcation.                                    
 
-3.  10 May 2017                                   calc_rel_angles in Segment.py   Due to the sign convention and range of vector_difference, which is defined in 
+3.  10 May 2017           11 May 2017             calc_rel_angles in Segment.py   Due to the sign convention and range of vector_difference, which is defined in 
                                                                                   geometry.py and was invoked in calc_rel_angles (prior to the fix), computed realtive 
                                                                                   differences were not always internal angles. calc_rel_angles was redifined.  
-
 
 4.  11 May 2017           11 May 2017             calc_distances,                 Not strictly a bug in that it had no adverse effect on the function of application.   
                                                   calc_abs_angles, and            However, those methods were never used anywhere in the code, so that they were    

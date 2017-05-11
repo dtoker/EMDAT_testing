@@ -56,6 +56,29 @@ find_abs_angle_vector<- function(x_cord_vector, y_cord_vector){
   return(abs_angle_vector)
 }
 
+find_rel_angle_vector<- function(x_cord_vector, y_cord_vector){
+  
+  rel_angle_vector <- c()
+  last_vector <- c()
+  next_vector <- c()
+  
+  for(i in 1:(length(x_cord_vector)-2)){
+    
+    last_vector[1] <- x_cord_vector[i] - x_cord_vector[i+1]
+    last_vector[2] <- y_cord_vector[i] - y_cord_vector[i+1]
+    next_vector[1] <- x_cord_vector[i+2] - x_cord_vector[i+1]
+    next_vector[2] <- y_cord_vector[i+2] - y_cord_vector[i+1]
+    normalized_last_vec <- normalize_vector(last_vector)
+    normalized_new_vec <- normalize_vector(next_vector)
+    rel_angle_vector[i]<- acos((normalized_last_vec%*%normalized_new_vec)[1,])
+  }
+  return(rel_angle_vector)
+}
+
+normalize_vector <- function(vector){
+  return(vector/ sqrt((vector%*%vector)[1,]))
+}
+
 # Computes the length as defined in EMDAT for a scene from its segment lengths  
 compute_scene_length <- function(segment_names,internal_data_vector){ 
   
