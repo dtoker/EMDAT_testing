@@ -37,14 +37,14 @@ readfiles_part2 <- function(participant, seg_file){
     
     emdat_export.df.scene <- subset(emdat_export.df, Sc_id == a_scene)
     
-    checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
-                                             segment.names)
+    # checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
+    #                                          segment.names)
     # checked_result2 <- check_correctness_sac(emdat_export.df.scene, participant, a_scene,
     #                                          segment.names)
     # checked_result3 <- check_correctness_eve(emdat_export.df.scene, participant, a_scene,
     #                                          segment.names)
-    # checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene,
-    #                                                 segment.names)
+    checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene,
+                                                    segment.names)
     }
 }
 
@@ -84,9 +84,9 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   
   # keeps all segments belonging to the scene in a vector 
   # only one data set (P18) contains a scene consisting of multiple segments     
-  internal_data.df <- subset(internal_data.df, grepl(a_scene, scene))
-  gazesample_data.df <- subset(gazesample_data.df, grepl(a_scene, scene))
-  saccade_data.df <- subset(saccade_data.df, grepl(a_scene, scene))
+  internal_data.df <- subset(internal_data.df, grepl(a_scene, scene) & !grepl(participant, scene))
+  gazesample_data.df <- subset(gazesample_data.df, grepl(a_scene, scene) & !grepl(participant, scene))
+  saccade_data.df <- subset(saccade_data.df, grepl(a_scene, scene) & !grepl(participant, scene))
   
   internal_data_vector <- c()
   gazesample_data_vector <- c()
@@ -250,9 +250,10 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
 #  meansaccadeduration
 #  meansaccadespeed
 #  minsaccadespeed
+#  sumsaccadedistance
 
 # TO BE REVISITED:
-#  sumsaccadedistance (error for P16 part2: last digit off by 0.00001)
+
 
 check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment.names){
 
@@ -263,7 +264,7 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
   
   # keeps all segments belonging to the scene
   # only one data set (P18) contains a scene consisting of multiple segments     
-  internal_data.df <- subset(internal_data.df, grepl(a_scene, scene))
+  internal_data.df <- subset(internal_data.df, grepl(a_scene, scene) & !grepl(participant, scene))
   
   internal_data_vector <- c()
   
@@ -310,7 +311,7 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
     denominator <- denominator+length(valid_data)
   }
   internal_mean_temp <- numerator/denominator
-  internal_value <- signif(internal_mean_temp, digits = 10)
+  internal_value <- signif(internal_mean_temp, digits = 12)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "meansaccadedistance")
     
@@ -327,7 +328,7 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
     numerator <- numerator + compute_segsd_with_weight(valid_data, internal_mean_temp)
     denominator <- denominator+length(valid_data)
   }
-  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 10)
+  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevsaccadedistance")
 
 ### meansaccadeduration ###
@@ -344,7 +345,7 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
     denominator <- denominator+length(valid_data)
   }
   internal_mean_temp <- numerator/denominator
-  internal_value <- signif(internal_mean_temp, digits = 10)
+  internal_value <- signif(internal_mean_temp, digits = 12)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "meansaccadeduration")
 
@@ -361,7 +362,7 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
     numerator <- numerator + compute_segsd_with_weight(valid_data, internal_mean_temp)
     denominator <- denominator+length(valid_data)
   }
-  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 10)
+  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevsaccadeduration")
 
 ### meansaccadespeed ###
@@ -378,7 +379,7 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
     denominator <- denominator+length(valid_data)
   }
   internal_mean_temp <- numerator/denominator
-  internal_value <- signif(internal_mean_temp, digits = 10)
+  internal_value <- signif(internal_mean_temp, digits = 12)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "meansaccadespeed")
   
@@ -395,16 +396,13 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
     numerator <- numerator + compute_segsd_with_weight(valid_data, internal_mean_temp)
     denominator <- denominator+length(valid_data)
   }
-  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 10)
+  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevsaccadespeed")
   
-### sumsaccadedistance (NEEDS FIX)###
-  
-  # error for P16 scene part2: internal_value = 43154.20657, output_value = 43154.20658
-  
+### sumsaccadedistance ###
   output_value <- subset(emdat_output.df, select=sumsaccadedistance)[1,]
   internal_value <- signif(sum(subset(internal_data.df, select=saccadedistance)$saccadedistance),
-                           digits = 10)
+                           digits = 12)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "sumsaccadedistance")
   
@@ -449,8 +447,8 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment
   
   # keeps all segments belonging to the scene
   # only one data set (P18) contains a scene consisting of multiple segments     
-  internal_data.df <- subset(internal_data.df, grepl(a_scene, scene))
-  gazesample_data.df <- subset(gazesample_data.df, grepl(a_scene, scene))
+  internal_data.df <- subset(internal_data.df, grepl(a_scene, scene) & !grepl(participant, scene))
+  gazesample_data.df <- subset(gazesample_data.df, grepl(a_scene, scene) & !grepl(participant, scene))
   
   internal_data_vector <- c()
   gazesample_data_vector <- c()
@@ -595,7 +593,7 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment
 #  meandistance (Assumed: only valid values considered)
 #  stddevdistance (Assumed: only valid values considered)
 
-# TO REVISIT: (test again when internal data files are updated)
+# TO REVISIT: 
 #  meanpupilvelocity (Assumed: -1 values are disregarded)
 #  stddevpupilvelocity (Assumed: -1 values are disregarded)
 #  maxpupilvelocity(for P17 part 2)
@@ -609,7 +607,7 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   
   # keeps all segments belonging to the scene in the vetor format  
   # only one data set (P18) contains a scene consisting of multiple segments     
-  internal_data.df <- subset(internal_data.df, grepl(a_scene, scene))
+  internal_data.df <- subset(internal_data.df, grepl(a_scene, scene) & !grepl(participant, scene))
   internal_data_vector <- c()
   for(i in 1:length(segment.names)) {
     
