@@ -37,14 +37,14 @@ readfiles_part2 <- function(participant, seg_file){
     
     emdat_export.df.scene <- subset(emdat_export.df, Sc_id == a_scene)
     
-    checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
-                                             segment.names)
+    # checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
+    #                                          segment.names)
     # checked_result2 <- check_correctness_sac(emdat_export.df.scene, participant, a_scene,
     #                                          segment.names)
     # checked_result3 <- check_correctness_eve(emdat_export.df.scene, participant, a_scene,
     #                                          segment.names)
-    # checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene,
-    #                                                 segment.names)
+    checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene,
+                                                    segment.names)
     }
 }
 
@@ -67,11 +67,11 @@ readfiles_part2 <- function(participant, seg_file){
 #  sumrelpathangles
 #  meanrelpathangles
 #  stddevrelpathangles
-
-#  TODO:
 #  abspathanglesrate
 #  eyemovementvelocity
 #  relpathanglesrate
+
+#  TODO:
 
 check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment.names){
   
@@ -131,9 +131,11 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   verify_equivalence(internal_value, output_value, participant, a_scene, "numsegments")
 
 ### sumpathdistance ###
-### meanpathdistance ###  
+### meanpathdistance ###
+### eyemovementvelocity ###  
   output_sum <- subset(emdat_output.df, select=sumpathdistance)[1,]
   output_mean <- subset(emdat_output.df, select = meanpathdistance)[1,]
+  output_velocity <- subset(emdat_output.df, select=eyemovementvelocity)[1,]
   
   internal_sum <- 0
   numerator <- 0
@@ -151,12 +153,14 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
     denominator <- denominator+length(path_length_vector)
   }
   
+  internal_velocity <- signif(internal_sum / scene_length, digits = 12)
   internal_sum <- signif(internal_sum, digits = 12)
   internal_mean_temp <- numerator/denominator
   internal_mean <- signif(internal_mean_temp, digits = 12)
   
   verify_equivalence(internal_sum, output_sum, participant, a_scene, "sumpathdistance")
   verify_equivalence(internal_mean, output_mean, participant, a_scene, "meanpathdistance")
+  verify_equivalence(internal_velocity, output_velocity, participant, a_scene, "eyemovementvelocity")
 
 ### stddevpathdistance ###
   output_value <- subset(emdat_output.df, select = stddevpathdistance)[1,]
@@ -178,10 +182,12 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
 
 ### sumabspathangles ###
 ### meanabspathangles ###
+### abspathanglesrate ###  
   output_sum <- subset(emdat_output.df, select = sumabspathangles)[1,]
-  internal_sum <-0
-  
   output_mean <- subset(emdat_output.df, select = meanabspathangles)[1,]
+  output_rate <- subset(emdat_output.df, select = abspathanglesrate)[1,]
+  
+  internal_sum <-0
   internal_mean <-0
   numerator <- 0
   denominator <- 0
@@ -196,13 +202,15 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
     denominator <- denominator+length(abs_angle_vector)
   }
   
+  internal_rate <- signif(internal_sum / scene_length, digits = 12)
   internal_sum <- signif(internal_sum, digits = 12)
-  internal_mean_temp <- numerator/denominator
+  internal_mean_temp <- numerator / denominator
   internal_mean <- signif(internal_mean_temp, digits = 12)
   
   verify_equivalence(internal_sum, output_sum, participant, a_scene, "sumabspathangles")
   verify_equivalence(internal_mean, output_mean, participant, a_scene, "meanabspathangles")
-
+  verify_equivalence(internal_rate, output_rate, participant, a_scene, "abspathanglesrate")
+  
 ### stddevabspathangles ###
   output_value <- subset(emdat_output.df, select = stddevabspathangles)[1,]
   numerator <- 0
@@ -235,11 +243,13 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   verify_equivalence(internal_value, output_value, participant, a_scene, "fixationsaccadetimeratio")
   
 ### sumrelpathangles ###
-### meanrelpathangles ###  
-  output_sum <- subset(emdat_output.df, select=sumrelpathangles)[1,]
-  internal_sum <- 0
+### meanrelpathangles ###
+### relpathanglesrate ###  
+  output_sum <- subset(emdat_output.df, select = sumrelpathangles)[1,]
+  output_mean <- subset(emdat_output.df, select = meanrelpathangles)[1,]
+  output_rate <- subset(emdat_output.df, select = relpathanglesrate)[1,]
   
-  output_mean <- subset(emdat_output.df, select=meanrelpathangles)[1,]
+  internal_sum <- 0
   internal_mean <-0
   numerator <- 0
   denominator <- 0
@@ -253,12 +263,14 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
     numerator <- numerator + compute_segmean_with_weight(rel_angle_vector)
     denominator <- denominator+length(rel_angle_vector)
   }
+  internal_rate <- signif(internal_sum / scene_length, digits = 12)
   internal_sum <- signif(internal_sum, digits = 12)
-  internal_mean_temp <- numerator/denominator
+  internal_mean_temp <- numerator / denominator
   internal_mean <- signif(internal_mean_temp, digits = 12)
   
   verify_equivalence(internal_sum, output_sum, participant, a_scene, "sumrelpathangles")
-  verify_equivalence(internal_sum, output_sum, participant, a_scene, "meanrelpathangles")
+  verify_equivalence(internal_mean, output_mean, participant, a_scene, "meanrelpathangles")
+  verify_equivalence(internal_rate, output_rate, participant, a_scene, "relpathanglesrate")
   
 ### stddevrelpathangles ###
   output_value <- subset(emdat_output.df, select = stddevrelpathangles)[1,]
@@ -620,26 +632,25 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment
 # This function checks the correctness of pupil and head distance
 # LIST OF COLUMS TO TEST:
 #  numsamples
-#  enddistance (Assumed: the enddistance is the last valid headdistance)
-#  endpupilsize (Assumed: the endpupilsize is the last valid rawpupilsize)
-#  maxdistance (Assumed:only valied values considered)
-#  maxpupilsize (Assumed:only valied values considered)
-#  maxpupilvelocity (Assumed: -1 values are disregarded)
-#  meanpupilsize (Assumed:only valied values considered)
-#  mindistance (Assumed:only valied values considered)
-#  minpupilsize (Assumed:only valied values considered)
-#  minpupilvelocity (Assumed: -1 values are disregarded)
-#  startdistance (Assumed: the startdistance is the first valid headdistance)
-#  startpupilsize (Assumed: the startpupilsize is the first valid rawpupilsize)
-#  stddevpupilsize (Assumed: only valid values considered)
+#  enddistance 
+#  endpupilsize 
+#  maxdistance 
+#  maxpupilsize 
+#  meanpupilsize 
+#  mindistance 
+#  minpupilsize 
+#  minpupilvelocity 
+#  startdistance 
+#  startpupilsize 
+#  stddevpupilsize 
 #  length 
-#  meandistance (Assumed: only valid values considered)
-#  stddevdistance (Assumed: only valid values considered)
+#  meandistance 
+#  stddevdistance 
 
 # TO REVISIT: 
-#  meanpupilvelocity (Assumed: -1 values are disregarded)
-#  stddevpupilvelocity (Assumed: -1 values are disregarded)
-#  maxpupilvelocity(for P17 part 2)
+#  meanpupilvelocity 
+#  stddevpupilvelocity 
+#  maxpupilvelocity(for P17 part 2: more significant figures in the output)
 
 check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, segment.names){
 
@@ -664,9 +675,6 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   verify_equivalence(internal_value, output_value, participant, a_scene, "numsamples")
   
 ### enddistance ###
-  
-  # Assumption: enddistance is the last valid headdistance
-  
   output_value <- subset(emdat_output.df, select=enddistance)[1,]
   internal_value <- tail(
     subset(internal_data.df, select=headdistance, is_valid_headdistance==TRUE)$headdistance, 1)
@@ -674,9 +682,6 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   verify_equivalence(internal_value, output_value, participant, a_scene, "enddistance")
 
 ### endpupilsize ###
-  
-  # Assumption: endpupilsize is the last valid rawpupilsize
-  
   output_value <- subset(emdat_output.df, select=endpupilsize)[1,]
   internal_value <- tail(
     subset(internal_data.df, select=rawpupilsize, is_valid_pupil==TRUE)$rawpupilsize, 1)
@@ -708,13 +713,9 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   # The condition in the subet operaiton does not make practical difference here. But, the convention
   # is followed in computing the mean and min, so that it is added here for consistency.      
   internal_value <- max(subset(internal_data.df, select=pupilvelocity, pupilvelocity != -1)$pupilvelocity)
-  
   verify_equivalence(internal_value, output_value, participant, a_scene, "maxpupilvelocity")
   
 ### meandistance ###
-  
-  # Assumption: only valid values are considered
-  
   output_value <- subset(emdat_output.df, select=meandistance)[1,]
   
   numerator <- 0
@@ -733,9 +734,6 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   verify_equivalence(internal_value, output_value, participant, a_scene, "meandistance")
 
 ### stddevdistance ###
-  
-  # Assumption: only valid values are considered
-  
   output_value <- subset(emdat_output.df, select=stddevdistance)[1,]
   numerator <- 0
   denominator <- 0
@@ -752,9 +750,6 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevdistance")
 
 ### meanpupilsize ###
-  
-  # Assumption: only valid values are considered
-  
   output_value <- subset(emdat_output.df, select=meanpupilsize)[1,]
   
   numerator <- 0
@@ -774,9 +769,6 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   verify_equivalence(internal_value, output_value, participant, a_scene, "meanpupilsize")
 
 ### stddevpupilsize ###
-  
-  # Assumption: only valid values are considered
-  
   output_value <- subset(emdat_output.df, select=stddevpupilsize)[1,]
   numerator <- 0
   denominator <- 0
@@ -793,9 +785,6 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevpupilsize")
   
 ### meanpupilvelocity (NEEDS FIX)###
-  
-  # Assumption: the value -1 is disregarded
-  
   output_value <- subset(emdat_output.df, select=meanpupilvelocity)[1,]
   
   numerator <- 0
@@ -815,9 +804,6 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   verify_equivalence(internal_value, output_value, participant, a_scene, "meanpupilvelocity")
 
 ### stddevpupilvelocity (NEEDS FIX)###
-  
-  # Assumption: pupilvelocity = -1 is disregarded
-  
   output_value <- subset(emdat_output.df, select=stddevpupilvelocity)[1,]
   numerator <- 0
   denominator <- 0
@@ -846,18 +832,12 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   verify_equivalence(internal_value, output_value, participant, a_scene, "minpupilsize")
   
 ### minpupilvelocity ###
-  
-  # Assumption: the value -1 is disregarded 
-  
   output_value <- subset(emdat_output.df, select=minpupilvelocity)[1,]
   internal_value <- min(subset(internal_data.df, select=pupilvelocity, pupilvelocity != -1)$pupilvelocity)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "minpupilvelocity")
   
 ### startdistance ###
-  
-  # Assumption: startdistance is the first valid headdistance
-  
   output_value <- subset(emdat_output.df, select=startdistance)[1,]
   internal_value <- head(
     subset(internal_data.df, select=headdistance, is_valid_headdistance==TRUE)$headdistance, 1)
@@ -865,9 +845,6 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   verify_equivalence(internal_value, output_value, participant, a_scene, "startdistance")
   
 ### startpupilsize ###
-
-  # Assumption: startpupilsize is the first valid rawpupilsize
-
   output_value <- subset(emdat_output.df, select=startpupilsize)[1,]
   internal_value <- head(
     subset(internal_data.df, select=rawpupilsize, is_valid_pupil==TRUE)$rawpupilsize, 1)
