@@ -81,17 +81,19 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   gazesample_data.df <- read.csv(paste("EMDATdata_gazesample_P", participant, ".tsv", sep=""), sep="\t")
   saccade_data.df <- read.csv(paste("EMDATdata_sac_P", participant, ".tsv", sep=""), sep="\t")
   
-  # keeps all segments belonging to the scene in a vector 
+  # keeps all segments belonging to the scene in data frame format 
   # only one data set (P18) contains a scene consisting of multiple segments     
   internal_data.df <- subset(internal_data.df, grepl(a_scene, scene) & !grepl(participant, scene))
   gazesample_data.df <- subset(gazesample_data.df, grepl(a_scene, scene) & !grepl(participant, scene))
   saccade_data.df <- subset(saccade_data.df, grepl(a_scene, scene) & !grepl(participant, scene))
   
+  segs_length <- length(segment.names)
+  
+  # stores the data by segment into vectors 
   internal_data_vector <- c()
   gazesample_data_vector <- c()
   saccade_data_vector <- c()
-  
-  for(i in 1:length(segment.names)) {
+  for(i in 1:segs_length) {
     
     internal_data_vector[[i]] <- subset(internal_data.df, grepl(segment.names[i], scene))
     gazesample_data_vector[[i]] <- subset(gazesample_data.df, grepl(segment.names[i], scene))
@@ -100,7 +102,7 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
  
 ### numfixations ###
   output_value <- subset(emdat_output.df, select=numfixations)[1,]
-  verify_equivalence(nrow(internal_data.df),output_value, participant, a_scene, "numfixation")
+  verify_equivalence(nrow(internal_data.df),output_value, participant, a_scene, "numfixations")
   
 ### sumfixationduration ###
   internal_value <- sum(subset(internal_data.df, select=fixationduration))
@@ -135,12 +137,13 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   output_sum <- subset(emdat_output.df, select=sumpathdistance)[1,]
   output_mean <- subset(emdat_output.df, select = meanpathdistance)[1,]
   output_velocity <- subset(emdat_output.df, select=eyemovementvelocity)[1,]
+  data_storage <- list()
   
   internal_sum <- 0
   numerator <- 0
   denominator <- 0
   
-  for(i in 1:length(segment.names)){
+  for(i in 1:segs_length){
     
     path_length_vector <- find_path_length_vector(
       internal_data_vector[[i]]$mappedfixationpointx,
@@ -150,6 +153,7 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
     internal_sum <- internal_sum + sum(path_length_vector)
     numerator <- numerator + compute_segmean_with_weight(path_length_vector)
     denominator <- denominator + length(path_length_vector)
+    data_storage[[i]] <- path_length_vector
   }
   
   internal_velocity <- signif(internal_sum / scene_length, digits = 12)
@@ -166,15 +170,10 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   numerator <- 0
   denominator <- 0
 
-  for(i in 1:length(segment.names)){
-
-    path_length_vector <- find_path_length_vector(
-      internal_data_vector[[i]]$mappedfixationpointx,
-      internal_data_vector[[i]]$mappedfixationpointy
-    )
-    numerator <- numerator + compute_segsd_with_weight(path_length_vector,internal_mean_temp)
-    denominator <- denominator + length(path_length_vector)
-
+  for(i in 1:segs_length){
+    
+    numerator <- numerator + compute_segsd_with_weight(data_storage[[i]],internal_mean_temp)
+    denominator <- denominator + length(data_storage[[i]])
   }
   internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevpathdistance")
@@ -187,11 +186,11 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   output_rate <- subset(emdat_output.df, select = abspathanglesrate)[1,]
   
   internal_sum <-0
-  internal_mean <-0
   numerator <- 0
   denominator <- 0
+  data_storage <- list()
   
-  for(i in 1:length(segment.names)){
+  for(i in 1:segs_length){
     
     abs_angle_vector <- find_abs_angle_vector(internal_data_vector[[i]]$mappedfixationpointx,
                                               internal_data_vector[[i]]$mappedfixationpointy)
@@ -199,6 +198,7 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
     internal_sum <- internal_sum + sum(abs_angle_vector)
     numerator <- numerator + compute_segmean_with_weight(abs_angle_vector)
     denominator <- denominator+length(abs_angle_vector)
+    data_storage[[i]] <- abs_angle_vector
   }
   
   internal_rate <- signif(internal_sum / scene_length, digits = 12)
@@ -215,13 +215,10 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   numerator <- 0
   denominator <- 0
   
-  for(i in 1:length(segment.names)){
+  for(i in 1:segs_length){
     
-    abs_angle_vector <- find_abs_angle_vector(internal_data_vector[[i]]$mappedfixationpointx,
-                                              internal_data_vector[[i]]$mappedfixationpointy)
-    
-    numerator <- numerator + compute_segsd_with_weight(abs_angle_vector, internal_mean_temp)
-    denominator <- denominator+length(abs_angle_vector)
+    numerator <- numerator + compute_segsd_with_weight(data_storage[[i]], internal_mean_temp)
+    denominator <- denominator+length(data_storage[[i]])
   }
   internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevabspathangles")
@@ -229,15 +226,14 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
 ### fixationsaccadetimeratio ###
   output_value <- subset(emdat_output.df, select=fixationsaccadetimeratio)[1,]
   numerator <- 0
-  segs_size <- length(segment.names)
   
-  for(i in 1:segs_size){
+  for(i in 1:segs_length){
     
     fix_sum <- sum(subset(internal_data_vector[[i]], select=fixationduration))
     sac_sum <- sum(subset(saccade_data_vector[[i]], select=saccadeduration))
     numerator <- numerator + fix_sum/sac_sum
   }
-  internal_value <- signif(numerator/segs_size, digits=12) 
+  internal_value <- signif(numerator/segs_length, digits=12) 
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "fixationsaccadetimeratio")
   
@@ -249,11 +245,11 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   output_rate <- subset(emdat_output.df, select = relpathanglesrate)[1,]
   
   internal_sum <- 0
-  internal_mean <-0
   numerator <- 0
   denominator <- 0
+  data_storage <- list()
   
-  for(i in 1:length(segment.names)){
+  for(i in 1:segs_length){
     
     rel_angle_vector <- find_rel_angle_vector(internal_data_vector[[i]]$mappedfixationpointx,
                                               internal_data_vector[[i]]$mappedfixationpointy)
@@ -261,6 +257,7 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
     internal_sum <- internal_sum + sum(rel_angle_vector)
     numerator <- numerator + compute_segmean_with_weight(rel_angle_vector)
     denominator <- denominator+length(rel_angle_vector)
+    data_storage[[i]] <- rel_angle_vector
   }
   internal_rate <- signif(internal_sum / scene_length, digits = 12)
   internal_sum <- signif(internal_sum, digits = 12)
@@ -276,13 +273,10 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   numerator <- 0
   denominator <- 0
   
-  for(i in 1:length(segment.names)){
+  for(i in 1:segs_length){
     
-    rel_angle_vector <- find_rel_angle_vector(internal_data_vector[[i]]$mappedfixationpointx,
-                                              internal_data_vector[[i]]$mappedfixationpointy)
-    
-    numerator <- numerator + compute_segsd_with_weight(rel_angle_vector, internal_mean_temp)
-    denominator <- denominator+length(rel_angle_vector)
+    numerator <- numerator + compute_segsd_with_weight(data_storage[[i]], internal_mean_temp)
+    denominator <- denominator+length(data_storage[[i]])
   }
   internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
   
@@ -316,13 +310,15 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
   # read in the corresponding internal EMDAT data file
   internal_data.df <- read.csv(paste("EMDATdata_sac_P", participant, ".tsv", sep=""), sep="\t")
   
-  # keeps all segments belonging to the scene
+  # keeps all segments belonging to the scene in data frame format
   # only one data set (P18) contains a scene consisting of multiple segments     
   internal_data.df <- subset(internal_data.df, grepl(a_scene, scene) & !grepl(participant, scene))
   
-  internal_data_vector <- c()
+  segs_length <- length(segment.names)
   
-  for(i in 1:length(segment.names)) {
+  # stores the data by segment into a vector
+  internal_data_vector <- c()
+  for(i in 1:segs_length) {
     
     internal_data_vector[[i]] <- subset(internal_data.df, grepl(segment.names[i], scene))
   }
@@ -357,7 +353,7 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
   numerator <- 0
   denominator <- 0
   
-  for(i in 1:length(segment.names)){
+  for(i in 1:segs_length){
     
     valid_data = subset(
       internal_data_vector[[i]], select=saccadedistance)$saccadedistance
@@ -374,7 +370,7 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
   numerator <- 0
   denominator <- 0
   
-  for(i in 1:length(segment.names)){
+  for(i in 1:segs_length){
     
     valid_data = subset(
       internal_data_vector[[i]], select=saccadedistance)$saccadedistance
@@ -391,7 +387,7 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
   numerator <- 0
   denominator <- 0
   
-  for(i in 1:length(segment.names)){
+  for(i in 1:segs_length){
     
     valid_data = subset(
       internal_data_vector[[i]], select=saccadeduration)$saccadeduration
@@ -408,7 +404,7 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
   numerator <- 0
   denominator <- 0
   
-  for(i in 1:length(segment.names)){
+  for(i in 1:segs_length){
     
     valid_data = subset(
       internal_data_vector[[i]], select=saccadeduration)$saccadeduration
@@ -417,6 +413,7 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
     denominator <- denominator+length(valid_data)
   }
   internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
+  
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevsaccadeduration")
 
 ### meansaccadespeed ###
@@ -425,7 +422,7 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
   numerator <- 0
   denominator <- 0
   
-  for(i in 1:length(segment.names)){
+  for(i in 1:segs_length){
     
     valid_data = subset(
       internal_data_vector[[i]], select=saccadespeed)$saccadespeed
@@ -442,7 +439,7 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
   numerator <- 0
   denominator <- 0
   
-  for(i in 1:length(segment.names)){
+  for(i in 1:segs_length){
     
     valid_data = subset(
       internal_data_vector[[i]], select=saccadespeed)$saccadespeed
@@ -451,6 +448,7 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
     denominator <- denominator+length(valid_data)
   }
   internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
+  
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevsaccadespeed")
   
 ### sumsaccadedistance ###
@@ -499,15 +497,17 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment
   internal_data.df <- read.csv(paste("EMDATdata_eve_P", participant, ".tsv", sep=""), sep="\t")
   gazesample_data.df <- read.csv(paste("EMDATdata_gazesample_P", participant, ".tsv", sep=""), sep="\t")
   
-  # keeps all segments belonging to the scene
+  # keeps all segments belonging to the scene in data frame format
   # only one data set (P18) contains a scene consisting of multiple segments     
   internal_data.df <- subset(internal_data.df, grepl(a_scene, scene) & !grepl(participant, scene))
   gazesample_data.df <- subset(gazesample_data.df, grepl(a_scene, scene) & !grepl(participant, scene))
   
+  segs_length <- length(segment.names)
+    
+  # stores the data by segment into vectors
   internal_data_vector <- c()
   gazesample_data_vector <- c()
-  
-  for(i in 1:length(segment.names)) {
+  for(i in 1:segs_length) {
     
     internal_data_vector[[i]] <- subset(internal_data.df, grepl(segment.names[i], scene))
     gazesample_data_vector[[i]] <- subset(gazesample_data.df, grepl(segment.names[i], scene))
@@ -520,7 +520,7 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment
   double_clicks <- 0
   left_clicks <- 0
 
-  for(i in 1:length(segment.names)){
+  for(i in 1:segs_length){
 
     clicks <- find_double_and_left_clicks(internal_data_vector[[i]])
     double_clicks <- double_clicks + clicks[1]
@@ -658,11 +658,15 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   # read in the needed internal EMDAT data file
   internal_data.df <- read.csv(paste("EMDATdata_gazesample_P", participant, ".tsv", sep=""), sep="\t")
   
-  # keeps all segments belonging to the scene in the vetor format  
+  # keeps all segments belonging to the scene in data frame format  
   # only one data set (P18) contains a scene consisting of multiple segments     
   internal_data.df <- subset(internal_data.df, grepl(a_scene, scene) & !grepl(participant, scene))
+  
+  segs_length <- length(segment.names)
+  
+  # stores the data by segment into a vector
   internal_data_vector <- c()
-  for(i in 1:length(segment.names)) {
+  for(i in 1:segs_length) {
     
     internal_data_vector[[i]] <- subset(internal_data.df, grepl(segment.names[i], scene))
   }
@@ -728,7 +732,7 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   numerator <- 0
   denominator <- 0
   
-  for(i in 1:length(segment.names)){
+  for(i in 1:segs_length){
     
     valid_data = subset(
       internal_data_vector[[i]], select=headdistance, is_valid_headdistance==TRUE)$headdistance
@@ -745,7 +749,7 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   numerator <- 0
   denominator <- 0
   
-  for(i in 1:length(segment.names)){
+  for(i in 1:segs_length){
     
     valid_data = subset(
       internal_data_vector[[i]], select=headdistance, is_valid_headdistance==TRUE)$headdistance
@@ -762,7 +766,7 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   numerator <- 0
   denominator <- 0
   
-  for(i in 1:length(segment.names)){
+  for(i in 1:segs_length){
     
     valid_data = subset(
       internal_data_vector[[i]], select=rawpupilsize, is_valid_pupil==TRUE)$rawpupilsize
@@ -780,7 +784,7 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   numerator <- 0
   denominator <- 0
   
-  for(i in 1:length(segment.names)){
+  for(i in 1:segs_length){
     
     valid_data = subset(
       internal_data_vector[[i]], select=rawpupilsize, is_valid_pupil==TRUE)$rawpupilsize
@@ -804,7 +808,7 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   numerator <- 0
   denominator <- 0
   
-  for(i in 1:length(segment.names)){
+  for(i in 1:segs_length){
     
     valid_data = subset(
       internal_data_vector[[i]], select=pupilvelocity, pupilvelocity != -1)$pupilvelocity
@@ -829,7 +833,7 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   numerator <- 0
   denominator <- 0
   
-  for(i in 1:length(segment.names)){
+  for(i in 1:segs_length){
     
     valid_data = subset(
       internal_data_vector[[i]], select=pupilvelocity, pupilvelocity != -1)$pupilvelocity
@@ -891,4 +895,5 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
 P16 <- readfiles_part2("16", "TobiiV3_sample_16.seg")
 P17 <- readfiles_part2("17", "TobiiV3_sample_17.seg")
 P18 <- readfiles_part2("18", "TobiiV3_sample_18.seg")
+
 
