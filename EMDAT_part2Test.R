@@ -20,6 +20,12 @@ VALID_SAMPLES_PROP_SACCADE = 1
 setwd("C:/git00/EMDAT_testing_actual/Part2_EMDATInternal_EMDATOutput")
 source("C:/git00/EMDAT_testing_actual/EMDAT_testUtils.R")
 
+# REMARK: the logic for processing segment level data in calculating the corresponding scene level 
+#         feature value in the original EMDAT code is not necessarily reflected in computation of 
+#         the expected value in the tests, unless it is deemed essential as, for instance, in 
+#         computing a weigthed mean or in processing fixation where the data straddling segment 
+#         boundaries can affect the computed value.
+
 readfiles_part2 <- function(participant, seg_file){
   
   emdat_export.df <- read.csv(paste("tobiiv3_sample_features_P",  participant, ".tsv", sep=""), sep="\t")
@@ -355,10 +361,10 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
   
   for(i in 1:segs_length){
     
-    valid_data = subset(
+    data = subset(
       internal_data_vector[[i]], select=saccadedistance)$saccadedistance
-    numerator <- numerator + compute_segmean_with_weight(valid_data)
-    denominator <- denominator+length(valid_data)
+    numerator <- numerator + compute_segmean_with_weight(data)
+    denominator <- denominator+length(data)
   }
   internal_mean_temp <- numerator/denominator
   internal_value <- signif(internal_mean_temp, digits = 12)
@@ -372,11 +378,11 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
   
   for(i in 1:segs_length){
     
-    valid_data = subset(
+    data = subset(
       internal_data_vector[[i]], select=saccadedistance)$saccadedistance
     
-    numerator <- numerator + compute_segsd_with_weight(valid_data, internal_mean_temp)
-    denominator <- denominator+length(valid_data)
+    numerator <- numerator + compute_segsd_with_weight(data, internal_mean_temp)
+    denominator <- denominator+length(data)
   }
   internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevsaccadedistance")
@@ -389,10 +395,10 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
   
   for(i in 1:segs_length){
     
-    valid_data = subset(
+    data = subset(
       internal_data_vector[[i]], select=saccadeduration)$saccadeduration
-    numerator <- numerator + compute_segmean_with_weight(valid_data)
-    denominator <- denominator+length(valid_data)
+    numerator <- numerator + compute_segmean_with_weight(data)
+    denominator <- denominator+length(data)
   }
   internal_mean_temp <- numerator/denominator
   internal_value <- signif(internal_mean_temp, digits = 12)
@@ -406,11 +412,11 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
   
   for(i in 1:segs_length){
     
-    valid_data = subset(
+    data = subset(
       internal_data_vector[[i]], select=saccadeduration)$saccadeduration
     
-    numerator <- numerator + compute_segsd_with_weight(valid_data, internal_mean_temp)
-    denominator <- denominator+length(valid_data)
+    numerator <- numerator + compute_segsd_with_weight(data, internal_mean_temp)
+    denominator <- denominator+length(data)
   }
   internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
   
@@ -424,10 +430,10 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
   
   for(i in 1:segs_length){
     
-    valid_data = subset(
+    data = subset(
       internal_data_vector[[i]], select=saccadespeed)$saccadespeed
-    numerator <- numerator + compute_segmean_with_weight(valid_data)
-    denominator <- denominator+length(valid_data)
+    numerator <- numerator + compute_segmean_with_weight(data)
+    denominator <- denominator+length(data)
   }
   internal_mean_temp <- numerator/denominator
   internal_value <- signif(internal_mean_temp, digits = 12)
@@ -441,11 +447,11 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
   
   for(i in 1:segs_length){
     
-    valid_data = subset(
+    data = subset(
       internal_data_vector[[i]], select=saccadespeed)$saccadespeed
     
-    numerator <- numerator + compute_segsd_with_weight(valid_data, internal_mean_temp)
-    denominator <- denominator+length(valid_data)
+    numerator <- numerator + compute_segsd_with_weight(data, internal_mean_temp)
+    denominator <- denominator+length(data)
   }
   internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
   
@@ -487,8 +493,6 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
 #  timetofirstkeypressed
 #  timetofirstrightclic
 
-#  TO DO:
-
 check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment.names){
   
 ### set up the tests ###
@@ -513,7 +517,7 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment
     gazesample_data_vector[[i]] <- subset(gazesample_data.df, grepl(segment.names[i], scene))
   }
   
-  length <- compute_scene_length(segment.names, gazesample_data_vector)
+  scene_length <- compute_scene_length(segment.names, gazesample_data_vector)
 
 ### numdoubleclic ###
   output_value <- subset(emdat_output.df, select=numdoubleclic)[1,]
@@ -542,7 +546,7 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment
   
 ### doubleclicrate ###
   output_value <- subset(emdat_output.df, select=doubleclicrate)[1,]
-  internal_value <- signif(double_clicks/length, digits=12)
+  internal_value <- signif(double_clicks/scene_length, digits=12)
 
   verify_equivalence(internal_value, output_value, participant, a_scene, "doubleclicrate")
 
@@ -560,7 +564,7 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment
   
 ### leftclicrate ###
   output_value <- subset(emdat_output.df, select=leftclicrate)[1,]
-  internal_value <- signif(left_clicks/length, digits=12)
+  internal_value <- signif(left_clicks/scene_length, digits=12)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "leftclicrate")  
 
@@ -588,7 +592,7 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment
   
 ### keypressedrate ###
   output_value <- subset(emdat_output.df, select=keypressedrate)[1,]
-  internal_value <- signif(keypress/length, digits=12) 
+  internal_value <- signif(keypress/scene_length, digits=12) 
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "keypressedrate")
   
@@ -617,7 +621,7 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment
   
 ### rightclicrate ###
   output_value <- subset(emdat_output.df, select=rightclicrate)[1,]
-  internal_value <- signif(rightclicks/length, digits=12) 
+  internal_value <- signif(rightclicks/scene_length, digits=12) 
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "rightclicrate")
   

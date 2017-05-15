@@ -1,4 +1,4 @@
-# path_length is the saccade distance between two sucessive coordinates
+# computes path_length, the saccade distance between two sucessive coordinates
 find_path_length_vector <- function(x_cord_vector, y_cord_vector){
   
   path_length_vector <- c()
@@ -22,6 +22,7 @@ verify_equivalence <- function(internal_value, output_value, participant, a_scen
   )
 }
 
+# computes and returns the abs angles of sucessive fixation points in vector format  
 find_abs_angle_vector<- function(x_cord_vector, y_cord_vector){
   
   abs_angle_vector <- c()
@@ -56,6 +57,7 @@ find_abs_angle_vector<- function(x_cord_vector, y_cord_vector){
   return(abs_angle_vector)
 }
 
+# computes and returns the relative angles of sucessive saccade paths in vector format
 find_rel_angle_vector<- function(x_cord_vector, y_cord_vector){
   
   rel_angle_vector <- c()
@@ -75,11 +77,12 @@ find_rel_angle_vector<- function(x_cord_vector, y_cord_vector){
   return(rel_angle_vector)
 }
 
+# helper function called in find_rel_angle_vector for use of arccosine  
 normalize_vector <- function(vector){
   return(vector/ sqrt((vector%*%vector)[1,]))
 }
 
-# Computes the length as defined in EMDAT for a scene from its segment lengths  
+# computes the length as defined in EMDAT for a scene from its segment lengths  
 compute_scene_length <- function(segment_names,internal_data_vector){ 
   
   internal_value <- 0
@@ -92,6 +95,8 @@ compute_scene_length <- function(segment_names,internal_data_vector){
   return(internal_value)
 }
 
+# Computes double and left clicks as defined in EMDAT code. Also, records the respectvie first clicks.
+# Return has the format of vector.   
 find_double_and_left_clicks <- function(internal_data.df){
 
   clicks.df <- subset(internal_data.df, event == "LeftMouseClick")
@@ -172,7 +177,7 @@ compute_segsd_with_weight <- function(feature_value_vector, scene_mean){
   return(numerator)
 }
 
-# Helper funciton for computing the numerator of scence mean
+# Helper funciton for computing the numerator of scene mean
 compute_segmean_with_weight <- function(feature_value_vector){
   
   numerator <- length(feature_value_vector)*mean(feature_value_vector)
