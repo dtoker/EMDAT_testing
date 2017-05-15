@@ -16,15 +16,32 @@
 # EMDAT PARAMS UTILIZED
 VALID_SAMPLES_PROP_SACCADE = 1
 
-# C:/Users/admin/Dropbox/PhD/EMDAT-testing/Part2_EMDATInternal_EMDATOutput
-setwd("C:/git00/EMDAT_testing_actual/Part2_EMDATInternal_EMDATOutput")
-source("C:/git00/EMDAT_testing_actual/EMDAT_testUtils.R")
+### REMARKS ###
 
-# REMARK: the logic for processing segment level data in calculating the corresponding scene level 
-#         feature value in the original EMDAT code is not necessarily reflected in computation of 
-#         the expected value in the tests, unless it is deemed essential as, for instance, in 
-#         computing a weigthed mean or in processing fixation where the data straddling segment 
-#         boundaries can affect the computed value.
+# 1) The logic for processing segment level data in calculating the corresponding scene level 
+#    feature value in the original EMDAT code is not necessarily reflected in computation of 
+#    the expected value in the tests, unless it is deemed essential as, for instance, in 
+#    computing a weigthed mean or in processing fixation, where the data straddling segment 
+#    boundaries can affect the computed value;
+# 2) Given the intended goal of these tests, namely checking the accuracy of the computed output 
+#    values from EMDAT by using the different langauge, R, rather than maximizing branch coverage of
+#    the python EMDAT code, the test script, as is, may fail if edge case values are passed. A degree
+#    of contorl over the input is assumed.
+
+
+### HOW TO RUN ###
+
+# Set the working directory with the file path to the test package (i.e. setwd(<file path>)), 
+# and then 'source' EMDAT_part2.R. If no error is printed out, all tests have passed. 
+# Note: the file path to the test package is assumed not to contain 'Part2_EMDATInternal_EMDATOutput' 
+# in the name.
+wd <- getwd()
+if(!grepl("/Part2_EMDATInternal_EMDATOutput", wd)){
+  source("EMDAT_testUtils.R", chdir = T)
+  setwd(paste(wd, "/Part2_EMDATInternal_EMDATOutput", sep = ""))
+}
+
+### TEST SCRIPT ###
 
 readfiles_part2 <- function(participant, seg_file){
   
@@ -75,8 +92,6 @@ readfiles_part2 <- function(participant, seg_file){
 #  abspathanglesrate
 #  eyemovementvelocity
 #  relpathanglesrate
-
-#  TODO:
 
 check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment.names){
   
@@ -143,45 +158,18 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   output_sum <- subset(emdat_output.df, select=sumpathdistance)[1,]
   output_mean <- subset(emdat_output.df, select = meanpathdistance)[1,]
   output_velocity <- subset(emdat_output.df, select=eyemovementvelocity)[1,]
-  data_storage <- list()
   
-  internal_sum <- 0
-  numerator <- 0
-  denominator <- 0
+  results <- find_sum_mean_rate(internal_data_vector, 
+                                find_path_length_vector, segs_length, scene_length)
   
-  for(i in 1:segs_length){
-    
-    path_length_vector <- find_path_length_vector(
-      internal_data_vector[[i]]$mappedfixationpointx,
-      internal_data_vector[[i]]$mappedfixationpointy
-    )
-    
-    internal_sum <- internal_sum + sum(path_length_vector)
-    numerator <- numerator + compute_segmean_with_weight(path_length_vector)
-    denominator <- denominator + length(path_length_vector)
-    data_storage[[i]] <- path_length_vector
-  }
-  
-  internal_velocity <- signif(internal_sum / scene_length, digits = 12)
-  internal_sum <- signif(internal_sum, digits = 12)
-  internal_mean_temp <- numerator/denominator
-  internal_mean <- signif(internal_mean_temp, digits = 12)
-  
-  verify_equivalence(internal_sum, output_sum, participant, a_scene, "sumpathdistance")
-  verify_equivalence(internal_mean, output_mean, participant, a_scene, "meanpathdistance")
-  verify_equivalence(internal_velocity, output_velocity, participant, a_scene, "eyemovementvelocity")
+  verify_equivalence(results$sum, output_sum, participant, a_scene, "sumpathdistance")
+  verify_equivalence(results$mean, output_mean, participant, a_scene, "meanpathdistance")
+  verify_equivalence(results$rate, output_velocity, participant, a_scene, "eyemovementvelocity")
 
 ### stddevpathdistance ###
   output_value <- subset(emdat_output.df, select = stddevpathdistance)[1,]
-  numerator <- 0
-  denominator <- 0
-
-  for(i in 1:segs_length){
-    
-    numerator <- numerator + compute_segsd_with_weight(data_storage[[i]],internal_mean_temp)
-    denominator <- denominator + length(data_storage[[i]])
-  }
-  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
+  internal_value <- find_fixation_sd(results$data_storage, results$temp_mean, segs_length)
+  
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevpathdistance")
 
 ### sumabspathangles ###
@@ -191,42 +179,17 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   output_mean <- subset(emdat_output.df, select = meanabspathangles)[1,]
   output_rate <- subset(emdat_output.df, select = abspathanglesrate)[1,]
   
-  internal_sum <-0
-  numerator <- 0
-  denominator <- 0
-  data_storage <- list()
+  results <- find_sum_mean_rate(internal_data_vector, 
+                                find_abs_angle_vector, segs_length, scene_length)
   
-  for(i in 1:segs_length){
-    
-    abs_angle_vector <- find_abs_angle_vector(internal_data_vector[[i]]$mappedfixationpointx,
-                                              internal_data_vector[[i]]$mappedfixationpointy)
-    
-    internal_sum <- internal_sum + sum(abs_angle_vector)
-    numerator <- numerator + compute_segmean_with_weight(abs_angle_vector)
-    denominator <- denominator+length(abs_angle_vector)
-    data_storage[[i]] <- abs_angle_vector
-  }
-  
-  internal_rate <- signif(internal_sum / scene_length, digits = 12)
-  internal_sum <- signif(internal_sum, digits = 12)
-  internal_mean_temp <- numerator / denominator
-  internal_mean <- signif(internal_mean_temp, digits = 12)
-  
-  verify_equivalence(internal_sum, output_sum, participant, a_scene, "sumabspathangles")
-  verify_equivalence(internal_mean, output_mean, participant, a_scene, "meanabspathangles")
-  verify_equivalence(internal_rate, output_rate, participant, a_scene, "abspathanglesrate")
+  verify_equivalence(results$sum, output_sum, participant, a_scene, "sumabspathangles")
+  verify_equivalence(results$mean, output_mean, participant, a_scene, "meanabspathangles")
+  verify_equivalence(results$rate, output_rate, participant, a_scene, "abspathanglesrate")
   
 ### stddevabspathangles ###
   output_value <- subset(emdat_output.df, select = stddevabspathangles)[1,]
-  numerator <- 0
-  denominator <- 0
+  internal_value <- find_fixation_sd(results$data_storage, results$temp_mean, segs_length)
   
-  for(i in 1:segs_length){
-    
-    numerator <- numerator + compute_segsd_with_weight(data_storage[[i]], internal_mean_temp)
-    denominator <- denominator+length(data_storage[[i]])
-  }
-  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevabspathangles")
   
 ### fixationsaccadetimeratio ###
@@ -250,45 +213,20 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   output_mean <- subset(emdat_output.df, select = meanrelpathangles)[1,]
   output_rate <- subset(emdat_output.df, select = relpathanglesrate)[1,]
   
-  internal_sum <- 0
-  numerator <- 0
-  denominator <- 0
-  data_storage <- list()
+  results <- find_sum_mean_rate(internal_data_vector, 
+                                find_rel_angle_vector, segs_length, scene_length)
   
-  for(i in 1:segs_length){
-    
-    rel_angle_vector <- find_rel_angle_vector(internal_data_vector[[i]]$mappedfixationpointx,
-                                              internal_data_vector[[i]]$mappedfixationpointy)
-    
-    internal_sum <- internal_sum + sum(rel_angle_vector)
-    numerator <- numerator + compute_segmean_with_weight(rel_angle_vector)
-    denominator <- denominator+length(rel_angle_vector)
-    data_storage[[i]] <- rel_angle_vector
-  }
-  internal_rate <- signif(internal_sum / scene_length, digits = 12)
-  internal_sum <- signif(internal_sum, digits = 12)
-  internal_mean_temp <- numerator / denominator
-  internal_mean <- signif(internal_mean_temp, digits = 12)
-  
-  verify_equivalence(internal_sum, output_sum, participant, a_scene, "sumrelpathangles")
-  verify_equivalence(internal_mean, output_mean, participant, a_scene, "meanrelpathangles")
-  verify_equivalence(internal_rate, output_rate, participant, a_scene, "relpathanglesrate")
+  verify_equivalence(results$sum, output_sum, participant, a_scene, "sumrelpathangles")
+  verify_equivalence(results$mean, output_mean, participant, a_scene, "meanrelpathangles")
+  verify_equivalence(results$rate, output_rate, participant, a_scene, "relpathanglesrate")
   
 ### stddevrelpathangles ###
   output_value <- subset(emdat_output.df, select = stddevrelpathangles)[1,]
-  numerator <- 0
-  denominator <- 0
+  internal_value <- find_fixation_sd(results$data_storage, results$temp_mean, segs_length)
   
-  for(i in 1:segs_length){
-    
-    numerator <- numerator + compute_segsd_with_weight(data_storage[[i]], internal_mean_temp)
-    denominator <- denominator+length(data_storage[[i]])
-  }
-  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
-  
-  verify_equivalence(internal_value, output_value, participant, a_scene, "stddevrelpathangles")  
-
+  verify_equivalence(internal_value, output_value, participant, a_scene, "stddevrelpathangles") 
 }
+
 
 # This function checks the correctness of saccades
 # LIST OF COLUMS TO TEST:
@@ -305,9 +243,6 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
 #  meansaccadespeed
 #  minsaccadespeed
 #  sumsaccadedistance
-
-# TO BE REVISITED:
-
 
 check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment.names){
 
@@ -477,6 +412,7 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
   verify_equivalence(internal_value, output_value, participant, a_scene, "minsaccadespeed")
 }  
 
+
 # This function checks the correctness of events
 # LIST OF COLUMS TO TEST:
 #  doubleclicrate
@@ -632,6 +568,7 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment
   verify_equivalence(internal_value, output_value, participant, a_scene, "numevents")
 }
 
+
 # This function checks the correctness of pupil and head distance
 # LIST OF COLUMS TO TEST:
 #  numsamples
@@ -652,8 +589,6 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment
 #  maxpupilvelocity (See note on rounding in the code below)
 #  meanpupilvelocity (See note on rounding in the code below)
 #  stddevpupilvelocity (See note on rounding in the code below)
-
-# TO REVISIT:
 
 check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, segment.names){
 

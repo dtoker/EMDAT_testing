@@ -184,4 +184,49 @@ compute_segmean_with_weight <- function(feature_value_vector){
   return(numerator)
 } 
 
+# Given an input vector, compute all of sum, mean, and rate (sum over scene_length)
+# for pathdistance, abspathangles, and relpathangles. Also returns mean before rounnding 
+# and result of applying the given vector function to the input, which are used for 
+# subsequent sd computation. 
+find_sum_mean_rate <- function(vector_input, vector_function, segs_length, scene_length){
+  
+  internal_sum <-0
+  numerator <- 0
+  denominator <- 0
+  data_storage <- list()
+  results <- list(sum = 0, temp_mean = 0, mean = 0, rate = 0, data_storage = 0)
+  
+  for(i in 1:segs_length){
+    
+    result_vector <- vector_function(vector_input[[i]]$mappedfixationpointx, 
+                                     vector_input[[i]]$mappedfixationpointy)
+    
+    internal_sum <- internal_sum + sum(result_vector)
+    numerator <- numerator + compute_segmean_with_weight(result_vector)
+    denominator <- denominator+length(result_vector)
+    data_storage[[i]] <- result_vector
+  }
+  
+  results$rate <- signif(internal_sum / scene_length, digits = 12)
+  results$sum <- signif(internal_sum, digits = 12)
+  results$temp_mean <- numerator / denominator
+  results$mean <- signif(results$temp_mean, digits = 12)
+  results$data_storage <- data_storage
+  
+  return(results)
+}
+
+# computes sd for pathdistance, abspathangles, and relpathangles 
+find_fixation_sd <- function(data_storage, scene_mean, segs_length){
+  numerator <- 0
+  denominator <- 0
+  
+  for(i in 1:segs_length){
+    
+    numerator <- numerator + compute_segsd_with_weight(data_storage[[i]], scene_mean)
+    denominator <- denominator+length(data_storage[[i]])
+  }
+  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
+  return(internal_value)
+}
 
