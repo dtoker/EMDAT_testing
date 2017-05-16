@@ -32,7 +32,7 @@ VALID_SAMPLES_PROP_SACCADE = 1
 ### HOW TO RUN ###
 
 # Set the working directory with the file path to the test package (i.e. setwd(<file path>)), 
-# and then 'source' EMDAT_part2.R. If no error is printed out, all tests have passed. 
+# and then 'source' EMDAT_part2.R.  
 # Note: the file path to the test package is assumed not to contain 'Part2_EMDATInternal_EMDATOutput' 
 # in the name.
 wd <- getwd()
@@ -67,7 +67,8 @@ readfiles_part2 <- function(participant, seg_file){
                                              segment.names)
     checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene,
                                                     segment.names)
-    }
+  }
+  report_success(participant)
 }
 
 

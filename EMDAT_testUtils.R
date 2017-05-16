@@ -1,3 +1,8 @@
+# global variables for keeping track of the number of total executed tests and that of passed tests 
+# for each participant
+success_counter = list("16"=0, "17"=0, "18"=0)
+total_counter = list("16"=0, "17"=0, "18"=0)
+
 # computes path_length, the saccade distance between two sucessive coordinates
 find_path_length_vector <- function(x_cord_vector, y_cord_vector){
   
@@ -15,11 +20,30 @@ find_path_length_vector <- function(x_cord_vector, y_cord_vector){
 # First argument: expected value. Second: actual value.  
 verify_equivalence <- function(internal_value, output_value, participant, a_scene, error_name){ 
   
+  total_counter[[participant]] <<- total_counter[[participant]] + 1
+  
   error_specification <- paste("Error: ", error_name, " does not match for participant:")
   try(
-    if(internal_value  != output_value)
+    if(internal_value  != output_value){
+      
       stop(paste(error_specification, participant, " and scene: ", a_scene))
+    } else{
+      
+      success_counter[[participant]] <<- success_counter[[participant]] + 1
+    }
   )
+}
+
+# notifies test success by printing out  
+report_success <- function(participant){
+  
+  if(success_counter[[participant]] == total_counter[[participant]]){
+    
+    print(paste('All Tests Passed for P', participant, sep = ""))
+  }
+  # clear the counters
+  success_counter[[participant]] <- 0
+  total_counter[[participant]] <- 0
 }
 
 # computes and returns the abs angles of sucessive fixation points in vector format  
@@ -317,4 +341,6 @@ find_gaze_sd <- function(input_vector, coloumn, criterion_name, criterion_condit
     denominator <- denominator+length(valid_data)
   }
   internal_value <- signif(sqrt(numerator/(denominator-1)), digits = sig_figs)
+  
+  return(internal_value)
 }
