@@ -42,8 +42,8 @@ report_success <- function(participant){
     print(paste('All Tests Passed for P', participant, sep = ""))
   }
   # clear the counters
-  success_counter[[participant]] <- 0
-  total_counter[[participant]] <- 0
+  success_counter[[participant]] <<- 0
+  total_counter[[participant]] <<- 0
 }
 
 # computes and returns the abs angles of sucessive fixation points in vector format  
