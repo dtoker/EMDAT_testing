@@ -230,3 +230,43 @@ find_fixation_sd <- function(data_storage, scene_mean, segs_length){
   return(internal_value)
 }
 
+# computes the mean for saccadedistance, saccadeduration, and saccadespeed
+# the argument coloumn takes a column name in String 
+find_saccade_mean <- function(input_vector, coloumn, segs_length){
+  
+  numerator <- 0
+  denominator <- 0
+  results <- list(temp_mean = 0, mean = 0)
+  
+  for(i in 1:segs_length){
+    
+    data = subset(
+      input_vector[[i]], select=coloumn)[,1]
+    numerator <- numerator + compute_segmean_with_weight(data)
+    denominator <- denominator+length(data)
+  }
+  results$temp_mean <- numerator/denominator
+  results$mean <- signif(results$temp_mean, digits = 12)
+  
+  return(results)
+}
+
+# computes the sd for saccadedistance, saccadeduration, and saccadespeed
+# the argument coloumn takes a column name in String 
+find_saccade_sd <- function(input_vector, coloumn, segs_length, scene_mean){
+  
+  numerator <- 0
+  denominator <- 0
+  
+  for(i in 1:segs_length){
+    
+    data = subset(
+      input_vector[[i]], select=coloumn)[,1]
+    
+    numerator <- numerator + compute_segsd_with_weight(data, scene_mean)
+    denominator <- denominator+length(data)
+  }
+  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
+  
+  return(internal_value)
+} 

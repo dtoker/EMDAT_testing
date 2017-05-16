@@ -291,104 +291,45 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
 ### meansaccadedistance ###
   output_value <- subset(emdat_output.df, select=meansaccadedistance)[1,]
   
-  numerator <- 0
-  denominator <- 0
+  results <- find_saccade_mean(internal_data_vector, "saccadedistance", segs_length)
   
-  for(i in 1:segs_length){
-    
-    data = subset(
-      internal_data_vector[[i]], select=saccadedistance)$saccadedistance
-    numerator <- numerator + compute_segmean_with_weight(data)
-    denominator <- denominator+length(data)
-  }
-  internal_mean_temp <- numerator/denominator
-  internal_value <- signif(internal_mean_temp, digits = 12)
-  
-  verify_equivalence(internal_value, output_value, participant, a_scene, "meansaccadedistance")
+  verify_equivalence(results$mean, output_value, participant, a_scene, "meansaccadedistance")
     
 ### stddevsaccadedistance ###
   output_value <- subset(emdat_output.df, select=stddevsaccadedistance)[1,]
-  numerator <- 0
-  denominator <- 0
   
-  for(i in 1:segs_length){
-    
-    data = subset(
-      internal_data_vector[[i]], select=saccadedistance)$saccadedistance
-    
-    numerator <- numerator + compute_segsd_with_weight(data, internal_mean_temp)
-    denominator <- denominator+length(data)
-  }
-  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
+  internal_value <- find_saccade_sd(
+    internal_data_vector, "saccadedistance", segs_length, results$temp_mean)
+  
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevsaccadedistance")
 
 ### meansaccadeduration ###
   output_value <- subset(emdat_output.df, select=meansaccadeduration)[1,]
   
-  numerator <- 0
-  denominator <- 0
+  results <- find_saccade_mean(internal_data_vector, "saccadeduration", segs_length)
   
-  for(i in 1:segs_length){
-    
-    data = subset(
-      internal_data_vector[[i]], select=saccadeduration)$saccadeduration
-    numerator <- numerator + compute_segmean_with_weight(data)
-    denominator <- denominator+length(data)
-  }
-  internal_mean_temp <- numerator/denominator
-  internal_value <- signif(internal_mean_temp, digits = 12)
-  
-  verify_equivalence(internal_value, output_value, participant, a_scene, "meansaccadeduration")
+  verify_equivalence(results$mean, output_value, participant, a_scene, "meansaccadeduration")
 
 ### stddevsaccadeduration ###
   output_value <- subset(emdat_output.df, select=stddevsaccadeduration)[1,]
-  numerator <- 0
-  denominator <- 0
   
-  for(i in 1:segs_length){
-    
-    data = subset(
-      internal_data_vector[[i]], select=saccadeduration)$saccadeduration
-    
-    numerator <- numerator + compute_segsd_with_weight(data, internal_mean_temp)
-    denominator <- denominator+length(data)
-  }
-  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
+  internal_value <- find_saccade_sd(
+    internal_data_vector, "saccadeduration", segs_length, results$temp_mean)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevsaccadeduration")
 
 ### meansaccadespeed ###
   output_value <- subset(emdat_output.df, select=meansaccadespeed)[1,]
   
-  numerator <- 0
-  denominator <- 0
+  results <- find_saccade_mean(internal_data_vector, "saccadespeed", segs_length)
   
-  for(i in 1:segs_length){
-    
-    data = subset(
-      internal_data_vector[[i]], select=saccadespeed)$saccadespeed
-    numerator <- numerator + compute_segmean_with_weight(data)
-    denominator <- denominator+length(data)
-  }
-  internal_mean_temp <- numerator/denominator
-  internal_value <- signif(internal_mean_temp, digits = 12)
-  
-  verify_equivalence(internal_value, output_value, participant, a_scene, "meansaccadespeed")
+  verify_equivalence(results$mean, output_value, participant, a_scene, "meansaccadespeed")
   
 ### stddevsaccadespeed ###
   output_value <- subset(emdat_output.df, select=stddevsaccadespeed)[1,]
-  numerator <- 0
-  denominator <- 0
   
-  for(i in 1:segs_length){
-    
-    data = subset(
-      internal_data_vector[[i]], select=saccadespeed)$saccadespeed
-    
-    numerator <- numerator + compute_segsd_with_weight(data, internal_mean_temp)
-    denominator <- denominator+length(data)
-  }
-  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
+  internal_value <- find_saccade_sd(
+    internal_data_vector, "saccadespeed", segs_length, results$temp_mean)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevsaccadespeed")
   
