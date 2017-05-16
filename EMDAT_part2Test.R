@@ -609,70 +609,33 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
 ### meandistance ###
   output_value <- subset(emdat_output.df, select=meandistance)[1,]
   
-  numerator <- 0
-  denominator <- 0
+  results <- find_gaze_mean(internal_data_vector, "headdistance", "is_valid_headdistance", "eql", 
+                            TRUE, segs_length, 12)
   
-  for(i in 1:segs_length){
-    
-    valid_data = subset(
-      internal_data_vector[[i]], select=headdistance, is_valid_headdistance==TRUE)$headdistance
-    numerator <- numerator + compute_segmean_with_weight(valid_data)
-    denominator <- denominator+length(valid_data)
-  }
-  internal_mean_temp <- numerator/denominator
-  internal_value <- signif(internal_mean_temp, digits = 12)
-  
-  verify_equivalence(internal_value, output_value, participant, a_scene, "meandistance")
+  verify_equivalence(results$mean, output_value, participant, a_scene, "meandistance")
 
 ### stddevdistance ###
   output_value <- subset(emdat_output.df, select=stddevdistance)[1,]
-  numerator <- 0
-  denominator <- 0
   
-  for(i in 1:segs_length){
-    
-    valid_data = subset(
-      internal_data_vector[[i]], select=headdistance, is_valid_headdistance==TRUE)$headdistance
-    
-    numerator <- numerator + compute_segsd_with_weight(valid_data, internal_mean_temp)
-    denominator <- denominator+length(valid_data)
-  }
-  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
+  internal_value <- find_gaze_sd(internal_data_vector, "headdistance", "is_valid_headdistance", "eql",
+                                 TRUE, segs_length, results$temp_mean, 12)
+  
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevdistance")
 
 ### meanpupilsize ###
   output_value <- subset(emdat_output.df, select=meanpupilsize)[1,]
   
-  numerator <- 0
-  denominator <- 0
+  results <- find_gaze_mean(internal_data_vector, "rawpupilsize", "is_valid_pupil", "eql", 
+                            TRUE, segs_length, 12)
   
-  for(i in 1:segs_length){
-    
-    valid_data = subset(
-      internal_data_vector[[i]], select=rawpupilsize, is_valid_pupil==TRUE)$rawpupilsize
-    
-    numerator <- numerator + compute_segmean_with_weight(valid_data)
-    denominator <- denominator+length(valid_data)
-  }
-  internal_mean_temp <- numerator/denominator
-  internal_value <- signif(internal_mean_temp, digits = 12)
-  
-  verify_equivalence(internal_value, output_value, participant, a_scene, "meanpupilsize")
+  verify_equivalence(results$mean, output_value, participant, a_scene, "meanpupilsize")
 
 ### stddevpupilsize ###
   output_value <- subset(emdat_output.df, select=stddevpupilsize)[1,]
-  numerator <- 0
-  denominator <- 0
   
-  for(i in 1:segs_length){
-    
-    valid_data = subset(
-      internal_data_vector[[i]], select=rawpupilsize, is_valid_pupil==TRUE)$rawpupilsize
-    
-    numerator <- numerator + compute_segsd_with_weight(valid_data, internal_mean_temp)
-    denominator <- denominator+length(valid_data)
-  }
-  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
+  internal_value <- find_gaze_sd(internal_data_vector, "rawpupilsize", "is_valid_pupil", "eql",
+                                 TRUE, segs_length, results$temp_mean, 12)
+  
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevpupilsize")
   
 ### meanpupilvelocity ###
@@ -685,21 +648,10 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   
   output_value <- signif(subset(emdat_output.df, select=meanpupilvelocity)[1,], digits = 6)
   
-  numerator <- 0
-  denominator <- 0
+  results <- find_gaze_mean(internal_data_vector, "pupilvelocity", "pupilvelocity","not_eql", -1, 
+                            segs_length, 6)
   
-  for(i in 1:segs_length){
-    
-    valid_data = subset(
-      internal_data_vector[[i]], select=pupilvelocity, pupilvelocity != -1)$pupilvelocity
-    
-    numerator <- numerator + compute_segmean_with_weight(valid_data)
-    denominator <- denominator+length(valid_data)
-  }
-  internal_mean_temp <- numerator/denominator
-  internal_value <- signif(internal_mean_temp, digits = 6)
-  
-  verify_equivalence(internal_value, output_value, participant, a_scene, "meanpupilvelocity")
+  verify_equivalence(results$mean, output_value, participant, a_scene, "meanpupilvelocity")
 
 ### stddevpupilvelocity ###
   
@@ -710,18 +662,10 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   # EMDAT does.
   
   output_value <- signif(subset(emdat_output.df, select=stddevpupilvelocity)[1,], digits = 6)
-  numerator <- 0
-  denominator <- 0
   
-  for(i in 1:segs_length){
-    
-    valid_data = subset(
-      internal_data_vector[[i]], select=pupilvelocity, pupilvelocity != -1)$pupilvelocity
-    
-    numerator <- numerator + compute_segsd_with_weight(valid_data, internal_mean_temp)
-    denominator <- denominator+length(valid_data)
-  }
-  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 6)
+  internal_value <- find_gaze_sd(internal_data_vector, "pupilvelocity", "pupilvelocity", "not_eql",
+                                 -1, segs_length, results$temp_mean, 6)
+  
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevpupilvelocity")
      
 ### mindistance ###

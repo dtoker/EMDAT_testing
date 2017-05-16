@@ -240,7 +240,7 @@ find_saccade_mean <- function(input_vector, coloumn, segs_length){
   
   for(i in 1:segs_length){
     
-    data = subset(
+    data <- subset(
       input_vector[[i]], select=coloumn)[,1]
     numerator <- numerator + compute_segmean_with_weight(data)
     denominator <- denominator+length(data)
@@ -260,7 +260,7 @@ find_saccade_sd <- function(input_vector, coloumn, segs_length, scene_mean){
   
   for(i in 1:segs_length){
     
-    data = subset(
+    data <- subset(
       input_vector[[i]], select=coloumn)[,1]
     
     numerator <- numerator + compute_segsd_with_weight(data, scene_mean)
@@ -269,4 +269,52 @@ find_saccade_sd <- function(input_vector, coloumn, segs_length, scene_mean){
   internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
   
   return(internal_value)
-} 
+}
+
+# computes the mean for headdistance, pupilsize, and pupilvelocity
+# coloumn, criterion_name, criterion_condition, and criterion_value in String
+find_gaze_mean <- function(input_vector, coloumn, criterion_name, criterion_condition, criterion_value, 
+                           segs_length, sig_figs){
+  
+  numerator <- 0
+  denominator <- 0
+  results <- list(mean = 0, temp_mean = 0)
+  
+  for(i in 1:segs_length){
+    # input_vector[[i]][input_vector[[i]][[criterion_name]]==criterion_value,][[coloumn]]    
+    #   == input_vector[[i]][input_vector[[i]]$criterion_name==criterion_value,]$coloumn
+    #   == subset(input_vector[[i]], criterion_name==criterion_value)$coloumn  
+    switch(criterion_condition, 
+           eql = (valid_data <- input_vector[[i]][input_vector[[i]][[criterion_name]]==criterion_value,][[coloumn]]),
+           not_eql = (valid_data <- input_vector[[i]][input_vector[[i]][[criterion_name]]!=criterion_value,][[coloumn]])
+    )  
+    numerator <- numerator + compute_segmean_with_weight(valid_data)
+    denominator <- denominator+length(valid_data)
+  }
+  results$temp_mean <- numerator/denominator
+  results$mean <- signif(results$temp_mean, digits = sig_figs)
+  
+  return(results)
+}
+
+# computes the sd for headdistance, pupilsize, and pupilvelocity
+# coloumn, criterion_name, criterion_condition, and criterion_value in String
+find_gaze_sd <- function(input_vector, coloumn, criterion_name, criterion_condition,
+                         criterion_value, segs_length, scene_mean, sig_figs){
+  
+  numerator <- 0
+  denominator <- 0
+  
+  for(i in 1:segs_length){
+    # input_vector[[i]][input_vector[[i]][[criterion_name]]==criterion_value,][[coloumn]]    
+    #   == input_vector[[i]][input_vector[[i]]$criterion_name==criterion_value,]$coloumn
+    #   == subset(input_vector[[i]], criterion_name==criterion_value)$coloumn  
+    switch(criterion_condition, 
+           eql = (valid_data <- input_vector[[i]][input_vector[[i]][[criterion_name]]==criterion_value,][[coloumn]]),
+           not_eql = (valid_data <- input_vector[[i]][input_vector[[i]][[criterion_name]]!=criterion_value,][[coloumn]])
+    )  
+    numerator <- numerator + compute_segsd_with_weight(valid_data, scene_mean)
+    denominator <- denominator+length(valid_data)
+  }
+  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = sig_figs)
+}
