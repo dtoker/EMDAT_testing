@@ -28,24 +28,20 @@ VALID_SAMPLES_PROP_SACCADE = 1
 #    the python EMDAT code, the test script, as is, may fail if edge case values are passed. A degree
 #    of contorl over the input is assumed.
 
-
 ### HOW TO RUN ###
 
 # Set the working directory with the file path to the test package (i.e. setwd(<file path>)), 
-# and then 'source' EMDAT_part2.R.  
-# Note: the file path to the test package is assumed not to contain 'Part2_EMDATInternal_EMDATOutput' 
-# in the name.
-wd <- getwd()
-if(!grepl("/Part2_EMDATInternal_EMDATOutput", wd)){
-  source("EMDAT_testUtils.R")
-  setwd(paste(wd, "/Part2_EMDATInternal_EMDATOutput", sep = ""))
-}
+# and then 'source' EMDAT_part2.R  
 
 ### TEST SCRIPT ###
 
+source("EMDAT_testUtils.R")
+root_path <- "Part2_EMDATInternal_EMDATOutput/"
+
+
 readfiles_part2 <- function(participant, seg_file){
   
-  emdat_export.df <- read.csv(paste("tobiiv3_sample_features_P",  participant, ".tsv", sep=""), sep="\t")
+  emdat_export.df <- read.csv(paste(root_path, "tobiiv3_sample_features_P",  participant, ".tsv", sep=""), sep="\t")
   seg_file.df <- read.csv(seg_file, sep="\t", header = FALSE, col.names = c("scene","segment","start","end"))
   
   #extract scene names
@@ -99,9 +95,9 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
 ### set up the tests ###
   
   # reads in the needed internal EMDAT data files
-  internal_data.df <- read.csv(paste("EMDATdata_fix_P", participant, ".tsv", sep=""), sep="\t")
-  gazesample_data.df <- read.csv(paste("EMDATdata_gazesample_P", participant, ".tsv", sep=""), sep="\t")
-  saccade_data.df <- read.csv(paste("EMDATdata_sac_P", participant, ".tsv", sep=""), sep="\t")
+  internal_data.df <- read.csv(paste(root_path,"EMDATdata_fix_P", participant, ".tsv", sep=""), sep="\t")
+  gazesample_data.df <- read.csv(paste(root_path, "EMDATdata_gazesample_P", participant, ".tsv", sep=""), sep="\t")
+  saccade_data.df <- read.csv(paste(root_path, "EMDATdata_sac_P", participant, ".tsv", sep=""), sep="\t")
   
   # keeps all segments belonging to the scene in data frame format 
   # only one data set (P18) contains a scene consisting of multiple segments     
@@ -250,7 +246,7 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
 ### set up the tests ###
   
   # read in the corresponding internal EMDAT data file
-  internal_data.df <- read.csv(paste("EMDATdata_sac_P", participant, ".tsv", sep=""), sep="\t")
+  internal_data.df <- read.csv(paste(root_path, "EMDATdata_sac_P", participant, ".tsv", sep=""), sep="\t")
   
   # keeps all segments belonging to the scene in data frame format
   # only one data set (P18) contains a scene consisting of multiple segments     
@@ -376,8 +372,8 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment
 ### set up the tests ###
   
   # read in the needed internal EMDAT data files
-  internal_data.df <- read.csv(paste("EMDATdata_eve_P", participant, ".tsv", sep=""), sep="\t")
-  gazesample_data.df <- read.csv(paste("EMDATdata_gazesample_P", participant, ".tsv", sep=""), sep="\t")
+  internal_data.df <- read.csv(paste(root_path, "EMDATdata_eve_P", participant, ".tsv", sep=""), sep="\t")
+  gazesample_data.df <- read.csv(paste(root_path, "EMDATdata_gazesample_P", participant, ".tsv", sep=""), sep="\t")
   
   # keeps all segments belonging to the scene in data frame format
   # only one data set (P18) contains a scene consisting of multiple segments     
@@ -537,7 +533,7 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
 ### set up the tests ###    
   
   # read in the needed internal EMDAT data file
-  internal_data.df <- read.csv(paste("EMDATdata_gazesample_P", participant, ".tsv", sep=""), sep="\t")
+  internal_data.df <- read.csv(paste(root_path, "EMDATdata_gazesample_P", participant, ".tsv", sep=""), sep="\t")
   
   # keeps all segments belonging to the scene in data frame format  
   # only one data set (P18) contains a scene consisting of multiple segments     
@@ -717,8 +713,8 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
 }
 
 
-P16 <- readfiles_part2("16", "TobiiV3_sample_16.seg")
-P17 <- readfiles_part2("17", "TobiiV3_sample_17.seg")
-P18 <- readfiles_part2("18", "TobiiV3_sample_18.seg")
+P16 <- readfiles_part2("16", paste(root_path, "TobiiV3_sample_16.seg", sep = ""))
+P17 <- readfiles_part2("17", paste(root_path, "TobiiV3_sample_17.seg", sep = ""))
+P18 <- readfiles_part2("18", paste(root_path, "TobiiV3_sample_18.seg", sep = ""))
 
 

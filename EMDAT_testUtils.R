@@ -1,7 +1,7 @@
 # global variables for keeping track of the number of total executed tests and that of passed tests 
 # for each participant
-success_counter = 0
-total_counter = 0
+success_counter <- 0
+total_counter <- 0
 
 # computes path_length, the saccade distance between two sucessive coordinates
 find_path_length_vector <- function(x_cord_vector, y_cord_vector){
