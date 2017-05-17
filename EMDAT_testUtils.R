@@ -6,7 +6,7 @@ total_counter = 0
 # computes path_length, the saccade distance between two sucessive coordinates
 find_path_length_vector <- function(x_cord_vector, y_cord_vector){
   
-  path_length_vector <- c()
+  path_length_vector <- numeric(length(x_cord_vector)-1)
   
   for(i in 1:(length(x_cord_vector)-1)){
     
@@ -49,7 +49,7 @@ report_success <- function(participant){
 # computes and returns the abs angles of sucessive fixation points in vector format  
 find_abs_angle_vector<- function(x_cord_vector, y_cord_vector){
   
-  abs_angle_vector <- c()
+  abs_angle_vector <- numeric(length(x_cord_vector)-1)
   
   for(i in 1:(length(x_cord_vector)-1)){
     
@@ -84,9 +84,9 @@ find_abs_angle_vector<- function(x_cord_vector, y_cord_vector){
 # computes and returns the relative angles of sucessive saccade paths in vector format
 find_rel_angle_vector<- function(x_cord_vector, y_cord_vector){
   
-  rel_angle_vector <- c()
-  last_vector <- c()
-  next_vector <- c()
+  rel_angle_vector <- numeric(length(x_cord_vector)-2)
+  last_vector <- numeric(2)
+  next_vector <- numeric(2)
   
   for(i in 1:(length(x_cord_vector)-2)){
     
@@ -124,9 +124,9 @@ compute_scene_length <- function(segment_names,internal_data_vector){
 find_double_and_left_clicks <- function(internal_data.df){
 
   clicks.df <- subset(internal_data.df, event == "LeftMouseClick")
-  clicks <- c() # c[1]: double click count, c[2]: left click count,
-  clicks[3] <- -1    # c[3]: time of first double click, with default being -1
-  clicks[4] <- -1    # c[4]: time of first left click, with default being -1
+  clicks <- numeric(4) # clicks[1]: double click count, clicks[2]: left click count,
+  clicks[3] <- -1      # clicks[3]: time of first double click, with default being -1
+  clicks[4] <- -1      # clicks[4]: time of first left click, with default being -1
 
   if(nrow(clicks.df) == 0){
     clicks[1] <- 0
@@ -147,7 +147,7 @@ find_double_and_left_clicks <- function(internal_data.df){
     # "D for double and "L" for left. Keep track of double and left clicks
     #  Used for determining the first double and left
     #  first element is always not double
-    double_left_marker <- c()
+    double_left_marker <- character(length(x_coords)-1)
     double_left_marker[1] <- "L" 
     
     is_double_click <- TRUE
@@ -307,7 +307,9 @@ find_gaze_mean <- function(input_vector, coloumn, criterion_name, criterion_cond
   for(i in 1:segs_length){
     # input_vector[[i]][input_vector[[i]][[criterion_name]]==criterion_value,][[coloumn]]    
     #   == input_vector[[i]][input_vector[[i]]$criterion_name==criterion_value,]$coloumn
-    #   == subset(input_vector[[i]], criterion_name==criterion_value)$coloumn  
+    #   == subset(input_vector[[i]], criterion_name==criterion_value)$coloumn
+    # Note: in the above "equalities", actually needs to strip away the quotation marks from 
+    #       the Strings criterion_name and coloumn, when preceded by '$' or used in subset 
     switch(criterion_condition, 
            eql = (valid_data <- input_vector[[i]][input_vector[[i]][[criterion_name]]==criterion_value,][[coloumn]]),
            not_eql = (valid_data <- input_vector[[i]][input_vector[[i]][[criterion_name]]!=criterion_value,][[coloumn]])
@@ -332,7 +334,9 @@ find_gaze_sd <- function(input_vector, coloumn, criterion_name, criterion_condit
   for(i in 1:segs_length){
     # input_vector[[i]][input_vector[[i]][[criterion_name]]==criterion_value,][[coloumn]]    
     #   == input_vector[[i]][input_vector[[i]]$criterion_name==criterion_value,]$coloumn
-    #   == subset(input_vector[[i]], criterion_name==criterion_value)$coloumn  
+    #   == subset(input_vector[[i]], criterion_name==criterion_value)$coloumn
+    # Note: in the above "equalities", actually needs to strip away the quotation marks from 
+    #       the Strings criterion_name and coloumn, when preceded by '$' or used in subset
     switch(criterion_condition, 
            eql = (valid_data <- input_vector[[i]][input_vector[[i]][[criterion_name]]==criterion_value,][[coloumn]]),
            not_eql = (valid_data <- input_vector[[i]][input_vector[[i]][[criterion_name]]!=criterion_value,][[coloumn]])
