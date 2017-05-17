@@ -37,7 +37,7 @@ VALID_SAMPLES_PROP_SACCADE = 1
 # in the name.
 wd <- getwd()
 if(!grepl("/Part2_EMDATInternal_EMDATOutput", wd)){
-  source("EMDAT_testUtils.R", chdir = T)
+  source("EMDAT_testUtils.R")
   setwd(paste(wd, "/Part2_EMDATInternal_EMDATOutput", sep = ""))
 }
 
