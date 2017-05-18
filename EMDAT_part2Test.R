@@ -37,11 +37,17 @@ VALID_SAMPLES_PROP_SACCADE = 1
 
 source("EMDAT_testUtils.R")
 root_path <- "Part2_EMDATInternal_EMDATOutput/"
+emdat_export_all.df <- read.csv(paste("Part2_EMDATInternal_EMDATOutput/", 
+                                      "tobiiv3_sample_features",  
+                                      ".tsv", 
+                                      sep=""), 
+                                sep="\t")
+Sc_ids <- as.character(emdat_export_all.df[,1])
 
 
-readfiles_part2 <- function(participant, seg_file){
+readfiles_part2 <- function(participant, seg_file, last_participant){
   
-  emdat_export.df <- read.csv(paste(root_path, "tobiiv3_sample_features_P",  participant, ".tsv", sep=""), sep="\t")
+  emdat_export.df <- get_features_df_for_participant(emdat_export_all.df, participant, Sc_ids, last_participant)
   seg_file.df <- read.csv(seg_file, sep="\t", header = FALSE, col.names = c("scene","segment","start","end"))
   
   #extract scene names
@@ -713,8 +719,8 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
 }
 
 
-P16 <- readfiles_part2("16", paste(root_path, "TobiiV3_sample_16.seg", sep = ""))
-P17 <- readfiles_part2("17", paste(root_path, "TobiiV3_sample_17.seg", sep = ""))
-P18 <- readfiles_part2("18", paste(root_path, "TobiiV3_sample_18.seg", sep = ""))
+# P16 <- readfiles_part2("16", paste(root_path, "TobiiV3_sample_16.seg", sep = ""))
+# P17 <- readfiles_part2("17", paste(root_path, "TobiiV3_sample_17.seg", sep = ""))
+# P18 <- readfiles_part2("18", paste(root_path, "TobiiV3_sample_18.seg", sep = ""))
 
 
