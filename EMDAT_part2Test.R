@@ -718,9 +718,18 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   verify_equivalence(internal_value, output_value, participant, a_scene, "length")
 }
 
+##########################################################################################
 
-# P16 <- readfiles_part2("16", paste(root_path, "TobiiV3_sample_16.seg", sep = ""))
-# P17 <- readfiles_part2("17", paste(root_path, "TobiiV3_sample_17.seg", sep = ""))
-# P18 <- readfiles_part2("18", paste(root_path, "TobiiV3_sample_18.seg", sep = ""))
-
-
+# When called in the main, commences the part2 tests for the given list of participants
+# last_participant refers to the last in the given study, not necessarily that 
+# in the list of participants    
+run_part2Test <- function(participants, last_participant){
+  
+  for(i in 1:length(participants)){
+    
+    participant <- participants[i]
+    readfiles_part2(participant, 
+                    paste(root_path, "TobiiV3_sample_", participant, ".seg", sep = ""),
+                    last_participant)
+  }
+}

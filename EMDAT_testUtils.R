@@ -349,20 +349,6 @@ find_gaze_sd <- function(input_vector, coloumn, criterion_name, criterion_condit
   return(internal_value)
 }
 
-# Commences the part2 tests for the given list of participants
-# last_participant refers to the last in the given study, not necessarily that 
-# in the list of participants    
-run_part2Test <- function(participants, last_participant){
-  
-  for(i in 1:length(participants)){
-    
-    participant <- participants[i]
-    readfiles_part2(participant, 
-                    paste(root_path, "TobiiV3_sample_", participant, ".seg", sep = ""),
-                    last_participant)
-  }
-}
-
 # Given all particapnts data, returns only the scenes belonging to the given participant
 # This idea of row retrieval is from 
 # http://stackoverflow.com/questions/5553802/get-row-number-for-r-data-frame   
