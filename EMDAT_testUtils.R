@@ -356,7 +356,7 @@ get_features_df_for_participant <- function(emdat_export_all.df, participant, Sc
   
   start_row <- which(Sc_ids==paste(participant, "_allsc", sep = "")) + 1
   
-  if(as.numeric(participant) != last_participant){
+  if(participant != last_participant){
     
     participant <- as.numeric(participant) + 1
     participant <- as.character(participant)

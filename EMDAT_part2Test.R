@@ -733,3 +733,11 @@ run_part2Test <- function(participants, last_participant){
                     last_participant)
   }
 }
+
+# # For debugging:
+# participants <- list("16", "17", "18")
+# 
+# # Run
+# # Note: second argument takes the last participant of the study, not necessarily the
+# #       last element in the list of participants given to the first argument
+# run_part2Test(participants, "18")
