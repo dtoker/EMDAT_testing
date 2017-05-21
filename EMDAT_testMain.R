@@ -10,9 +10,9 @@ source("EMDAT_part2Test.R")
 
 # Set up the tests
 # Choose particpants to run the tests on
-participants <- list("16", "17", "18")
+participants <- list("101a", "101b")
 
 # Run
 # Note: second argument takes the last participant of the study, not necessarily the
 #       last element in the list of participants given to the first argument    
-run_part2Test(participants, "18")
+run_part2Test(participants, "101b")

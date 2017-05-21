@@ -23,13 +23,14 @@ verify_equivalence <- function(internal_value, output_value, participant, a_scen
   total_counter <<- total_counter + 1
   
   error_specification <- paste("Error: ", error_name, " does not match for participant:")
+  if(is.na(internal_value)|is.na(output_value)){print(paste(participant, a_scene, " NA"))}
   try(
     if(internal_value  != output_value){
       
       stop(paste(error_specification, participant, " and scene: ", a_scene))
     } else{
       
-      success_counter <<- success_counter + 1
+        success_counter <<- success_counter + 1
     }
   )
 }
@@ -356,15 +357,25 @@ get_features_df_for_participant <- function(emdat_export_all.df, participant, Sc
   
   start_row <- which(Sc_ids==paste(participant, "_allsc", sep = "")) + 1
   
-  if(as.numeric(participant) != last_participant){
+  if(participant != last_participant){
     
-    participant <- as.numeric(participant) + 1
-    participant <- as.character(participant)
-    end_row <- which(Sc_ids==paste(participant, "_allsc", sep = "")) - 1
+    number_char <- nchar(participant)
+    last_char <- substr(participant, number_char, number_char)
+    
+    if(last_char == "a"){
+      
+      end_row <- which(Sc_ids==paste(substr(participant, 1, number_char-1), "b_allsc", sep = "")) - 1
+    } else {
+      
+      numerical_part <- as.numeric(substr(participant, 1, number_char - 1))
+      numerical_part <- numerical_part + 1
+      end_row <- which(Sc_ids==paste(numerical_part, "a_allsc", sep = "")) - 1
+    }
   } else{
     
     end_row <- length(Sc_ids)
   }
+  
   return(emdat_export_all.df[start_row : end_row, ])
 }
 
