@@ -196,7 +196,12 @@ find_double_and_left_clicks <- function(internal_data.df){
 # Helper funciton for computing the numerator of aggregated sd
 compute_segsd_with_weight <- function(feature_value_vector, scene_mean){
   
-  numerator <- (length(feature_value_vector)-1)*(sd(feature_value_vector)^2)+
+  stddev <- sd(feature_value_vector)
+  if(is.na(stddev)){
+    stddev <- 0
+  } 
+  
+  numerator <- (length(feature_value_vector)-1)*(stddev^2)+
                 length(feature_value_vector)*(mean(feature_value_vector)-scene_mean)^2
   
   return(numerator)
@@ -245,13 +250,16 @@ find_sum_mean_rate <- function(vector_input, vector_function, segs_length, scene
 find_fixation_sd <- function(data_storage, scene_mean, segs_length){
   numerator <- 0
   denominator <- 0
+  internal_value <- 0
   
   for(i in 1:segs_length){
     
     numerator <- numerator + compute_segsd_with_weight(data_storage[[i]], scene_mean)
     denominator <- denominator+length(data_storage[[i]])
   }
-  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
+  if(denominator > 1){
+    internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
+  }
   return(internal_value)
 }
 
@@ -378,4 +386,24 @@ get_features_df_for_participant <- function(emdat_export_all.df, participant, Sc
   
   return(emdat_export_all.df[start_row : end_row, ])
 }
+
+generate_participant_list <- function(p_range){
+  
+  participants <- list()
+  last_index = 0
+  
+  for(i in p_range){
+    
+    participant_a = paste(as.character(i), "a", sep = "")
+    participant_b = paste(as.character(i), "b", sep = "")
+    
+    last_index = last_index + 1
+    participants[last_index] = participant_a
+    
+    last_index = last_index + 1
+    participants[last_index] = participant_b
+  }
+  
+  return(participants)
+} 
 

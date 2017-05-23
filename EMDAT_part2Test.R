@@ -50,12 +50,8 @@ readfiles_part2 <- function(participant, seg_file, last_participant){
   emdat_export.df <- get_features_df_for_participant(emdat_export_all.df, participant, Sc_ids, last_participant)
   seg_file.df <- read.csv(seg_file, sep="\t", header = FALSE, col.names = c("scene","segment","start","end"))
   
-  acceptable_seg_file.df <- subset(seg_file.df, end > start)
-  removed <- setdiff(seg_file.df[,1], acceptable_seg_file.df[,1])
-  print(paste("Scene with end_time < start_time for participant ", participant, ": ", removed))
-  
   #extract scene names
-  scene.names <- unique(acceptable_seg_file.df[,"scene"])
+  scene.names <- unique(seg_file.df[,"scene"])
   
   # loop over the scenes
   for (a_scene in scene.names) {
@@ -136,10 +132,11 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   internal_value <- sum(subset(internal_data.df, select=fixationduration))
   output_value <- subset(emdat_output.df, select=sumfixationduration)[1,]
   verify_equivalence(internal_value, output_value, participant, a_scene, "sumfixationduration")
-  
+
+### OUTPUT ROUNDED FOR NOW ###################################################################    
 ### stddevfixationduration ###
   internal_value <- round(sd(subset(internal_data.df, select=fixationduration)$fixationduration), digits=9)
-  output_value <- subset(emdat_output.df, select=stddevfixationduration)[1,]
+  output_value <- round(subset(emdat_output.df, select=stddevfixationduration)[1,], digits = 9)
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevfixationduration")
   
 ### meanfixationduration ###
@@ -734,16 +731,41 @@ run_part2Test <- function(participants, last_participant){
     
     participant <- participants[i]
     readfiles_part2(participant, 
-                    paste(root_path, "P", participant, ".seg", sep = ""),
+                    paste(root_path, "SegFiles/P", participant, ".seg", sep = ""),
                     last_participant)
   }
 }
 
+##### For debugging #####
+
 # Set up the tests
 # Choose particpants to run the tests on
-participants <- list("101b")
+participants <- generate_participant_list(103:103)
 
 # Run
 # Note: second argument takes the last participant of the study, not necessarily the
-#       last element in the list of participants given to the first argument    
-run_part2Test(participants, "101b")
+#       last element in the list of participants given to the first argument
+run_part2Test(participants, "103b")
+
+# path <- paste(root_path, "SegFiles/P", "102b", ".seg", sep = "")
+# readfiles_part2_debug <- function(participant, seg_file, last_participant, a_scene){
+# 
+#   emdat_export.df <- get_features_df_for_participant(emdat_export_all.df, participant, Sc_ids, last_participant)
+#   seg_file.df <- read.csv(seg_file, sep="\t", header = FALSE, col.names = c("scene","segment","start","end"))
+# 
+#   acceptable_seg_file.df <- subset(seg_file.df, end > start)
+#   segment.names <- unique(subset(seg_file.df, scene==a_scene)[,"segment"])
+#   emdat_export.df.scene <- subset(emdat_export.df, Sc_id == a_scene)
+# 
+#   checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
+#                                            segment.names)
+#   # checked_result2 <- check_correctness_sac(emdat_export.df.scene, participant, a_scene,
+#   #                                            segment.names)
+#   # checked_result3 <- check_correctness_eve(emdat_export.df.scene, participant, a_scene,
+#   #                                            segment.names)
+#   # checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene,
+#   #                                                   segment.names)
+# }
+# 
+# readfiles_part2_debug("102b", path, "102b", "Event_16")
+
