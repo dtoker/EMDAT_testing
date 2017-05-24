@@ -61,14 +61,20 @@ readfiles_part2 <- function(participant, seg_file, last_participant){
     
     emdat_export.df.scene <- subset(emdat_export.df, Sc_id == a_scene)
     
-    checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
-                                             segment.names)
+    if(nrow(emdat_export.df.scene) != 0){
+      checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
+                                               segment.names)
     # checked_result2 <- check_correctness_sac(emdat_export.df.scene, participant, a_scene,
     #                                          segment.names)
     # checked_result3 <- check_correctness_eve(emdat_export.df.scene, participant, a_scene,
     #                                          segment.names)
     # checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene,
     #                                                 segment.names)
+    } else{
+      print(paste("############## ", participant, " ",  a_scene,
+                  " has no data in output file; tests skipped ##################",
+                  sep = ""))
+    }  
   }
   report_success(participant)
 }
@@ -106,10 +112,14 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   saccade_data.df <- read.csv(paste(root_path, "EMDATinternaldata_saccades_", participant, ".csv", sep=""), sep=",")
   
   # keeps all segments belonging to the scene in data frame format 
-  # only one data set (P18) contains a scene consisting of multiple segments     
+  # only one data set (P18) contains a scene consisting of multiple segments
   internal_data.df <- subset(internal_data.df, scene == a_scene)
   gazesample_data.df <- subset(gazesample_data.df, scene == a_scene)
   saccade_data.df <- subset(saccade_data.df, scene == a_scene)
+  
+  if(nrow(internal_data.df) == 0 | nrow(gazesample_data.df) == 0 | nrow(saccade_data.df)==0){
+    print(paste("Missing internal data ", participant, " ", a_scene, sep = ""))
+  }
   
   segs_length <- length(segment.names)
   
@@ -188,7 +198,8 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   
   verify_equivalence(results$sum, output_sum, participant, a_scene, "sumabspathangles")
   verify_equivalence(results$mean, output_mean, participant, a_scene, "meanabspathangles")
-  verify_equivalence(results$rate, output_rate, participant, a_scene, "abspathanglesrate")
+  internal_value <- results$rate
+  verify_equivalence(internal_value, output_rate, participant, a_scene, "abspathanglesrate")
   
 ### stddevabspathangles ###
   output_value <- subset(emdat_output.df, select = stddevabspathangles)[1,]
@@ -747,7 +758,7 @@ participants <- generate_participant_list(103:103)
 #       last element in the list of participants given to the first argument
 run_part2Test(participants, "103b")
 
-# path <- paste(root_path, "SegFiles/P", "102b", ".seg", sep = "")
+# path <- paste(root_path, "SegFiles/P", "103a", ".seg", sep = "")
 # readfiles_part2_debug <- function(participant, seg_file, last_participant, a_scene){
 # 
 #   emdat_export.df <- get_features_df_for_participant(emdat_export_all.df, participant, Sc_ids, last_participant)
@@ -757,15 +768,21 @@ run_part2Test(participants, "103b")
 #   segment.names <- unique(subset(seg_file.df, scene==a_scene)[,"segment"])
 #   emdat_export.df.scene <- subset(emdat_export.df, Sc_id == a_scene)
 # 
-#   checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
-#                                            segment.names)
-#   # checked_result2 <- check_correctness_sac(emdat_export.df.scene, participant, a_scene,
-#   #                                            segment.names)
-#   # checked_result3 <- check_correctness_eve(emdat_export.df.scene, participant, a_scene,
-#   #                                            segment.names)
-#   # checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene,
-#   #                                                   segment.names)
+#   if(nrow(emdat_export.df.scene) != 0){
+#     checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
+#                                              segment.names)
+#     # checked_result2 <- check_correctness_sac(emdat_export.df.scene, participant, a_scene,
+#     #                                          segment.names)
+#     # checked_result3 <- check_correctness_eve(emdat_export.df.scene, participant, a_scene,
+#     #                                          segment.names)
+#     # checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene,
+#     #                                                 segment.names)
+#   } else{
+#     print(
+#       paste("################ ", a_scene," has no data in output file; tests skipped ##################", 
+#             sep = ""))
+#   } 
 # }
 # 
-# readfiles_part2_debug("102b", path, "102b", "Event_16")
+# readfiles_part2_debug("103a", path, "103b", "Event_61")
 

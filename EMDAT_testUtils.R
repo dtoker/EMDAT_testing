@@ -18,22 +18,57 @@ find_path_length_vector <- function(x_cord_vector, y_cord_vector){
 
 # Checks whether the value computed from the internal data actually matches EMDAT output value
 # First argument: expected value. Second: actual value.  
-verify_equivalence <- function(internal_value, output_value, participant, a_scene, error_name){ 
-  
+verify_equivalence <- function(internal_value, output_value, participant, a_scene, error_name){
+
   total_counter <<- total_counter + 1
-  
+
   error_specification <- paste("Error: ", error_name, " does not match for participant:")
   if(is.na(internal_value)|is.na(output_value)){print(paste(participant, a_scene, " NA"))}
   try(
     if(internal_value  != output_value){
-      
-      stop(paste(error_specification, participant, " and scene: ", a_scene))
+
+      stop(paste(error_specification,
+                 participant,
+                 " and scene: ",
+                 a_scene,
+                 " internal_value: ",
+                 formatC(internal_value, format="f", digits = 12),
+                 " output_value: ",
+                 formatC(output_value, format="f", digits = 12),
+                 sep = ""))
     } else{
-      
+
         success_counter <<- success_counter + 1
     }
   )
 }
+# verify_equivalence <- function(internal_value, output_value, participant, a_scene, error_name){ 
+#   
+#   total_counter <<- total_counter + 1
+#   
+#   error_specification <- paste("Error: ", error_name, " does not match for participant:")
+#   
+#   try(
+#     if(is.na(internal_value)|is.na(output_value)){
+#       stop(paste(participant, a_scene, " NA"))
+#       
+#     }else if(internal_value  != output_value){
+#       
+#       stop(paste(error_specification, 
+#                  participant, 
+#                  " and scene: ", 
+#                  a_scene, 
+#                  " internal_value: ",
+#                  formatC(internal_value, format="f", digits = 12),
+#                  " output_value: ",
+#                  formatC(output_value, format="f", digits = 12),
+#                  sep = ""))
+#     } else{
+#       
+#       success_counter <<- success_counter + 1
+#     }
+#   )
+# }
 
 # notifies test success by printing out  
 report_success <- function(participant){
