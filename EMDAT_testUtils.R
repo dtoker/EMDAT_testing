@@ -23,7 +23,11 @@ verify_equivalence <- function(internal_value, output_value, participant, a_scen
   total_counter <<- total_counter + 1
 
   error_specification <- paste("Error: ", error_name, " does not match for participant:")
+  
+  print(paste("--------- processing ", participant, " ", a_scene, " ", error_name, " --------", sep = ""))
+  
   if(is.na(internal_value)|is.na(output_value)){print(paste(participant, a_scene, " NA"))}
+  
   try(
     if(internal_value  != output_value){
 
