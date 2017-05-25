@@ -28,7 +28,14 @@ get_features_df_for_participant <- function(emdat_export_all.df, participant, Sc
     } else {
       
       numerical_part <- as.numeric(substr(participant, 1, number_char - 1))
-      numerical_part <- numerical_part + 1
+      
+      # no seg file for participant 143 
+      if(numerical_part != 142){
+        numerical_part <- numerical_part + 1
+      } else{
+        numerical_part <- numerical_part + 2
+      }
+      
       end_row <- which(Sc_ids==paste(numerical_part, "a_allsc", sep = "")) - 1
     }
   } else{
@@ -116,7 +123,7 @@ find_missing <- function(participant, seg_file, last_participant){
   }
 }
 
-participants <- generate_participant_list(151:162)
+participants <- generate_participant_list(162:162)
 
 run_tests <- function(participants, last_participant){
   

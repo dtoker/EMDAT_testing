@@ -580,7 +580,7 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
 ### set up the tests ###    
   
   # read in the needed internal EMDAT data file
-  internal_data.df <- read.csv(paste(root_path, "EMDATinternaldata_gazesamples_", participant, ".csv", sep=""),lowernames=FALSE, sep=",")
+  internal_data.df <- read.csv(paste(root_path, "EMDATinternaldata_gazesamples_", participant, ".csv", sep=""), sep=",")
   
   # keeps all segments belonging to the scene in data frame format  
   # only one data set (P18) contains a scene consisting of multiple segments     
