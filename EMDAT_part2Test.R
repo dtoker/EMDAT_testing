@@ -171,10 +171,9 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   output_value <- subset(emdat_output.df, select=sumfixationduration)[1,]
   verify_equivalence(internal_value, output_value, participant, a_scene, "sumfixationduration")
 
-### OUTPUT ROUNDED FOR NOW ###################################################################    
 ### stddevfixationduration ###
   internal_value <- round(sd(subset(internal_data.df, select=fixationduration)$fixationduration), digits=9)
-  output_value <- round(subset(emdat_output.df, select=stddevfixationduration)[1,], digits = 9)
+  output_value <- subset(emdat_output.df, select=stddevfixationduration)[1,]
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevfixationduration")
   
 ### meanfixationduration ###
