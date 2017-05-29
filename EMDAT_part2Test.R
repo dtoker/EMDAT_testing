@@ -53,6 +53,12 @@ readfiles_part2 <- function(participant, seg_file, last_participant){
   # extract scene names
   scene.names <- unique(seg_file.df[,"scene"])
   
+  # reads in the needed internal EMDAT data files
+  fixation_data.df <- read.csv(paste(root_path,"EMDATinternaldata_fixations_", participant, ".csv", sep=""), sep=",")
+  gazesample_data.df <- read.csv(paste(root_path, "EMDATinternaldata_gazesamples_", participant, ".csv", sep=""), sep=",")
+  saccade_data.df <- read.csv(paste(root_path, "EMDATinternaldata_saccades_", participant, ".csv", sep=""), sep=",")
+  events_data.df <- read.csv(paste(root_path, "EMDATinternaldata_events_", participant, ".csv", sep=""), sep=",")
+  
   # loop over the scenes
   for (a_scene in scene.names) {
     
@@ -61,48 +67,31 @@ readfiles_part2 <- function(participant, seg_file, last_participant){
     
     emdat_export.df.scene <- subset(emdat_export.df, Sc_id == a_scene)
     
-    ############### remove when the problem is resolved  #######################
-    ######### ensures the scene exists in internal data and output files #######
-    scene_abscent <- FALSE
+    if(nrow(emdat_export.df.scene) != 0) {
     
-    # reads in the needed internal EMDAT data files
-    fixation_data.df <- read.csv(paste(root_path,"EMDATinternaldata_fixations_", participant, ".csv", sep=""), sep=",")
-    gazesample_data.df <- read.csv(paste(root_path, "EMDATinternaldata_gazesamples_", participant, ".csv", sep=""), sep=",")
-    saccade_data.df <- read.csv(paste(root_path, "EMDATinternaldata_saccades_", participant, ".csv", sep=""), sep=",")
-    events_data.df <- read.csv(paste(root_path, "EMDATinternaldata_events_", participant, ".csv", sep=""), sep=",")
+      # keeps all segments belonging to the scene in data frame format 
+      fixation_data_sub.df <- subset(fixation_data.df, scene == a_scene)
+      gazesample_data_sub.df <- subset(gazesample_data.df, scene == a_scene)
+      saccade_data_sub.df <- subset(saccade_data.df, scene == a_scene)
+      events_data_sub.df <- subset(events_data.df, scene == a_scene)
     
-    # keeps all segments belonging to the scene in data frame format 
-    fixation_data.df <- subset(fixation_data.df, scene == a_scene)
-    gazesample_data.df <- subset(gazesample_data.df, scene == a_scene)
-    saccade_data.df <- subset(saccade_data.df, scene == a_scene)
-    events_data.df <- subset(events_data.df, scene == a_scene)
-    
-    if(nrow(emdat_export.df.scene)==0 | 
-       nrow(fixation_data.df)==0 | 
-       nrow(gazesample_data.df)==0 |
-       nrow(saccade_data.df)==0 |
-       nrow(events_data.df)==0){
-      
-      scene_abscent <- TRUE
-    }  
-    ##########################################################################
-    
-    if(scene_abscent){
-      
-      print(paste("############## ", participant, " ",  a_scene,
-                  " has no data in internal data or output file; tests skipped ##################",
-                  sep = ""))
-    } else{
-      
-      checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
-                                               segment.names)
-      checked_result2 <- check_correctness_sac(emdat_export.df.scene, participant, a_scene,
-                                               segment.names)
-      checked_result3 <- check_correctness_eve(emdat_export.df.scene, participant, a_scene,
-                                               segment.names)
-      checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene,
-                                                      segment.names)
-    }  
+      # if(nrow(fixation_data_sub.df) != 0){
+      #   checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
+      #                                            segment.names)
+      # }
+      # if(nrow(saccade_data_sub.df) != 0){
+      #   checked_result2 <- check_correctness_sac(emdat_export.df.scene, participant, a_scene,
+      #                                            segment.names)
+      # }
+      # if(nrow(events_data_sub.df) != 0){
+      #   checked_result3 <- check_correctness_eve(emdat_export.df.scene, participant, a_scene,
+      #                                            segment.names)
+      # }
+      if(nrow(gazesample_data_sub.df) != 0){
+        checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene,
+                                                        segment.names)
+      }
+    }
   }
   report_success(participant)
 }
@@ -603,14 +592,14 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
 ### enddistance ###
   output_value <- subset(emdat_output.df, select=enddistance)[1,]
   internal_value <- tail(
-    subset(internal_data.df, select=headdistance, is_valid_headdistance==TRUE)$headdistance, 1)
+    subset(internal_data.df, select=headdistance, is_valid_headdistance=="True")$headdistance, 1)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "enddistance")
 
 ### endpupilsize ###
   output_value <- subset(emdat_output.df, select=endpupilsize)[1,]
   internal_value <- tail(
-    subset(internal_data.df, select=rawpupilsize, is_valid_pupil==TRUE)$rawpupilsize, 1)
+    subset(internal_data.df, select=rawpupilsize, is_valid_pupil=="True")$rawpupilsize, 1)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "endpupilsize")
 
@@ -621,7 +610,7 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   # does not make difference. But the internal value does not match the output_value in the 
   # corresponding  mindistancetest without that condition. So to be consistent, the condition 
   # is added here as well.
-  internal_value <- max(subset(internal_data.df, select=headdistance, is_valid_headdistance==TRUE)$headdistance)
+  internal_value <- max(subset(internal_data.df, select=headdistance, is_valid_headdistance=="True")$headdistance)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "maxdistance")
 
@@ -629,7 +618,7 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   output_value <- subset(emdat_output.df, select=maxpupilsize)[1,]
   
   # Remark similar to the above on the condition of R subset operation holds here as well.   
-  internal_value <- max(subset(internal_data.df, select=rawpupilsize, is_valid_pupil==TRUE)$rawpupilsize)
+  internal_value <- max(subset(internal_data.df, select=rawpupilsize, is_valid_pupil=="True")$rawpupilsize)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "maxpupilsize")
   
@@ -653,7 +642,7 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   output_value <- subset(emdat_output.df, select=meandistance)[1,]
   
   results <- find_gaze_mean(internal_data_vector, "headdistance", "is_valid_headdistance", "eql", 
-                            TRUE, segs_length, 12)
+                            "True", segs_length, 12)
   
   verify_equivalence(results$mean, output_value, participant, a_scene, "meandistance")
 
@@ -661,7 +650,7 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   output_value <- subset(emdat_output.df, select=stddevdistance)[1,]
   
   internal_value <- find_gaze_sd(internal_data_vector, "headdistance", "is_valid_headdistance", "eql",
-                                 TRUE, segs_length, results$temp_mean, 12)
+                                 "True", segs_length, results$temp_mean, 12)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevdistance")
 
@@ -669,7 +658,7 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   output_value <- subset(emdat_output.df, select=meanpupilsize)[1,]
   
   results <- find_gaze_mean(internal_data_vector, "rawpupilsize", "is_valid_pupil", "eql", 
-                            TRUE, segs_length, 12)
+                            "True", segs_length, 12)
   
   verify_equivalence(results$mean, output_value, participant, a_scene, "meanpupilsize")
 
@@ -677,7 +666,7 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   output_value <- subset(emdat_output.df, select=stddevpupilsize)[1,]
   
   internal_value <- find_gaze_sd(internal_data_vector, "rawpupilsize", "is_valid_pupil", "eql",
-                                 TRUE, segs_length, results$temp_mean, 12)
+                                 "True", segs_length, results$temp_mean, 12)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevpupilsize")
   
@@ -713,13 +702,13 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
      
 ### mindistance ###
   output_value <- subset(emdat_output.df, select=mindistance)[1,]
-  internal_value <- min(subset(internal_data.df, select=headdistance, is_valid_headdistance==TRUE)$headdistance)
+  internal_value <- min(subset(internal_data.df, select=headdistance, is_valid_headdistance=="True")$headdistance)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "mindistance")
   
 ### minpupilsize ###
   output_value <- subset(emdat_output.df, select=minpupilsize)[1,]
-  internal_value <- min(subset(internal_data.df, select=rawpupilsize, is_valid_pupil==TRUE)$rawpupilsize)
+  internal_value <- min(subset(internal_data.df, select=rawpupilsize, is_valid_pupil=="True")$rawpupilsize)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "minpupilsize")
   
@@ -740,14 +729,14 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
 ### startdistance ###
   output_value <- subset(emdat_output.df, select=startdistance)[1,]
   internal_value <- head(
-    subset(internal_data.df, select=headdistance, is_valid_headdistance==TRUE)$headdistance, 1)
+    subset(internal_data.df, select=headdistance, is_valid_headdistance=="True")$headdistance, 1)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "startdistance")
   
 ### startpupilsize ###
   output_value <- subset(emdat_output.df, select=startpupilsize)[1,]
   internal_value <- head(
-    subset(internal_data.df, select=rawpupilsize, is_valid_pupil==TRUE)$rawpupilsize, 1)
+    subset(internal_data.df, select=rawpupilsize, is_valid_pupil=="True")$rawpupilsize, 1)
 
   verify_equivalence(internal_value, output_value, participant, a_scene, "startpupilsize")
 
@@ -760,50 +749,50 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
 
 ##########################################################################################
 
-# # When called in the main, commences the part2 tests for the given list of participants
-# # last_participant refers to the last in the given study, not necessarily that 
-# # in the list of participants    
-# run_part2Test <- function(participants, last_participant){
-#   
-#   for(i in 1:length(participants)){
-#     
-#     participant <- participants[i]
-#     readfiles_part2(participant, 
-#                     paste(root_path, "SegFiles/P", participant, ".seg", sep = ""),
-#                     last_participant)
-#   }
-# }
-# 
-# ##### For debugging #####
-# 
-# # Set up the tests
-# # Choose particpants to run the tests on
-# participants <- generate_participant_list(101:101)
-# 
-# # Run
-# # Note: second argument takes the last participant of the study, not necessarily the
-# #       last element in the list of participants given to the first argument
-# run_part2Test(participants, "162b")
+# When called in the main, commences the part2 tests for the given list of participants
+# last_participant refers to the last in the given study, not necessarily that
+# in the list of participants
+run_part2Test <- function(participants, last_participant){
 
-path <- paste(root_path, "SegFiles/P", "101a", ".seg", sep = "")
-readfiles_part2_debug <- function(participant, seg_file, last_participant, a_scene){
+  for(i in 1:length(participants)){
 
-  emdat_export.df <- get_features_df_for_participant(emdat_export_all.df, participant, Sc_ids, last_participant)
-  seg_file.df <- read.csv(seg_file, sep="\t", header = FALSE, col.names = c("scene","segment","start","end"))
-
-  acceptable_seg_file.df <- subset(seg_file.df, end > start)
-  segment.names <- unique(subset(seg_file.df, scene==a_scene)[,"segment"])
-  emdat_export.df.scene <- subset(emdat_export.df, Sc_id == a_scene)
-
-  # checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
-  #                                          segment.names)
-  checked_result2 <- check_correctness_sac(emdat_export.df.scene, participant, a_scene,
-                                           segment.names)
-  checked_result3 <- check_correctness_eve(emdat_export.df.scene, participant, a_scene,
-                                           segment.names)
-  checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene,
-                                                  segment.names)
+    participant <- participants[i]
+    readfiles_part2(participant,
+                    paste(root_path, "SegFiles/P", participant, ".seg", sep = ""),
+                    last_participant)
+  }
 }
 
-readfiles_part2_debug("101a", path, "162b", "Event_15")
+##### For debugging #####
+
+# Set up the tests
+# Choose particpants to run the tests on
+participants <- generate_participant_list(101:101)
+
+# Run
+# Note: second argument takes the last participant of the study, not necessarily the
+#       last element in the list of participants given to the first argument
+run_part2Test(participants, "162b")
+
+# path <- paste(root_path, "SegFiles/P", "101a", ".seg", sep = "")
+# readfiles_part2_debug <- function(participant, seg_file, last_participant, a_scene){
+# 
+#   emdat_export.df <- get_features_df_for_participant(emdat_export_all.df, participant, Sc_ids, last_participant)
+#   seg_file.df <- read.csv(seg_file, sep="\t", header = FALSE, col.names = c("scene","segment","start","end"))
+# 
+#   acceptable_seg_file.df <- subset(seg_file.df, end > start)
+#   segment.names <- unique(subset(seg_file.df, scene==a_scene)[,"segment"])
+#   emdat_export.df.scene <- subset(emdat_export.df, Sc_id == a_scene)
+# 
+#   # checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
+#   #                                          segment.names)
+#   checked_result2 <- check_correctness_sac(emdat_export.df.scene, participant, a_scene,
+#                                            segment.names)
+#   checked_result3 <- check_correctness_eve(emdat_export.df.scene, participant, a_scene,
+#                                            segment.names)
+#   checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene,
+#                                                   segment.names)
+# }
+# 
+# readfiles_part2_debug("101a", path, "162b", "Event_15")
 
