@@ -194,7 +194,7 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
 
 ### stddevpathdistance ###
   output_value <- subset(emdat_output.df, select = stddevpathdistance)[1,]
-  internal_value <- find_fixation_sd(results$data_storage, results$temp_mean, segs_length)
+  internal_value <- find_fixation_sd(results$data_storage, results$mean, segs_length)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevpathdistance")
 
@@ -215,7 +215,7 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   
 ### stddevabspathangles ###
   output_value <- subset(emdat_output.df, select = stddevabspathangles)[1,]
-  internal_value <- find_fixation_sd(results$data_storage, results$temp_mean, segs_length)
+  internal_value <- find_fixation_sd(results$data_storage, results$mean, segs_length)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevabspathangles")
   
@@ -249,7 +249,7 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   
 ### stddevrelpathangles ###
   output_value <- subset(emdat_output.df, select = stddevrelpathangles)[1,]
-  internal_value <- find_fixation_sd(results$data_storage, results$temp_mean, segs_length)
+  internal_value <- find_fixation_sd(results$data_storage, results$mean, segs_length)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevrelpathangles")
 }
@@ -319,45 +319,45 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
 ### meansaccadedistance ###
   output_value <- subset(emdat_output.df, select=meansaccadedistance)[1,]
   
-  results <- find_saccade_mean(internal_data_vector, "saccadedistance", segs_length)
+  mean <- find_saccade_mean(internal_data_vector, "saccadedistance", segs_length)
   
-  verify_equivalence(results$mean, output_value, participant, a_scene, "meansaccadedistance")
+  verify_equivalence(mean, output_value, participant, a_scene, "meansaccadedistance")
     
 ### stddevsaccadedistance ###
   output_value <- subset(emdat_output.df, select=stddevsaccadedistance)[1,]
   
   internal_value <- find_saccade_sd(
-    internal_data_vector, "saccadedistance", segs_length, results$temp_mean)
+    internal_data_vector, "saccadedistance", segs_length, mean)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevsaccadedistance")
 
 ### meansaccadeduration ###
   output_value <- subset(emdat_output.df, select=meansaccadeduration)[1,]
   
-  results <- find_saccade_mean(internal_data_vector, "saccadeduration", segs_length)
+  mean <- find_saccade_mean(internal_data_vector, "saccadeduration", segs_length)
   
-  verify_equivalence(results$mean, output_value, participant, a_scene, "meansaccadeduration")
+  verify_equivalence(mean, output_value, participant, a_scene, "meansaccadeduration")
 
 ### stddevsaccadeduration ###
   output_value <- subset(emdat_output.df, select=stddevsaccadeduration)[1,]
   
   internal_value <- find_saccade_sd(
-    internal_data_vector, "saccadeduration", segs_length, results$temp_mean)
+    internal_data_vector, "saccadeduration", segs_length, mean)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevsaccadeduration")
 
 ### meansaccadespeed ###
   output_value <- subset(emdat_output.df, select=meansaccadespeed)[1,]
   
-  results <- find_saccade_mean(internal_data_vector, "saccadespeed", segs_length)
+  mean <- find_saccade_mean(internal_data_vector, "saccadespeed", segs_length)
   
-  verify_equivalence(results$mean, output_value, participant, a_scene, "meansaccadespeed")
+  verify_equivalence(mean, output_value, participant, a_scene, "meansaccadespeed")
   
 ### stddevsaccadespeed ###
   output_value <- subset(emdat_output.df, select=stddevsaccadespeed)[1,]
   
   internal_value <- find_saccade_sd(
-    internal_data_vector, "saccadespeed", segs_length, results$temp_mean)
+    internal_data_vector, "saccadespeed", segs_length, mean)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevsaccadespeed")
   
@@ -636,32 +636,32 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
 ### meandistance ###
   output_value <- subset(emdat_output.df, select=meandistance)[1,]
   
-  results <- find_gaze_mean(internal_data_vector, "headdistance", "is_valid_headdistance", "eql", 
-                            "True", segs_length, 12)
+  mean <- find_gaze_mean(internal_data_vector, "headdistance", "is_valid_headdistance", "eql", 
+                            "True", segs_length)
   
-  verify_equivalence(results$mean, output_value, participant, a_scene, "meandistance")
+  verify_equivalence(mean, output_value, participant, a_scene, "meandistance")
 
 ### stddevdistance ###
   output_value <- subset(emdat_output.df, select=stddevdistance)[1,]
   
   internal_value <- find_gaze_sd(internal_data_vector, "headdistance", "is_valid_headdistance", "eql",
-                                 "True", segs_length, results$temp_mean, 12)
+                                 "True", segs_length, mean)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevdistance")
 
 ### meanpupilsize ###
   output_value <- subset(emdat_output.df, select=meanpupilsize)[1,]
   
-  results <- find_gaze_mean(internal_data_vector, "rawpupilsize", "is_valid_pupil", "eql", 
-                            "True", segs_length, 12)
+  mean <- find_gaze_mean(internal_data_vector, "rawpupilsize", "is_valid_pupil", "eql", 
+                            "True", segs_length)
   
-  verify_equivalence(results$mean, output_value, participant, a_scene, "meanpupilsize")
+  verify_equivalence(mean, output_value, participant, a_scene, "meanpupilsize")
 
 ### stddevpupilsize ###
   output_value <- subset(emdat_output.df, select=stddevpupilsize)[1,]
   
   internal_value <- find_gaze_sd(internal_data_vector, "rawpupilsize", "is_valid_pupil", "eql",
-                                 "True", segs_length, results$temp_mean, 12)
+                                 "True", segs_length, mean)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevpupilsize")
   
@@ -675,10 +675,10 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   
   output_value <- subset(emdat_output.df, select=meanpupilvelocity)[1,]
   
-  results <- find_gaze_mean(internal_data_vector, "pupilvelocity", "pupilvelocity","not_eql", -1, 
-                            segs_length, 12)
+  mean <- find_gaze_mean(internal_data_vector, "pupilvelocity", "pupilvelocity","not_eql", -1, 
+                            segs_length)
   
-  verify_equivalence(results$mean, output_value, participant, a_scene, "meanpupilvelocity")
+  verify_equivalence(mean, output_value, participant, a_scene, "meanpupilvelocity")
 
 ### stddevpupilvelocity ###
   
@@ -691,7 +691,7 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   output_value <- subset(emdat_output.df, select=stddevpupilvelocity)[1,]
   
   internal_value <- find_gaze_sd(internal_data_vector, "pupilvelocity", "pupilvelocity", "not_eql",
-                                 -1, segs_length, results$temp_mean, 12)
+                                 -1, segs_length, mean)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevpupilvelocity")
      
@@ -761,7 +761,7 @@ run_part2Test <- function(participants, last_participant){
 
 # Set up the tests
 # Choose particpants to run the tests on
-participants <- generate_participant_list(101:103)
+participants <- generate_participant_list(101:101)
 # Run
 # Note: second argument takes the last participant of the study, not necessarily the
 #       last element in the list of participants given to the first argument

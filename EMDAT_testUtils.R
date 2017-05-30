@@ -291,10 +291,9 @@ find_sum_mean_rate <- function(vector_input, vector_function, segs_length, scene
     data_storage[[i]] <- result_vector
   }
   
-  results$rate <- signif(internal_sum / scene_length, digits = 12)
-  results$sum <- signif(internal_sum, digits = 12)
-  results$temp_mean <- numerator / denominator
-  results$mean <- signif(results$temp_mean, digits = 12)
+  results$rate <- internal_sum / scene_length
+  results$sum <- internal_sum
+  results$mean <- numerator / denominator
   results$data_storage <- data_storage
   
   return(results)
@@ -312,7 +311,7 @@ find_fixation_sd <- function(data_storage, scene_mean, segs_length){
     denominator <- denominator+length(data_storage[[i]])
   }
   if(denominator > 1){
-    internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
+    internal_value <- sqrt(numerator/(denominator-1))
   }
   return(internal_value)
 }
@@ -323,7 +322,6 @@ find_saccade_mean <- function(input_vector, coloumn, segs_length){
   
   numerator <- 0
   denominator <- 0
-  results <- list(temp_mean = 0, mean = 0)
   
   for(i in 1:segs_length){
     
@@ -332,10 +330,9 @@ find_saccade_mean <- function(input_vector, coloumn, segs_length){
     numerator <- numerator + compute_segmean_with_weight(data)
     denominator <- denominator+length(data)
   }
-  results$temp_mean <- numerator/denominator
-  results$mean <- signif(results$temp_mean, digits = 12)
+  mean <- numerator/denominator
   
-  return(results)
+  return(mean)
 }
 
 # computes the sd for saccadedistance, saccadeduration, and saccadespeed
@@ -353,7 +350,7 @@ find_saccade_sd <- function(input_vector, coloumn, segs_length, scene_mean){
     numerator <- numerator + compute_segsd_with_weight(data, scene_mean)
     denominator <- denominator+length(data)
   }
-  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
+  internal_value <- sqrt(numerator/(denominator-1))
   
   return(internal_value)
 }
@@ -361,11 +358,10 @@ find_saccade_sd <- function(input_vector, coloumn, segs_length, scene_mean){
 # computes the mean for headdistance, pupilsize, and pupilvelocity
 # coloumn, criterion_name, criterion_condition, and criterion_value in String
 find_gaze_mean <- function(input_vector, coloumn, criterion_name, criterion_condition, criterion_value, 
-                           segs_length, sig_figs){
+                           segs_length){
   
   numerator <- 0
   denominator <- 0
-  results <- list(mean = 0, temp_mean = 0)
   
   for(i in 1:segs_length){
     # input_vector[[i]][input_vector[[i]][[criterion_name]]==criterion_value,][[coloumn]]    
@@ -380,16 +376,15 @@ find_gaze_mean <- function(input_vector, coloumn, criterion_name, criterion_cond
     numerator <- numerator + compute_segmean_with_weight(valid_data)
     denominator <- denominator+length(valid_data)
   }
-  results$temp_mean <- numerator/denominator
-  results$mean <- signif(results$temp_mean, digits = sig_figs)
+  mean <- numerator / denominator
   
-  return(results)
+  return(mean)
 }
 
 # computes the sd for headdistance, pupilsize, and pupilvelocity
 # coloumn, criterion_name, criterion_condition, and criterion_value in String
 find_gaze_sd <- function(input_vector, coloumn, criterion_name, criterion_condition,
-                         criterion_value, segs_length, scene_mean, sig_figs){
+                         criterion_value, segs_length, scene_mean){
   
   numerator <- 0
   denominator <- 0
@@ -407,7 +402,7 @@ find_gaze_sd <- function(input_vector, coloumn, criterion_name, criterion_condit
     numerator <- numerator + compute_segsd_with_weight(valid_data, scene_mean)
     denominator <- denominator+length(valid_data)
   }
-  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = sig_figs)
+  internal_value <- sqrt(numerator/(denominator-1))
   
   return(internal_value)
 }
