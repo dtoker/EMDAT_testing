@@ -27,7 +27,7 @@ verify_equivalence <- function(internal_value, output_value, participant, a_scen
   #print(paste("--------- processing ", participant, " ", a_scene, " ", error_name, " --------", sep = ""))
   
   try(
-    if(internal_value  != output_value){
+    if(signif(internal_value, digits = 8) != signif(output_value, digits = 8)){
 
       stop(paste(error_specification,
                  participant,

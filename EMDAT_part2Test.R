@@ -157,19 +157,19 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
   verify_equivalence(internal_value, output_value, participant, a_scene, "sumfixationduration")
 
 ### stddevfixationduration ###
-  internal_value <- round(sd(subset(internal_data.df, select=fixationduration)$fixationduration), digits=9)
+  internal_value <- sd(subset(internal_data.df, select=fixationduration)$fixationduration)
   output_value <- subset(emdat_output.df, select=stddevfixationduration)[1,]
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevfixationduration")
   
 ### meanfixationduration ###
-  internal_value <- round(mean(subset(internal_data.df, select=fixationduration)$fixationduration), digits=9)
+  internal_value <- mean(subset(internal_data.df, select=fixationduration)$fixationduration)
   output_value <- subset(emdat_output.df, select=meanfixationduration)[1,]
   verify_equivalence(internal_value, output_value, participant, a_scene, "meanfixationduration")
 
 ### fixationrate ###
   output_value <- subset(emdat_output.df, select=fixationrate)[1,]
   scene_length <- compute_scene_length(segment.names, gazesample_data_vector)
-  internal_value <- signif((nrow(internal_data.df) / scene_length), digits=12)
+  internal_value <- nrow(internal_data.df) / scene_length
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "fixationrate")
   
@@ -229,7 +229,7 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
     sac_sum <- sum(subset(saccade_data_vector[[i]], select=saccadeduration))
     numerator <- numerator + fix_sum/sac_sum
   }
-  internal_value <- signif(numerator/segs_length, digits=12) 
+  internal_value <- numerator/segs_length 
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "fixationsaccadetimeratio")
   
@@ -363,8 +363,7 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
   
 ### sumsaccadedistance ###
   output_value <- subset(emdat_output.df, select=sumsaccadedistance)[1,]
-  internal_value <- signif(sum(subset(internal_data.df, select=saccadedistance)$saccadedistance),
-                           digits = 12)
+  internal_value <- sum(subset(internal_data.df, select=saccadedistance)$saccadedistance)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "sumsaccadedistance")
   
@@ -451,7 +450,7 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment
   
 ### doubleclicrate ###
   output_value <- subset(emdat_output.df, select=doubleclicrate)[1,]
-  internal_value <- signif(double_clicks/scene_length, digits=12)
+  internal_value <- double_clicks / scene_length
 
   verify_equivalence(internal_value, output_value, participant, a_scene, "doubleclicrate")
 
@@ -469,7 +468,7 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment
   
 ### leftclicrate ###
   output_value <- subset(emdat_output.df, select=leftclicrate)[1,]
-  internal_value <- signif(left_clicks/scene_length, digits=12)
+  internal_value <- left_clicks / scene_length
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "leftclicrate")  
 
@@ -497,7 +496,7 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment
   
 ### keypressedrate ###
   output_value <- subset(emdat_output.df, select=keypressedrate)[1,]
-  internal_value <- signif(keypress/scene_length, digits=12) 
+  internal_value <- keypress / scene_length 
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "keypressedrate")
   
@@ -526,7 +525,7 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment
   
 ### rightclicrate ###
   output_value <- subset(emdat_output.df, select=rightclicrate)[1,]
-  internal_value <- signif(rightclicks/scene_length, digits=12) 
+  internal_value <- rightclicks / scene_length 
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "rightclicrate")
   
@@ -626,12 +625,12 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   # (i.e., data_gazesample); we cannot calculate the value in our test to the same precision as 
   # EMDAT does.
   
-  output_value <- signif(subset(emdat_output.df, select=maxpupilvelocity)[1,], digits = 8)
+  output_value <- subset(emdat_output.df, select=maxpupilvelocity)[1,]
   
   # The condition in the subet operaiton does not make practical difference here. But, the convention
   # is followed in computing the mean and min, so that it is added here for consistency.      
   internal_value <- max(subset(internal_data.df, select=pupilvelocity, pupilvelocity != -1)$pupilvelocity)
-  internal_value <- signif(internal_value, digits = 8)
+  
   verify_equivalence(internal_value, output_value, participant, a_scene, "maxpupilvelocity")
   
 ### meandistance ###
@@ -674,10 +673,10 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   # (i.e., data_gazesample); we cannot calculate the value in our test to the same precision as 
   # EMDAT does.
   
-  output_value <- signif(subset(emdat_output.df, select=meanpupilvelocity)[1,], digits = 6)
+  output_value <- subset(emdat_output.df, select=meanpupilvelocity)[1,]
   
   results <- find_gaze_mean(internal_data_vector, "pupilvelocity", "pupilvelocity","not_eql", -1, 
-                            segs_length, 6)
+                            segs_length, 12)
   
   verify_equivalence(results$mean, output_value, participant, a_scene, "meanpupilvelocity")
 
@@ -689,10 +688,10 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   # (i.e., data_gazesample); we cannot calculate the value in our test to the same precision as 
   # EMDAT does.
   
-  output_value <- signif(subset(emdat_output.df, select=stddevpupilvelocity)[1,], digits = 6)
+  output_value <- subset(emdat_output.df, select=stddevpupilvelocity)[1,]
   
   internal_value <- find_gaze_sd(internal_data_vector, "pupilvelocity", "pupilvelocity", "not_eql",
-                                 -1, segs_length, results$temp_mean, 6)
+                                 -1, segs_length, results$temp_mean, 12)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevpupilvelocity")
      
@@ -716,9 +715,8 @@ check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, 
   # (i.e., data_gazesample); we cannot calculate the value in our test to the same precision as 
   # EMDAT does.
   
-  output_value <- signif(subset(emdat_output.df, select=minpupilvelocity)[1,], digits = 8)
+  output_value <- subset(emdat_output.df, select=minpupilvelocity)[1,]
   internal_value <- min(subset(internal_data.df, select=pupilvelocity, pupilvelocity != -1)$pupilvelocity)
-  internal_value <- signif(internal_value, digits = 8)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "minpupilvelocity")
   
