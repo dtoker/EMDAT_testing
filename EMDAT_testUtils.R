@@ -26,8 +26,6 @@ verify_equivalence <- function(internal_value, output_value, participant, a_scen
   
   #print(paste("--------- processing ", participant, " ", a_scene, " ", error_name, " --------", sep = ""))
   
-  #if(is.na(internal_value)|is.na(output_value)){print(paste(participant, a_scene, " NA"))}
-  
   try(
     if(internal_value  != output_value){
 
@@ -134,9 +132,23 @@ find_rel_angle_vector<- function(x_cord_vector, y_cord_vector){
     last_vector[2] <- y_cord_vector[i] - y_cord_vector[i+1]
     next_vector[1] <- x_cord_vector[i+2] - x_cord_vector[i+1]
     next_vector[2] <- y_cord_vector[i+2] - y_cord_vector[i+1]
-    normalized_last_vec <- normalize_vector(last_vector)
-    normalized_new_vec <- normalize_vector(next_vector)
-    rel_angle_vector[i]<- acos((normalized_last_vec%*%normalized_new_vec)[1,])
+    
+    if((last_vector[1]==0 & last_vector[2]==0) | (next_vector[1]==0 & next_vector[2]==0)){
+      
+      rel_angle_vector[i]<- 0
+    } else{
+      
+        normalized_last_vec <- normalize_vector(last_vector)
+        normalized_new_vec <- normalize_vector(next_vector)
+        dot_product <- (normalized_last_vec%*%normalized_new_vec)[1,]
+        if(dot_product > 1 ){
+          dot_product = 1
+        } 
+        if(dot_product < -1){
+          dot_product = -1
+        }
+        rel_angle_vector[i]<- acos(dot_product)
+    }
   }
   return(rel_angle_vector)
 }
@@ -228,6 +240,9 @@ find_double_and_left_clicks <- function(internal_data.df){
         first_left <- FALSE
       }
     }
+    if(double_left_marker[length(double_left_marker)]=="L" & first_left){
+      clicks[4] <- time_stamps[length(double_left_marker)]
+    } 
     return(clicks)
   }
 }
