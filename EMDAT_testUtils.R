@@ -34,16 +34,29 @@ verify_equivalence <- function(internal_value, output_value, participant, a_scen
                  " and scene: ",
                  a_scene,
                  " internal_value: ",
-                 formatC(internal_value, format="f", digits = 12),
+                 formatC(internal_value, format="f", digits = 8),
                  " output_value: ",
-                 formatC(output_value, format="f", digits = 12),
+                 formatC(output_value, format="f", digits = 8),
                  sep = ""))
     } else{
 
         success_counter <<- success_counter + 1
+        
+        # To pintout values for confirmation:
+        # writeLines(paste(participant,
+        #                  " and scene: ",
+        #                  a_scene,
+        #                  " ",
+        #                  error_name,
+        #                  " internal_value: ",
+        #                  formatC(internal_value, format="f", digits = 8),
+        #                  " output_value: ",
+        #                  formatC(output_value, format="f", digits = 8),
+        #                  sep = ""))
     }
   )
 }
+
 # verify_equivalence <- function(internal_value, output_value, participant, a_scene, error_name){ 
 #   
 #   total_counter <<- total_counter + 1
@@ -141,34 +154,39 @@ find_abs_angle_vector<- function(x_cord_vector, y_cord_vector){
 # computes and returns the relative angles of sucessive saccade paths in vector format
 find_rel_angle_vector<- function(x_cord_vector, y_cord_vector){
   
-  rel_angle_vector <- numeric(length(x_cord_vector)-2)
-  last_vector <- numeric(2)
-  next_vector <- numeric(2)
+  result_length <- length(x_cord_vector) - 2
+  rel_angle_vector <- numeric(result_length)
   
-  for(i in 1:(length(x_cord_vector)-2)){
+  if(result_length > 0){
     
-    last_vector[1] <- x_cord_vector[i] - x_cord_vector[i+1]
-    last_vector[2] <- y_cord_vector[i] - y_cord_vector[i+1]
-    next_vector[1] <- x_cord_vector[i+2] - x_cord_vector[i+1]
-    next_vector[2] <- y_cord_vector[i+2] - y_cord_vector[i+1]
+    last_vector <- numeric(2)
+    next_vector <- numeric(2)
+  
+    for(i in 1:(length(x_cord_vector)-2)){
     
-    if((last_vector[1]==0 & last_vector[2]==0) | (next_vector[1]==0 & next_vector[2]==0)){
+      last_vector[1] <- x_cord_vector[i] - x_cord_vector[i+1]
+      last_vector[2] <- y_cord_vector[i] - y_cord_vector[i+1]
+      next_vector[1] <- x_cord_vector[i+2] - x_cord_vector[i+1]
+      next_vector[2] <- y_cord_vector[i+2] - y_cord_vector[i+1]
+    
+      if((last_vector[1]==0 & last_vector[2]==0) | (next_vector[1]==0 & next_vector[2]==0)){
       
-      rel_angle_vector[i]<- 0
-    } else{
+        rel_angle_vector[i]<- 0
+      } else{
       
-        normalized_last_vec <- normalize_vector(last_vector)
-        normalized_new_vec <- normalize_vector(next_vector)
-        dot_product <- (normalized_last_vec%*%normalized_new_vec)[1,]
-        if(dot_product > 1 ){
-          dot_product = 1
-        } 
-        if(dot_product < -1){
-          dot_product = -1
-        }
-        rel_angle_vector[i]<- acos(dot_product)
+          normalized_last_vec <- normalize_vector(last_vector)
+          normalized_new_vec <- normalize_vector(next_vector)
+          dot_product <- (normalized_last_vec%*%normalized_new_vec)[1,]
+          if(dot_product > 1 ){
+            dot_product = 1
+          } 
+          if(dot_product < -1){
+            dot_product = -1
+          }
+          rel_angle_vector[i]<- acos(dot_product)
+      }
     }
-  }
+  } 
   return(rel_angle_vector)
 }
 
@@ -297,7 +315,7 @@ find_sum_mean_rate <- function(vector_input, vector_function, segs_length, scene
   numerator <- 0
   denominator <- 0
   data_storage <- list()
-  results <- list(sum = 0, temp_mean = 0, mean = 0, rate = 0, data_storage = 0)
+  results <- list(sum = 0, mean = 0, rate = 0, data_storage = 0)
   
   for(i in 1:segs_length){
     
@@ -312,7 +330,11 @@ find_sum_mean_rate <- function(vector_input, vector_function, segs_length, scene
   
   results$rate <- internal_sum / scene_length
   results$sum <- internal_sum
-  results$mean <- numerator / denominator
+  
+  if(denominator != 0){
+    results$mean <- numerator / denominator
+  }
+  
   results$data_storage <- data_storage
   
   return(results)
@@ -360,6 +382,7 @@ find_saccade_sd <- function(input_vector, coloumn, segs_length, scene_mean){
   
   numerator <- 0
   denominator <- 0
+  internal_value <- 0
   
   for(i in 1:segs_length){
     
@@ -369,8 +392,11 @@ find_saccade_sd <- function(input_vector, coloumn, segs_length, scene_mean){
     numerator <- numerator + compute_segsd_with_weight(data, scene_mean)
     denominator <- denominator+length(data)
   }
-  internal_value <- sqrt(numerator/(denominator-1))
   
+  if(denominator > 1) {
+    
+    internal_value <- sqrt(numerator/(denominator-1))
+  }
   return(internal_value)
 }
 
@@ -395,7 +421,12 @@ find_gaze_mean <- function(input_vector, coloumn, criterion_name, criterion_cond
     numerator <- numerator + compute_segmean_with_weight(valid_data)
     denominator <- denominator+length(valid_data)
   }
-  mean <- numerator / denominator
+  
+  if(denominator != 0){
+    mean <- numerator / denominator
+  } else {
+    mean <- -1
+  }
   
   return(mean)
 }
@@ -407,6 +438,7 @@ find_gaze_sd <- function(input_vector, coloumn, criterion_name, criterion_condit
   
   numerator <- 0
   denominator <- 0
+  internal_value <- 0
   
   for(i in 1:segs_length){
     # input_vector[[i]][input_vector[[i]][[criterion_name]]==criterion_value,][[coloumn]]    
@@ -421,7 +453,16 @@ find_gaze_sd <- function(input_vector, coloumn, criterion_name, criterion_condit
     numerator <- numerator + compute_segsd_with_weight(valid_data, scene_mean)
     denominator <- denominator+length(valid_data)
   }
-  internal_value <- sqrt(numerator/(denominator-1))
+  
+  # no valid data case 
+  if(denominator == 0) {
+    internal_value <- -1
+  }
+  
+  if(denominator > 1){
+    
+    internal_value <- sqrt(numerator/(denominator-1))
+  }
   
   return(internal_value)
 }
