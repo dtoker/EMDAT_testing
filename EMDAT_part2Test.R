@@ -70,26 +70,44 @@ readfiles_part2 <- function(participant, seg_file, last_participant){
     if(nrow(emdat_export.df.scene) != 0) {
     
       # keeps all segments belonging to the scene in data frame format 
-      fixation_data_sub.df <- subset(fixation_data.df, scene == a_scene)
-      gazesample_data_sub.df <- subset(gazesample_data.df, scene == a_scene)
-      saccade_data_sub.df <- subset(saccade_data.df, scene == a_scene)
-      events_data_sub.df <- subset(events_data.df, scene == a_scene)
+      fixation_data_scene.df <- subset(fixation_data.df, scene == a_scene)
+      gazesample_data_scene.df <- subset(gazesample_data.df, scene == a_scene)
+      saccade_data_scene.df <- subset(saccade_data.df, scene == a_scene)
+      events_data_scene.df <- subset(events_data.df, scene == a_scene)
     
-      if(nrow(fixation_data_sub.df) != 0){
-        checked_result1 <- check_correctness_fix(emdat_export.df.scene, participant, a_scene,
-                                                 segment.names)
+      if(nrow(fixation_data_scene.df) != 0 &
+         nrow(gazesample_data_scene.df) != 0 &
+         nrow(saccade_data_scene.df) != 0){
+        checked_result1 <- check_correctness_fix(emdat_export.df.scene,
+                                                 participant,
+                                                 a_scene,
+                                                 segment.names,
+                                                 fixation_data_scene.df,
+                                                 gazesample_data_scene.df,
+                                                 saccade_data_scene.df)
       }
-      if(nrow(saccade_data_sub.df) != 0){
-        checked_result2 <- check_correctness_sac(emdat_export.df.scene, participant, a_scene,
-                                                 segment.names)
+      if(nrow(saccade_data_scene.df) != 0){
+        checked_result2 <- check_correctness_sac(emdat_export.df.scene,
+                                                 participant,
+                                                 a_scene,
+                                                 segment.names,
+                                                 saccade_data_scene.df)
       }
-      if(nrow(events_data_sub.df) != 0){
-        checked_result3 <- check_correctness_eve(emdat_export.df.scene, participant, a_scene,
-                                                 segment.names)
+      if(nrow(events_data_scene.df) != 0 &
+         nrow(gazesample_data_scene.df) != 0){
+        checked_result3 <- check_correctness_eve(emdat_export.df.scene,
+                                                 participant,
+                                                 a_scene,
+                                                 segment.names,
+                                                 events_data_scene.df,
+                                                 gazesample_data_scene.df)
       }
-      if(nrow(gazesample_data_sub.df) != 0){
-        checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, participant, a_scene,
-                                                        segment.names)
+      if(nrow(gazesample_data_scene.df) != 0){
+        checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, 
+                                                        participant, 
+                                                        a_scene,
+                                                        segment.names,
+                                                        gazesample_data_scene.df)
       }
     }
   }
@@ -119,21 +137,19 @@ readfiles_part2 <- function(participant, seg_file, last_participant){
 #  eyemovementvelocity
 #  relpathanglesrate
 
-check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment.names){
+check_correctness_fix <- function(emdat_output.df, 
+                                  participant, 
+                                  a_scene, 
+                                  segment.names,
+                                  fixation_data_scene.df,
+                                  gazesample_data_scene.df,
+                                  saccade_data_scene.df){
   
 ### set up the tests ###
-  
-  # reads in the needed internal EMDAT data files
-  internal_data.df <- read.csv(paste(root_path,"EMDATinternaldata_fixations_", participant, ".csv", sep=""), sep=",")
-  gazesample_data.df <- read.csv(paste(root_path, "EMDATinternaldata_gazesamples_", participant, ".csv", sep=""), sep=",")
-  saccade_data.df <- read.csv(paste(root_path, "EMDATinternaldata_saccades_", participant, ".csv", sep=""), sep=",")
-  
-  # keeps all segments belonging to the scene in data frame format 
-  # only one data set (P18) contains a scene consisting of multiple segments
-  internal_data.df <- subset(internal_data.df, scene == a_scene)
-  gazesample_data.df <- subset(gazesample_data.df, scene == a_scene)
-  saccade_data.df <- subset(saccade_data.df, scene == a_scene)
-  
+  internal_data.df <- fixation_data_scene.df
+  gazesample_data.df <- gazesample_data_scene.df
+  saccade_data.df <- saccade_data_scene.df
+
   segs_length <- length(segment.names)
   
   # stores the data by segment into vectors 
@@ -272,17 +288,14 @@ check_correctness_fix <- function(emdat_output.df, participant, a_scene, segment
 #  minsaccadespeed
 #  sumsaccadedistance
 
-check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment.names){
+check_correctness_sac <- function(emdat_output.df, 
+                                  participant, 
+                                  a_scene, 
+                                  segment.names,
+                                  saccade_data_scene.df){
 
 ### set up the tests ###
-  
-  # read in the corresponding internal EMDAT data file
-  internal_data.df <- read.csv(paste(root_path, "EMDATinternaldata_saccades_", participant, ".csv", sep=""), sep=",")
-  
-  # keeps all segments belonging to the scene in data frame format
-  # only one data set (P18) contains a scene consisting of multiple segments     
-  internal_data.df <- subset(internal_data.df, scene == a_scene)
-  
+  internal_data.df <- saccade_data_scene.df
   segs_length <- length(segment.names)
   
   # stores the data by segment into a vector
@@ -294,7 +307,7 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
  
 ### longestsaccadedistance ###
   output_value <- subset(emdat_output.df, select=longestsaccadedistance)[1,]
-  internal_value <- signif(max(subset(internal_data.df, select=saccadedistance)$saccadedistance), digits = 12)
+  internal_value <- max(subset(internal_data.df, select=saccadedistance)$saccadedistance)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "longestsaccadedistance")
   
@@ -397,19 +410,16 @@ check_correctness_sac <- function(emdat_output.df, participant, a_scene, segment
 #  timetofirstkeypressed
 #  timetofirstrightclic
 
-check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment.names){
+check_correctness_eve <- function(emdat_output.df, 
+                                  participant, 
+                                  a_scene, 
+                                  segment.names,
+                                  events_data_scene.df,
+                                  gazesample_data_scene.df){
   
 ### set up the tests ###
-  
-  # read in the needed internal EMDAT data files
-  internal_data.df <- read.csv(paste(root_path, "EMDATinternaldata_events_", participant, ".csv", sep=""), sep=",")
-  gazesample_data.df <- read.csv(paste(root_path, "EMDATinternaldata_gazesamples_", participant, ".csv", sep=""), sep=",")
-  
-  # keeps all segments belonging to the scene in data frame format
-  # only one data set (P18) contains a scene consisting of multiple segments     
-  internal_data.df <- subset(internal_data.df, scene == a_scene)
-  gazesample_data.df <- subset(gazesample_data.df, scene == a_scene)
-  
+  internal_data.df <- events_data_scene.df
+  gazesample_data.df <- gazesample_data_scene.df
   segs_length <- length(segment.names)
     
   # stores the data by segment into vectors
@@ -558,17 +568,14 @@ check_correctness_eve <- function(emdat_output.df, participant, a_scene, segment
 #  meanpupilvelocity (See note on rounding in the code below)
 #  stddevpupilvelocity (See note on rounding in the code below)
 
-check_correctness_gazesample <- function(emdat_output.df, participant, a_scene, segment.names){
+check_correctness_gazesample <- function(emdat_output.df, 
+                                         participant, 
+                                         a_scene, 
+                                         segment.names,
+                                         gazesample_data_scene.df){
 
-### set up the tests ###    
-  
-  # read in the needed internal EMDAT data file
-  internal_data.df <- read.csv(paste(root_path, "EMDATinternaldata_gazesamples_", participant, ".csv", sep=""), sep=",")
-  
-  # keeps all segments belonging to the scene in data frame format  
-  # only one data set (P18) contains a scene consisting of multiple segments     
-  internal_data.df <- subset(internal_data.df, scene == a_scene)
-  
+### set up the tests ###
+  internal_data.df <- gazesample_data_scene.df
   segs_length <- length(segment.names)
   
   # stores the data by segment into a vector
@@ -761,7 +768,7 @@ run_part2Test <- function(participants, last_participant){
 
 # Set up the tests
 # Choose particpants to run the tests on
-participants <- generate_participant_list(101:101)
+participants <- generate_participant_list(101:103)
 # Run
 # Note: second argument takes the last participant of the study, not necessarily the
 #       last element in the list of participants given to the first argument

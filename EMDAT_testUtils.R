@@ -72,13 +72,32 @@ verify_equivalence <- function(internal_value, output_value, participant, a_scen
 #   )
 # }
 
+# # notifies test success by printing out  
+# report_success <- function(participant){
+#   
+#   if(success_counter == total_counter){
+#     
+#     print(paste('All Tests Passed for P', participant, sep = ""))
+#   }
+#   # clear the counters
+#   success_counter <<- 0
+#   total_counter <<- 0
+# }
+
 # notifies test success by printing out  
 report_success <- function(participant){
   
+  writeLines(paste("######## Results for ", participant, " #########\nTotal number of tests: ", 
+                   total_counter, sep = ""))
+  writeLines(paste("The number of failed tests: ", total_counter - success_counter, sep = ""))
+  
   if(success_counter == total_counter){
     
-    print(paste('All Tests Passed for P', participant, sep = ""))
+    writeLines(paste("All Tests Passed for P", participant, sep = ""))
   }
+  writeLines("###################################")
+  writeLines("")
+  
   # clear the counters
   success_counter <<- 0
   total_counter <<- 0
