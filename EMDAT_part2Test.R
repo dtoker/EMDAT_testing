@@ -47,26 +47,30 @@ Sc_ids <- as.character(emdat_export_all.df[,1])
 
 readfiles_part2 <- function(participant, seg_file, last_participant){
   
+  # reads the pertinent part of the features file for the given participant (*)
   emdat_export.df <- get_features_df_for_participant(emdat_export_all.df, participant, Sc_ids, last_participant)
+  
   seg_file.df <- read.csv(seg_file, sep="\t", header = FALSE, col.names = c("scene","segment","start","end"))
   
-  # extract scene names
+  # extracts scene names
   scene.names <- unique(seg_file.df[,"scene"])
   
-  # reads in the needed internal EMDAT data files
+  # reads in the needed internal EMDAT data files once for the given participant 
   fixation_data.df <- read.csv(paste(root_path,"EMDATinternaldata_fixations_", participant, ".csv", sep=""), sep=",")
   gazesample_data.df <- read.csv(paste(root_path, "EMDATinternaldata_gazesamples_", participant, ".csv", sep=""), sep=",")
   saccade_data.df <- read.csv(paste(root_path, "EMDATinternaldata_saccades_", participant, ".csv", sep=""), sep=",")
   events_data.df <- read.csv(paste(root_path, "EMDATinternaldata_events_", participant, ".csv", sep=""), sep=",")
   
-  # loop over the scenes
+  # loops over the scenes
   for (a_scene in scene.names) {
     
-    # extract segments within a given scene
+    # extracts segments within a given scene
     segment.names <- unique(subset(seg_file.df, scene==a_scene)[,"segment"])
     
+    # reads the pertinent part of the file from (*) above for the given scene 
     emdat_export.df.scene <- subset(emdat_export.df, Sc_id == a_scene)
     
+    # if-statements below guards aginst missing scenes in the files   
     if(nrow(emdat_export.df.scene) != 0) {
     
       # keeps all segments belonging to the scene in data frame format 
@@ -608,10 +612,6 @@ check_correctness_gazesample <- function(emdat_output.df,
 ### maxdistance ###
   output_value <- subset(emdat_output.df, select=maxdistance)[1,]
   
-  # Since the max happens to be non-negative in this case, the is_valid_headdistance==TRUE condition
-  # does not make difference. But the internal value does not match the output_value in the 
-  # corresponding  mindistancetest without that condition. So to be consistent, the condition 
-  # is added here as well.
   internal_value <- max(subset(internal_data.df, select=headdistance, is_valid_headdistance=="True")$headdistance)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "maxdistance")
@@ -619,18 +619,11 @@ check_correctness_gazesample <- function(emdat_output.df,
 ### maxpupilsize ###
   output_value <- subset(emdat_output.df, select=maxpupilsize)[1,]
   
-  # Remark similar to the above on the condition of R subset operation holds here as well.   
   internal_value <- max(subset(internal_data.df, select=rawpupilsize, is_valid_pupil=="True")$rawpupilsize)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "maxpupilsize")
   
 ### maxpupilvelocity ###
-  
-  # NOTE: rounding to eight significant figures here is necessary because the internal data 
-  # representaiton of valid pupil velosity in EMDAT contains measures (in float structure) that 
-  # have greater precision than we are able to print out into the intermediate files
-  # (i.e., data_gazesample); we cannot calculate the value in our test to the same precision as 
-  # EMDAT does.
   
   output_value <- subset(emdat_output.df, select=maxpupilvelocity)[1,]
   
@@ -679,13 +672,6 @@ check_correctness_gazesample <- function(emdat_output.df,
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevpupilsize")
   
 ### meanpupilvelocity ###
-  
-  # NOTE: rounding to six significant figures here is necessary because the internal data 
-  # representaiton of valid pupil velosity in EMDAT contains measures (in float structure) that 
-  # have greater precision than we are able to print out into the intermediate files
-  # (i.e., data_gazesample); we cannot calculate the value in our test to the same precision as 
-  # EMDAT does.
-  
   output_value <- subset(emdat_output.df, select=meanpupilvelocity)[1,]
   
   mean <- find_gaze_mean(internal_data_vector, "pupilvelocity", "pupilvelocity","not_eql", -1, 
@@ -694,13 +680,6 @@ check_correctness_gazesample <- function(emdat_output.df,
   verify_equivalence(mean, output_value, participant, a_scene, "meanpupilvelocity")
 
 ### stddevpupilvelocity ###
-  
-  # NOTE: rounding to six significant figures here is necessary because the internal data 
-  # representaiton of valid pupil velosity in EMDAT contains measures (in float structure) that 
-  # have greater precision than we are able to print out into the intermediate files
-  # (i.e., data_gazesample); we cannot calculate the value in our test to the same precision as 
-  # EMDAT does.
-  
   output_value <- subset(emdat_output.df, select=stddevpupilvelocity)[1,]
   
   internal_value <- find_gaze_sd(internal_data_vector, "pupilvelocity", "pupilvelocity", "not_eql",
@@ -721,13 +700,6 @@ check_correctness_gazesample <- function(emdat_output.df,
   verify_equivalence(internal_value, output_value, participant, a_scene, "minpupilsize")
   
 ### minpupilvelocity ###
-  
-  # NOTE: rounding to eight significant figures here is necessary because the internal data 
-  # representaiton of valid pupil velosity in EMDAT contains measures (in float structure) that 
-  # have greater precision than we are able to print out into the intermediate files
-  # (i.e., data_gazesample); we cannot calculate the value in our test to the same precision as 
-  # EMDAT does.
-  
   output_value <- subset(emdat_output.df, select=minpupilvelocity)[1,]
   internal_value <- subset(internal_data.df, select=pupilvelocity, pupilvelocity != -1)$pupilvelocity
   
@@ -764,7 +736,7 @@ check_correctness_gazesample <- function(emdat_output.df,
 
 ##########################################################################################
 
-# When called in the main, commences the part2 tests for the given list of participants
+# When called, commences the part2 tests for the given list of participants
 # last_participant refers to the last in the given study, not necessarily that
 # in the list of participants
 run_part2Test <- function(participants, last_participant){
@@ -778,18 +750,23 @@ run_part2Test <- function(participants, last_participant){
   }
 }
 
-##### For debugging #####
+##### To Run #####
 
-# Set up the tests
-# Choose particpants to run the tests on
+# Set up the tests: choose the range of particpants to run the tests on
 participants <- generate_participant_list(144:162)
+
 # Run
 # Note: second argument takes the last participant of the study, not necessarily the
 #       last element in the list of participants given to the first argument
 run_part2Test(participants, "162b")
 
-path <- paste(root_path, "SegFiles/P", "121a", ".seg", sep = "")
 
+#### To debug #####
+
+# Runs tests on a given individual participant and scene
+
+# path <- paste(root_path, "SegFiles/P", "121a", ".seg", sep = "")
+# 
 # readfiles_part2_debug <- function(participant, seg_file, last_participant, a_scene){
 # 
 #   emdat_export.df <- get_features_df_for_participant(emdat_export_all.df, participant, Sc_ids, last_participant)
@@ -798,13 +775,11 @@ path <- paste(root_path, "SegFiles/P", "121a", ".seg", sep = "")
 #   segment.names <- unique(subset(seg_file.df, scene==a_scene)[,"segment"])
 #   emdat_export.df.scene <- subset(emdat_export.df, Sc_id == a_scene)
 # 
-#   # reads in the needed internal EMDAT data files
 #   fixation_data.df <- read.csv(paste(root_path,"EMDATinternaldata_fixations_", participant, ".csv", sep=""), sep=",")
 #   gazesample_data.df <- read.csv(paste(root_path, "EMDATinternaldata_gazesamples_", participant, ".csv", sep=""), sep=",")
 #   saccade_data.df <- read.csv(paste(root_path, "EMDATinternaldata_saccades_", participant, ".csv", sep=""), sep=",")
 #   events_data.df <- read.csv(paste(root_path, "EMDATinternaldata_events_", participant, ".csv", sep=""), sep=",")
 # 
-#   # keeps all segments belonging to the scene in data frame format
 #   fixation_data_scene.df <- subset(fixation_data.df, scene == a_scene)
 #   gazesample_data_scene.df <- subset(gazesample_data.df, scene == a_scene)
 #   saccade_data_scene.df <- subset(saccade_data.df, scene == a_scene)

@@ -17,6 +17,7 @@ find_path_length_vector <- function(x_cord_vector, y_cord_vector){
 }
 
 # Checks whether the value computed from the internal data actually matches EMDAT output value
+# ,to the given number of significant figures, which is currently set to eight  
 # First argument: expected value. Second: actual value.  
 verify_equivalence <- function(internal_value, output_value, participant, a_scene, error_name){
 
@@ -24,7 +25,11 @@ verify_equivalence <- function(internal_value, output_value, participant, a_scen
 
   error_specification <- paste("Error: ", error_name, " does not match for participant:")
   
+  #### for debugging ####
+  
   #print(paste("--------- processing ", participant, " ", a_scene, " ", error_name, " --------", sep = ""))
+  
+  #######################
   
   try(
     if(signif(internal_value, digits = 8) != signif(output_value, digits = 8)){
@@ -57,47 +62,7 @@ verify_equivalence <- function(internal_value, output_value, participant, a_scen
   )
 }
 
-# verify_equivalence <- function(internal_value, output_value, participant, a_scene, error_name){ 
-#   
-#   total_counter <<- total_counter + 1
-#   
-#   error_specification <- paste("Error: ", error_name, " does not match for participant:")
-#   
-#   try(
-#     if(is.na(internal_value)|is.na(output_value)){
-#       stop(paste(participant, a_scene, " NA"))
-#       
-#     }else if(internal_value  != output_value){
-#       
-#       stop(paste(error_specification, 
-#                  participant, 
-#                  " and scene: ", 
-#                  a_scene, 
-#                  " internal_value: ",
-#                  formatC(internal_value, format="f", digits = 12),
-#                  " output_value: ",
-#                  formatC(output_value, format="f", digits = 12),
-#                  sep = ""))
-#     } else{
-#       
-#       success_counter <<- success_counter + 1
-#     }
-#   )
-# }
-
-# # notifies test success by printing out  
-# report_success <- function(participant){
-#   
-#   if(success_counter == total_counter){
-#     
-#     print(paste('All Tests Passed for P', participant, sep = ""))
-#   }
-#   # clear the counters
-#   success_counter <<- 0
-#   total_counter <<- 0
-# }
-
-# notifies test success by printing out  
+# notifies test results for each particpant by printing out  
 report_success <- function(participant){
   
   writeLines(paste("######## Results for ", participant, " #########\nTotal number of tests: ", 
@@ -277,6 +242,7 @@ find_double_and_left_clicks <- function(internal_data.df){
         first_left <- FALSE
       }
     }
+    # this last element can not be checked in the for-loop above
     if(double_left_marker[length(double_left_marker)]=="L" & first_left){
       clicks[4] <- time_stamps[length(double_left_marker)]
     } 
@@ -287,18 +253,21 @@ find_double_and_left_clicks <- function(internal_data.df){
 # Helper funciton for computing the numerator of aggregated sd
 compute_segsd_with_weight <- function(feature_value_vector, scene_mean){
   
-  stddev <- sd(feature_value_vector)
-  if(is.na(stddev)){
-    stddev <- 0
-  } 
+  vector_length <- length(feature_value_vector)
+  numerator <- 0
   
-  numerator <- (length(feature_value_vector)-1)*(stddev^2)+
-                length(feature_value_vector)*(mean(feature_value_vector)-scene_mean)^2
+  if(vector_length > 0){
+    stddev <- sd(feature_value_vector)
+    if(is.na(stddev)){
+      stddev <- 0
+    } 
   
+    numerator <- (vector_length-1)*(stddev^2) + vector_length*(mean(feature_value_vector)-scene_mean)^2
+  }
   return(numerator)
 }
 
-# Helper funciton for computing the numerator of scene mean
+# Helper funciton for computing the numerator of scene mean (weighted)
 compute_segmean_with_weight <- function(feature_value_vector){
   
   numerator <- length(feature_value_vector)*mean(feature_value_vector)
@@ -306,15 +275,16 @@ compute_segmean_with_weight <- function(feature_value_vector){
 } 
 
 # Given an input vector, compute all of sum, mean, and rate (sum over scene_length)
-# for pathdistance, abspathangles, and relpathangles. Also returns mean before rounnding 
-# and result of applying the given vector function to the input, which are used for 
-# subsequent sd computation. 
+# for pathdistance, abspathangles, and relpathangles. 
 find_sum_mean_rate <- function(vector_input, vector_function, segs_length, scene_length){
   
   internal_sum <-0
   numerator <- 0
   denominator <- 0
+  
+  # this variable stores computed vectors to avoid recomputation  
   data_storage <- list()
+  
   results <- list(sum = 0, mean = 0, rate = 0, data_storage = 0)
   
   for(i in 1:segs_length){
@@ -363,6 +333,7 @@ find_saccade_mean <- function(input_vector, coloumn, segs_length){
   
   numerator <- 0
   denominator <- 0
+  mean <- 0
   
   for(i in 1:segs_length){
     
@@ -371,8 +342,9 @@ find_saccade_mean <- function(input_vector, coloumn, segs_length){
     numerator <- numerator + compute_segmean_with_weight(data)
     denominator <- denominator+length(data)
   }
-  mean <- numerator/denominator
-  
+  if(denominator != 0){
+    mean <- numerator/denominator
+  }
   return(mean)
 }
 
@@ -486,6 +458,7 @@ get_features_df_for_participant <- function(emdat_export_all.df, participant, Sc
       
       numerical_part <- as.numeric(substr(participant, 1, number_char - 1))
       
+      # P143 missing; needs to skip 
       if(numerical_part != 142){
         numerical_part <- numerical_part + 1
       } else{
@@ -502,6 +475,7 @@ get_features_df_for_participant <- function(emdat_export_all.df, participant, Sc
   return(emdat_export_all.df[start_row : end_row, ])
 }
 
+# generate a list of participants in the givne range in string    
 generate_participant_list <- function(p_range){
   
   participants <- list()
