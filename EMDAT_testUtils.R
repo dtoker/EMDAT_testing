@@ -39,9 +39,9 @@ verify_equivalence <- function(internal_value, output_value, participant, a_scen
                  " and scene: ",
                  a_scene,
                  " internal_value: ",
-                 formatC(internal_value, format="f", digits = 8),
+                 formatC(internal_value, format="e", digits = 15),
                  " output_value: ",
-                 formatC(output_value, format="f", digits = 8),
+                 formatC(output_value, format="e", digits = 15),
                  sep = ""))
     } else{
 
@@ -54,9 +54,9 @@ verify_equivalence <- function(internal_value, output_value, participant, a_scen
         #                  " ",
         #                  error_name,
         #                  " internal_value: ",
-        #                  formatC(internal_value, format="f", digits = 8),
+        #                  formatC(internal_value, format="e", digits = 15),
         #                  " output_value: ",
-        #                  formatC(output_value, format="f", digits = 8),
+        #                  formatC(output_value, format="e", digits = 15),
         #                  sep = ""))
     }
   )
