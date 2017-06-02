@@ -82,6 +82,8 @@ find_missing <- function(participant, seg_file, last_participant){
   saccade_data.df <- read.csv(paste(root_path, "EMDATinternaldata_saccades_", participant, ".csv", sep=""), sep=",")
   events_data.df <- read.csv(paste(root_path, "EMDATinternaldata_events_", participant, ".csv", sep=""), sep=",")
   
+  space_marker <- FALSE
+  
   # loop over the scenes
   for(a_scene in scene.names){
     
@@ -91,7 +93,8 @@ find_missing <- function(participant, seg_file, last_participant){
       
       print(paste(participant, " ",  a_scene,
                   " has no data in output file",
-                  sep = ""))                                                
+                  sep = ""))
+      space_marker <- TRUE
     } 
     
     # keeps all segments belonging to the scene in data frame format 
@@ -104,21 +107,31 @@ find_missing <- function(participant, seg_file, last_participant){
       print(paste(participant, " ",  a_scene,
                   " has no data in fixation file",
                   sep = ""))
+      space_marker <- TRUE
     }
     if(nrow(gazesample_data_sub.df) == 0){
       print(paste(participant, " ",  a_scene,
                   " has no data in gaze_sample file",
                   sep = ""))
+      space_marker <- TRUE
     }  
     if(nrow(saccade_data_sub.df) == 0){
       print(paste(participant, " ",  a_scene,
                   " has no data in saccade file",
                   sep = ""))
+      space_marker <- TRUE
     }
     if(nrow(events_data_sub.df) == 0){
       print(paste(participant, " ",  a_scene,
                   " has no data in events file",
                   sep = ""))
+      space_marker <- TRUE
+    }
+    
+    if(space_marker){
+      
+      writeLines("")
+      space_marker <- FALSE
     }
   }
 }

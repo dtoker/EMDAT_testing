@@ -63,7 +63,7 @@ verify_equivalence <- function(internal_value, output_value, participant, a_scen
 }
 
 # notifies test results for each particpant by printing out  
-report_success <- function(participant){
+report_success <- function(participant, cumulative_counter){
   
   writeLines(paste("######## Results for ", participant, " #########\nTotal number of tests: ", 
                    total_counter, sep = ""))
@@ -75,6 +75,8 @@ report_success <- function(participant){
   }
   writeLines("###################################")
   writeLines("")
+  
+  cumulative_counter <<- cumulative_counter + total_counter
   
   # clear the counters
   success_counter <<- 0

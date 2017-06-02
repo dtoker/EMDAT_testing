@@ -43,6 +43,7 @@ emdat_export_all.df <- read.csv(paste(root_path,
                                       sep=""), 
                                 sep="\t")
 Sc_ids <- as.character(emdat_export_all.df[,1])
+cumulative_counter <- 0
 
 
 readfiles_part2 <- function(participant, seg_file, last_participant){
@@ -115,7 +116,7 @@ readfiles_part2 <- function(participant, seg_file, last_participant){
       }
     }
   }
-  report_success(participant)
+  report_success(participant, cumulative_counter)
 }
 
 
@@ -748,72 +749,74 @@ run_part2Test <- function(participants, last_participant){
                     paste(root_path, "SegFiles/P", participant, ".seg", sep = ""),
                     last_participant)
   }
+  writeLines(paste("####### cumulative total number of tests run: ", cumulative_counter, " #######"))
+  cumulative_counter <<- 0
 }
 
 ##### To Run #####
 
 # Set up the tests: choose the range of particpants to run the tests on
 
-#participants <- generate_participant_list(101:101)
+participants <- generate_participant_list(144:162)
 
 # Run
 # Note: second argument takes the last participant of the study, not necessarily the
 #       last element in the list of participants given to the first argument
 
-#run_part2Test(participants, "162b")
+run_part2Test(participants, "162b")
 
 
 #### To debug #####
 
 # Runs tests on a given individual participant and scene
 
-path <- paste(root_path, "SegFiles/P", "140a", ".seg", sep = "")
+# path <- paste(root_path, "SegFiles/P", "140a", ".seg", sep = "")
+# 
+# readfiles_part2_debug <- function(participant, seg_file, last_participant, a_scene){
+# 
+#   emdat_export.df <- get_features_df_for_participant(emdat_export_all.df, participant, Sc_ids, last_participant)
+#   seg_file.df <- read.csv(seg_file, sep="\t", header = FALSE, col.names = c("scene","segment","start","end"))
+# 
+#   segment.names <- unique(subset(seg_file.df, scene==a_scene)[,"segment"])
+#   emdat_export.df.scene <- subset(emdat_export.df, Sc_id == a_scene)
+# 
+#   fixation_data.df <- read.csv(paste(root_path,"EMDATinternaldata_fixations_", participant, ".csv", sep=""), sep=",")
+#   gazesample_data.df <- read.csv(paste(root_path, "EMDATinternaldata_gazesamples_", participant, ".csv", sep=""), sep=",")
+#   saccade_data.df <- read.csv(paste(root_path, "EMDATinternaldata_saccades_", participant, ".csv", sep=""), sep=",")
+#   events_data.df <- read.csv(paste(root_path, "EMDATinternaldata_events_", participant, ".csv", sep=""), sep=",")
+# 
+#   fixation_data_scene.df <- subset(fixation_data.df, scene == a_scene)
+#   gazesample_data_scene.df <- subset(gazesample_data.df, scene == a_scene)
+#   saccade_data_scene.df <- subset(saccade_data.df, scene == a_scene)
+#   events_data_scene.df <- subset(events_data.df, scene == a_scene)
+# 
+#   checked_result1 <- check_correctness_fix(emdat_export.df.scene,
+#                                            participant,
+#                                            a_scene,
+#                                            segment.names,
+#                                            fixation_data_scene.df,
+#                                            gazesample_data_scene.df,
+#                                            saccade_data_scene.df)
+# 
+#   # checked_result2 <- check_correctness_sac(emdat_export.df.scene,
+#   #                                          participant,
+#   #                                          a_scene,
+#   #                                          segment.names,
+#   #                                          saccade_data_scene.df)
+# 
+#   # checked_result3 <- check_correctness_eve(emdat_export.df.scene,
+#   #                                          participant,
+#   #                                          a_scene,
+#   #                                          segment.names,
+#   #                                          events_data_scene.df,
+#   #                                          gazesample_data_scene.df)
+#   #
+#   # checked_result4 <- check_correctness_gazesample(emdat_export.df.scene,
+#   #                                                 participant,
+#   #                                                 a_scene,
+#   #                                                 segment.names,
+#   #                                                 gazesample_data_scene.df)
+# }
 
-readfiles_part2_debug <- function(participant, seg_file, last_participant, a_scene){
-
-  emdat_export.df <- get_features_df_for_participant(emdat_export_all.df, participant, Sc_ids, last_participant)
-  seg_file.df <- read.csv(seg_file, sep="\t", header = FALSE, col.names = c("scene","segment","start","end"))
-
-  segment.names <- unique(subset(seg_file.df, scene==a_scene)[,"segment"])
-  emdat_export.df.scene <- subset(emdat_export.df, Sc_id == a_scene)
-
-  fixation_data.df <- read.csv(paste(root_path,"EMDATinternaldata_fixations_", participant, ".csv", sep=""), sep=",")
-  gazesample_data.df <- read.csv(paste(root_path, "EMDATinternaldata_gazesamples_", participant, ".csv", sep=""), sep=",")
-  saccade_data.df <- read.csv(paste(root_path, "EMDATinternaldata_saccades_", participant, ".csv", sep=""), sep=",")
-  events_data.df <- read.csv(paste(root_path, "EMDATinternaldata_events_", participant, ".csv", sep=""), sep=",")
-
-  fixation_data_scene.df <- subset(fixation_data.df, scene == a_scene)
-  gazesample_data_scene.df <- subset(gazesample_data.df, scene == a_scene)
-  saccade_data_scene.df <- subset(saccade_data.df, scene == a_scene)
-  events_data_scene.df <- subset(events_data.df, scene == a_scene)
-
-  checked_result1 <- check_correctness_fix(emdat_export.df.scene,
-                                           participant,
-                                           a_scene,
-                                           segment.names,
-                                           fixation_data_scene.df,
-                                           gazesample_data_scene.df,
-                                           saccade_data_scene.df)
-
-  # checked_result2 <- check_correctness_sac(emdat_export.df.scene,
-  #                                          participant,
-  #                                          a_scene,
-  #                                          segment.names,
-  #                                          saccade_data_scene.df)
-
-  # checked_result3 <- check_correctness_eve(emdat_export.df.scene,
-  #                                          participant,
-  #                                          a_scene,
-  #                                          segment.names,
-  #                                          events_data_scene.df,
-  #                                          gazesample_data_scene.df)
-  #
-  # checked_result4 <- check_correctness_gazesample(emdat_export.df.scene,
-  #                                                 participant,
-  #                                                 a_scene,
-  #                                                 segment.names,
-  #                                                 gazesample_data_scene.df)
-}
-
-readfiles_part2_debug("140a", path, "162b", "Event_38")
+#readfiles_part2_debug("140a", path, "162b", "Event_38")
 
