@@ -498,3 +498,22 @@ generate_participant_list <- function(p_range){
   return(participants)
 } 
 
+
+# tuple is numeric: either 1 or 2 
+get_tuple_element <- function(tuple, tuples) {
+  
+  tuples <- as.character(tuples)
+  comma_index <- gregexpr(pattern = paste(",", sep = ""), tuples)[[1]][1]
+  
+  if(tuple == 1){
+    return(as.numeric(substr(tuples, 1, comma_index - 1)))
+  } 
+  else{
+    return(as.numeric(substr(tuples, comma_index + 1, nchar(tuples))))
+  }
+}
+
+
+
+
+
