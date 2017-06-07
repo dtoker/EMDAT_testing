@@ -513,7 +513,16 @@ get_tuple_element <- function(tuple, tuples) {
   }
 }
 
-
+get_seg_start_and_end_times <- function(seg) {
+  
+  start_and_end <- list(start = 0, end = 0)
+  
+  timestamps <- seg$timestamp
+  start_and_end$start <- timestamps[1]
+  start_and_end$end <- timestamps[length(timestamps)]
+  
+  return(start_and_end)
+}
 
 
 
