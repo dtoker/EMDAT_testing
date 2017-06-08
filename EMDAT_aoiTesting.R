@@ -92,12 +92,12 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
 # single_stddevfixationduration
 # single_timetolastfixation
 # single_totaltimespent
+# single_numtransfrom_single
+# single_proptransfrom_single
 
-# TODO:
+# TODO?:
 
-# single_numtransfrom_single	
 # single_numtransto_single	
-# single_proptransfrom_single	
 # single_proptransto_single	
 
 check_aoi_fix <- function(emdat_output.df, 
@@ -109,39 +109,34 @@ check_aoi_fix <- function(emdat_output.df,
                           fixation_data_scene.df){
   
   ### set up the tests ###
+  
+  # read aoi coordinates
   top_left <- aoi_file.df$TL
   top_right <- aoi_file.df$TR
   bottom_right <- aoi_file.df$BR
   bottom_left <-  aoi_file.df$BL
   
+  # get data inside aoi
   internal_data.df <- subset(fixation_data_scene.df, 
                              mappedfixationpointx > get_tuple_element(1, top_left) &
                              mappedfixationpointx <= get_tuple_element(1, top_right) &
                              mappedfixationpointy <= get_tuple_element(2, bottom_right) &   
                              mappedfixationpointy > get_tuple_element(2, top_right))
   
-  fixation_data.df <- fixation_data_scene.df
-  gazesample_data.df <- gazesample_data_scene.df
-  
-  start_and_end_times <- get_seg_start_and_end_times(gazesample_data.df)
+  # get start and end times of all_data for the scene
+  start_and_end_times <- get_seg_start_and_end_times(gazesample_data_scene.df)
   length <- start_and_end_times$end - start_and_end_times$start
   
-  segs_length <- length(segment.names)
-  
-  trans.df <- subset(internal_data.df, timestamp > fixation_data.df$timestamp[1] &
-                     timestamp < fixation_data.df$timestamp[nrow(fixation_data.df)-2])  
-  
-  
-  # stores the data by segment into vectors 
-  #internal_data_vector <- c()
-  #fixation_data_vector <- c()
-  #gazesample_data_vector <- c()
-  
+  # stores the data by segment into vectors
+  # internal_data_vector <- c()
+  # fixation_data_vector <- c()
+  # gazesample_data_vector <- c()
+  # segs_length <- length(segment.names)
   # for(i in 1:segs_length) {
-  #   
+  # 
   #   internal_data_vector[[i]] <- subset(internal_data.df, grepl(segment.names[i], scene))
-  #   fixation_data_vector[[i]] <- subset(fixation_data.df, grepl(segment.names[i], scene))
-  #   gazesample_data_vector[[i]] <- subset(gazesample_data.df, grepl(segment.names[i], scene))
+  #   fixation_data_vector[[i]] <- subset(fixation_data_scene.df, grepl(segment.names[i], scene))
+  #   gazesample_data_vector[[i]] <- subset(gazesample_data_scene.df, grepl(segment.names[i], scene))
   # }
   
   ### single_numfixations ###
@@ -152,7 +147,7 @@ check_aoi_fix <- function(emdat_output.df,
   
   ### single_proportionnum ###
   output_value <- subset(emdat_output.df, select = single_proportionnum)[1,]
-  internal_value <- numfixs / nrow(fixation_data.df)
+  internal_value <- numfixs / nrow(fixation_data_scene.df)
   
   verify_equivalence(internal_value ,output_value, participant, a_scene, "single_proportionnum")
   
@@ -218,7 +213,7 @@ check_aoi_fix <- function(emdat_output.df,
   
   if(nrow(internal_data.df) != 0){
     
-    internal_value <- internal_data.df[1,]$timestamp - gazesample_data.df[1,]$timestamp 
+    internal_value <- internal_data.df[1,]$timestamp - gazesample_data_scene.df[1,]$timestamp 
   } else{
     
     internal_value <- -1
@@ -234,7 +229,7 @@ check_aoi_fix <- function(emdat_output.df,
   if(column_length != 0){
     
     internal_value <- 
-      internal_data.df[column_length,]$timestamp - gazesample_data.df[1,]$timestamp 
+      internal_data.df[column_length,]$timestamp - gazesample_data_scene.df[1,]$timestamp 
   } else{
     
     internal_value <- -1
@@ -242,14 +237,29 @@ check_aoi_fix <- function(emdat_output.df,
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "single_timetolastfixation")
   
-  ### single_numtransto_single ###
-  output_value <- subset(emdat_output.df, select = single_numtransto_single)[1,]
+  ### single_numtransfrom_single ###
+  output_value <- subset(emdat_output.df, select = single_numtransfrom_single)[1,]
   
-  count_trans_to <- function(){
+  aoi1 <- list(x_left = top_left , x_right = top_right, y_bottom = bottom_right, y_top = top_right)
+  aoi2 <- list(x_left = top_left , x_right = top_right, y_bottom = bottom_right, y_top = top_right)
+  
+  counts <- trans_from(fixation_data_scene.df, 0, aoi1, aoi2)
+  internal_value <- counts$count_per_aoi
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, "single_numtransfrom_single")
+  
+  ### single_proptransfrom_single ###
+  output_value <- subset(emdat_output.df, select = single_proptransfrom_single)[1,]
+  
+  if(counts$total_count != 0){
     
+    internal_value <- internal_value / counts$total_count
+  } else{
+    internal_value <- 0
   }
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, "single_proptransfrom_single")
 }
-
 
 # This function checks the correctness of events
 # LIST OF COLUMS TO TEST:
@@ -270,8 +280,6 @@ check_aoi_fix <- function(emdat_output.df,
 # single_timetolastleftclic	
 # single_timetolastrightclic	
 
-
-
 check_aoi_eve <- function(emdat_output.df, 
                           participant, 
                           a_scene, 
@@ -281,11 +289,14 @@ check_aoi_eve <- function(emdat_output.df,
                           gazesample_data_scene.df){
   
   ### set up the tests ###
+  
+  # get aoi coordinates
   top_left <- aoi_file.df$TL
   top_right <- aoi_file.df$TR
   bottom_right <- aoi_file.df$BR
   bottom_left <-  aoi_file.df$BL
   
+  # get start and end times of all_data for the scene
   internal_data.df <- subset(events_data_scene.df,
                              grepl('MouseClick', event) &
                              x_coord > get_tuple_element(1, top_left) &
@@ -293,25 +304,20 @@ check_aoi_eve <- function(emdat_output.df,
                              y_coord <= get_tuple_element(2, bottom_right) &
                              y_coord > get_tuple_element(2, top_right))
   
-  gazesample_data.df <- gazesample_data_scene.df
-  # events_data.df <- events_data_scene.df
-  segs_length <- length(segment.names)
+  # get start and end times of all_data for the scene
+  start_and_end_times <- get_seg_start_and_end_times(gazesample_data_scene.df)
+  length <- start_and_end_times$end - start_and_end_times$start
   
   # stores the data by segment into vectors
-  #internal_data_vector <- c()
-  #events_data_vector <- c()
-  #gazesample_data_vector <- c()
+  # internal_data_vector <- c()
+  # events_data_vector <- c()
+  # gazesample_data_vector <- c()
+  # segs_length <- length(segment.names)
   # for(i in 1:segs_length) {
-  #   
+  # 
   #   internal_data_vector[[i]] <- subset(internal_data.df, grepl(segment.names[i], scene))
-  #   events_data_vector[[i]] <- subset(events_data.df, grepl(segment.names[i], scene))
-  #   gazesample_data_vector[[i]] <- subset(gazesample_data.df, grepl(segment.names[i], scene))
+  #   gazesample_data_vector[[i]] <- subset(gazesample_data_scene.df, grepl(segment.names[i], scene))
   # }
-  
-  #scene_length <- compute_scene_length(segment.names, gazesample_data_vector)
-  
-  start_and_end_times <- get_seg_start_and_end_times(gazesample_data.df)
-  length <- start_and_end_times$end - start_and_end_times$start
   
   ### single_numevents ###
   output_value <- subset(emdat_output.df, select = single_numevents)[1,]
@@ -423,132 +429,7 @@ check_aoi_eve <- function(emdat_output.df,
   }
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "single_timetofirstrightclic")
-
-  
-  # ### numrightclic ###  
-  # output_value <- subset(emdat_output.df, select=numrightclic)[1,]
-  # rightclicks.df <- subset(internal_data.df, event=="RightMouseClick")
-  # 
-  # rightclicks <- nrow(rightclicks.df)
-  # 
-  # internal_value <- rightclicks
-  # 
-  # verify_equivalence(internal_value, output_value, participant, a_scene, "numrightclic")
-  
-  # ### numdoubleclic ###
-  # output_value <- subset(emdat_output.df, select=numdoubleclic)[1,]
-  # double_clicks <- 0
-  # left_clicks <- 0
-  # 
-  # for(i in 1:segs_length){
-  #   
-  #   clicks <- find_double_and_left_clicks(internal_data_vector[[i]])
-  #   double_clicks <- double_clicks + clicks[1]
-  #   left_clicks <- left_clicks + clicks[2]
-  #   if(i == 1){
-  #     first_double_click <- clicks[3]
-  #     first_left_click <- clicks[4]
-  #   }
-  # }
-  # internal_value <- double_clicks
-  # 
-  # verify_equivalence(internal_value, output_value, participant, a_scene, "numdoubleclic")
-  # 
-  # ### timetofirstdoubleclic ###
-  # output_value <- subset(emdat_output.df, select=timetofirstdoubleclic)[1,]
-  # internal_value <- first_double_click
-  # 
-  # verify_equivalence(internal_value, output_value, participant, a_scene, "timetofirstdoubleclic")
-  # 
-  # ### doubleclicrate ###
-  # output_value <- subset(emdat_output.df, select=doubleclicrate)[1,]
-  # internal_value <- double_clicks / scene_length
-  # 
-  # verify_equivalence(internal_value, output_value, participant, a_scene, "doubleclicrate")
-  # 
-  # ### numleftclic ###
-  # output_value <- subset(emdat_output.df, select=numleftclic)[1,]
-  # internal_value <- left_clicks
-  # 
-  # verify_equivalence(internal_value, output_value, participant, a_scene, "numleftclic")
-  # 
-  # ### timetofirstleftclic ###
-  # output_value <- subset(emdat_output.df, select=timetofirstleftclic)[1,]
-  # internal_value <- first_left_click
-  # 
-  # verify_equivalence(internal_value, output_value, participant, a_scene, "timetofirstleftclic")
-  # 
-  # ### leftclicrate ###
-  # output_value <- subset(emdat_output.df, select=leftclicrate)[1,]
-  # internal_value <- left_clicks / scene_length
-  # 
-  # verify_equivalence(internal_value, output_value, participant, a_scene, "leftclicrate")  
-  # 
-  # ### numkeypressed ###  
-  # output_value <- subset(emdat_output.df, select=numkeypressed)[1,]
-  # keypress.df <- subset(internal_data.df, event=="KeyPress")
-  # 
-  # keypress <- nrow(keypress.df)
-  # 
-  # internal_value <- keypress
-  # verify_equivalence(internal_value, output_value, participant, a_scene, "numkeypressed")
-  # 
-  # ### timetofirstkeypressed ###
-  # output_value <- subset(emdat_output.df, select=timetofirstkeypressed)[1,]
-  # first_keypress.df <- subset(internal_data_vector[[1]], event=="KeyPress")
-  # 
-  # if(nrow(first_keypress.df) == 0){
-  #   first_keypressed <- -1
-  # }else{
-  #   first_keypressed <- subset(first_keypress.df, select=timestamp)[1,]
-  # }
-  # internal_value <- first_keypressed
-  # 
-  # verify_equivalence(internal_value, output_value, participant, a_scene, "timetofirstkeypressed")
-  # 
-  # ### keypressedrate ###
-  # output_value <- subset(emdat_output.df, select=keypressedrate)[1,]
-  # internal_value <- keypress / scene_length 
-  # 
-  # verify_equivalence(internal_value, output_value, participant, a_scene, "keypressedrate")
-  # 
-  # ### numrightclic ###  
-  # output_value <- subset(emdat_output.df, select=numrightclic)[1,]
-  # rightclicks.df <- subset(internal_data.df, event=="RightMouseClick")
-  # 
-  # rightclicks <- nrow(rightclicks.df)
-  # 
-  # internal_value <- rightclicks
-  # 
-  # verify_equivalence(internal_value, output_value, participant, a_scene, "numrightclic")
-  # 
-  # ### timetofirstrightclic ###
-  # output_value <- subset(emdat_output.df, select=timetofirstrightclic)[1,]
-  # first_rightclick.df <- subset(internal_data_vector[[1]], event=="RightMouseClick")
-  # 
-  # if(nrow(first_rightclick.df) == 0){
-  #   first_rightclick <- -1
-  # }else{
-  #   first_rightclick <- subset(first_rightclick.df, select=timestamp)[1,]
-  # }
-  # internal_value <- first_rightclick
-  # 
-  # verify_equivalence(internal_value, output_value, participant, a_scene, "timetofirstrightclic")
-  # 
-  # ### rightclicrate ###
-  # output_value <- subset(emdat_output.df, select=rightclicrate)[1,]
-  # internal_value <- rightclicks / scene_length 
-  # 
-  # verify_equivalence(internal_value, output_value, participant, a_scene, "rightclicrate")
-  # 
-  # ### numevents ###
-  # output_value <- subset(emdat_output.df, select=numevents)[1,]
-  # internal_value <- double_clicks + left_clicks + keypress + rightclicks
-  # 
-  # verify_equivalence(internal_value, output_value, participant, a_scene, "numevents")
 }
-
-
 ##########################################################################################
 
 # When called, commences the part2 tests for the given list of participants
