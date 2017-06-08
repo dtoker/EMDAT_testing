@@ -22,11 +22,6 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
   
   aoi_file.df <- read.csv(aoi_file, sep="\t", header = FALSE, col.names = c("aoi_name","TL","TR","BR", "BL"))
   
-  top_left <- aoi_file.df$TL
-  top_right <- aoi_file.df$TR
-  bottom_right <- aoi_file.df$BR
-  bottom_left <-  aoi_file.df$BL
-  
   # extracts scene names
   seg_file.df <- read.csv(seg_file, sep="\t", header = FALSE, col.names = c("scene","segment","start","end"))
   scene.names <- unique(seg_file.df[,"scene"])
@@ -52,19 +47,8 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
       # keeps all segments belonging to the scene in data frame format
       gazesample_data_scene.df <- subset(gazesample_data.df, scene == a_scene)
       fixation_data_scene.df <- subset(fixation_data.df, scene == a_scene)
-      aoi_fixation_data_scene.df <- subset(fixation_data_scene.df, 
-                                           mappedfixationpointx > get_tuple_element(1, top_left) &
-                                           mappedfixationpointx <= get_tuple_element(1, top_right) &
-                                           mappedfixationpointy <= get_tuple_element(2, bottom_right) &   
-                                           mappedfixationpointy > get_tuple_element(2, top_right))
-                           
       events_data_scene.df <- subset(events_data.df, scene == a_scene)
-      aoi_events_data_scene.df <- subset(events_data_scene.df,
-                                         grepl('MouseClick', event) &
-                                         x_coord > get_tuple_element(1, top_left) &
-                                         x_coord <= get_tuple_element(1, top_right) &
-                                         y_coord <= get_tuple_element(2, bottom_right) &   
-                                         y_coord > get_tuple_element(2, top_right))
+      
       
       if(nrow(fixation_data_scene.df) != 0 &
          nrow(gazesample_data_scene.df) != 0){
@@ -73,9 +57,9 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
                                          participant,
                                          a_scene,
                                          segment.names,
+                                         aoi_file.df,
                                          gazesample_data_scene.df,
-                                         fixation_data_scene.df,
-                                         aoi_fixation_data_scene.df)
+                                         fixation_data_scene.df)
 
       }
       
@@ -86,9 +70,9 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
                                          participant,
                                          a_scene,
                                          segment.names,
+                                         aoi_file.df,
                                          events_data_scene.df,
-                                         gazesample_data_scene.df,
-                                         aoi_events_data_scene.df)
+                                         gazesample_data_scene.df)
       }
     }
   }
@@ -104,7 +88,6 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
 # single_longestfixation
 # single_proportionnum
 # single_proportiontime
-
 # single_timetofirstfixation
 # single_stddevfixationduration
 # single_timetolastfixation
@@ -112,17 +95,31 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
 
 # TODO:
 
+# single_numtransfrom_single	
+# single_numtransto_single	
+# single_proptransfrom_single	
+# single_proptransto_single	
 
 check_aoi_fix <- function(emdat_output.df, 
                           participant, 
                           a_scene, 
                           segment.names,
+                          aoi_file.df,
                           gazesample_data_scene.df,
-                          fixation_data_scene.df,
-                          aoi_fixation_data_scene.df){
+                          fixation_data_scene.df){
   
   ### set up the tests ###
-  internal_data.df <- aoi_fixation_data_scene.df
+  top_left <- aoi_file.df$TL
+  top_right <- aoi_file.df$TR
+  bottom_right <- aoi_file.df$BR
+  bottom_left <-  aoi_file.df$BL
+  
+  internal_data.df <- subset(fixation_data_scene.df, 
+                             mappedfixationpointx > get_tuple_element(1, top_left) &
+                             mappedfixationpointx <= get_tuple_element(1, top_right) &
+                             mappedfixationpointy <= get_tuple_element(2, bottom_right) &   
+                             mappedfixationpointy > get_tuple_element(2, top_right))
+  
   fixation_data.df <- fixation_data_scene.df
   gazesample_data.df <- gazesample_data_scene.df
   
@@ -130,6 +127,10 @@ check_aoi_fix <- function(emdat_output.df,
   length <- start_and_end_times$end - start_and_end_times$start
   
   segs_length <- length(segment.names)
+  
+  trans.df <- subset(internal_data.df, timestamp > fixation_data.df$timestamp[1] &
+                     timestamp < fixation_data.df$timestamp[nrow(fixation_data.df)-2])  
+  
   
   # stores the data by segment into vectors 
   #internal_data_vector <- c()
@@ -144,7 +145,7 @@ check_aoi_fix <- function(emdat_output.df,
   # }
   
   ### single_numfixations ###
-  output_value <- subset(emdat_output.df, select=single_numfixations)[1,]
+  output_value <- subset(emdat_output.df, select = single_numfixations)[1,]
   numfixs <- nrow(internal_data.df)
   
   verify_equivalence(numfixs ,output_value, participant, a_scene, "single_numfixations")
@@ -163,8 +164,7 @@ check_aoi_fix <- function(emdat_output.df,
   verify_equivalence(internal_value ,output_value, participant, a_scene, "single_fixationrate")
   
   ### single_totaltimespent ###
-  ### affetced by misalignment ##########################################
-  output_value <- subset(emdat_output.df, select = single_timetolastleftclic)[1,]
+  output_value <- subset(emdat_output.df, select = single_totaltimespent)[1,]
   
   verify_equivalence(fix_duration, output_value, participant, a_scene, "single_totaltimespent")
   
@@ -188,8 +188,7 @@ check_aoi_fix <- function(emdat_output.df,
   verify_equivalence(internal_value, output_value, participant, a_scene, "single_meanfixationduration")
 
   ### single_stddevfixationduration ###
-  ### affetced by misalignment ##########################################
-  output_value <- subset(emdat_output.df, select = single_proptransto_single)[1,]
+  output_value <- subset(emdat_output.df, select = single_stddevfixationduration)[1,]
   
   if(nrow(internal_data.df) != 0){
     
@@ -215,8 +214,7 @@ check_aoi_fix <- function(emdat_output.df,
   verify_equivalence(internal_value, output_value, participant, a_scene, "single_longestfixation")
   
   ### single_timetofirstfixation ###
-  ### affetced by misalignment ##########################################
-  output_value <- subset(emdat_output.df, select = single_stddevfixationduration)[1,]
+  output_value <- subset(emdat_output.df, select = single_timetofirstfixation)[1,]
   
   if(nrow(internal_data.df) != 0){
     
@@ -229,8 +227,7 @@ check_aoi_fix <- function(emdat_output.df,
   verify_equivalence(internal_value, output_value, participant, a_scene, "single_timetofirstfixation")
   
   ### single_timetolastfixation ###
-  ### affetced by misalignment ##########################################
-  output_value <- subset(emdat_output.df, select = single_timetofirstrightclic)[1,]
+  output_value <- subset(emdat_output.df, select = single_timetolastfixation)[1,]
   
   column_length <- nrow(internal_data.df)
   
@@ -245,8 +242,12 @@ check_aoi_fix <- function(emdat_output.df,
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "single_timetolastfixation")
   
+  ### single_numtransto_single ###
+  output_value <- subset(emdat_output.df, select = single_numtransto_single)[1,]
   
-  
+  count_trans_to <- function(){
+    
+  }
 }
 
 
@@ -259,20 +260,12 @@ check_aoi_fix <- function(emdat_output.df,
 # single_numleftclic
 # single_doubleclicrate
 # single_leftclicrate
-
 # single_rightclicrate
 # single_timetofirstdoubleclic
 # single_timetofirstleftclic
-# single_timetofirstrightclic 
+# single_timetofirstrightclic
 
-
-# TODO:
-# single_numtransfrom_single	
-# single_numtransto_single	
-# single_proptransfrom_single	
-# single_proptransto_single	
-
-# These are set to -1 in teh emdat code:	
+# Not tested; these are set to -1 in the emdat code:	
 # single_timetolastdoubleclic	
 # single_timetolastleftclic	
 # single_timetolastrightclic	
@@ -283,12 +276,23 @@ check_aoi_eve <- function(emdat_output.df,
                           participant, 
                           a_scene, 
                           segment.names,
+                          aoi_file.df,
                           events_data_scene.df,
-                          gazesample_data_scene.df,
-                          aoi_events_data_scene.df){
+                          gazesample_data_scene.df){
   
   ### set up the tests ###
-  internal_data.df <- aoi_events_data_scene.df
+  top_left <- aoi_file.df$TL
+  top_right <- aoi_file.df$TR
+  bottom_right <- aoi_file.df$BR
+  bottom_left <-  aoi_file.df$BL
+  
+  internal_data.df <- subset(events_data_scene.df,
+                             grepl('MouseClick', event) &
+                             x_coord > get_tuple_element(1, top_left) &
+                             x_coord <= get_tuple_element(1, top_right) &
+                             y_coord <= get_tuple_element(2, bottom_right) &
+                             y_coord > get_tuple_element(2, top_right))
+  
   gazesample_data.df <- gazesample_data_scene.df
   # events_data.df <- events_data_scene.df
   segs_length <- length(segment.names)
@@ -333,8 +337,7 @@ check_aoi_eve <- function(emdat_output.df,
   verify_equivalence(internal_value, output_value, participant, a_scene, "single_numrightclic")
   
   ### single_rightclicrate ###
-  ### affetced by misalignment ##########################################
-  output_value <- subset(emdat_output.df, select = single_proptransto_ingle)[1,]
+  output_value <- subset(emdat_output.df, select = single_rightclicrate)[1,]
   
   if(length != 0){
     internal_value <- internal_value / length
@@ -385,8 +388,7 @@ check_aoi_eve <- function(emdat_output.df,
   verify_equivalence(internal_value, output_value, participant, a_scene, "single_leftclicrate")
   
   ### single_timetofirstdoubleclic ###
-  ### affetced by misalignment ##########################################
-  output_value <- subset(emdat_output.df, select = single_rightclicrate)[1,]
+  output_value <- subset(emdat_output.df, select = single_timetofirstdoubleclic)[1,]
   
   internal_value <- clicks[3]
   
@@ -398,8 +400,7 @@ check_aoi_eve <- function(emdat_output.df,
   verify_equivalence(internal_value, output_value, participant, a_scene, "single_timetofirstdoubleclic")
   
   ### single_timetofirstleftclic ###
-  ### affetced by misalignment ##########################################
-  output_value <- subset(emdat_output.df, select = single_timetofirstdoubleclic)[1,]
+  output_value <- subset(emdat_output.df, select = single_timetofirstleftclic)[1,]
   
   internal_value <- clicks[4]
   
@@ -411,8 +412,7 @@ check_aoi_eve <- function(emdat_output.df,
   verify_equivalence(internal_value, output_value, participant, a_scene, "single_timetofirstleftclic")
   
   ### single_timetofirstrightclic ###
-  ### affetced by misalignment ##########################################
-  output_value <- subset(emdat_output.df, select = single_timetofirstfixation)[1,]
+  output_value <- subset(emdat_output.df, select = single_timetofirstrightclic)[1,]
   
   if(nrow(rightclicks.df) != 0){
     
@@ -423,7 +423,7 @@ check_aoi_eve <- function(emdat_output.df,
   }
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "single_timetofirstrightclic")
-  
+
   
   # ### numrightclic ###  
   # output_value <- subset(emdat_output.df, select=numrightclic)[1,]
