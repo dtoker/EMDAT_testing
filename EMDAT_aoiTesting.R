@@ -174,7 +174,7 @@ check_aoi_fix <- function(emdat_output.df,
   
   if(nrow(internal_data.df) != 0){
     
-    internal_value <- mean(subset(internal_data.df, select = fixationduration)[,1])
+    internal_value <- mean(internal_data.df$fixationduration)
   } else{
     
     internal_value <- -1
