@@ -107,13 +107,13 @@ readfiles_part2 <- function(participant, seg_file, last_participant){
                                                  events_data_scene.df,
                                                  gazesample_data_scene.df)
       }
-      if(nrow(gazesample_data_scene.df) != 0){
+      #if(nrow(gazesample_data_scene.df) != 0){
         checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, 
                                                         participant, 
                                                         a_scene,
                                                         segment.names,
                                                         gazesample_data_scene.df)
-      }
+      #}
     }
   }
   report_success(participant, cumulative_counter)

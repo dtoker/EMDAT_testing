@@ -63,17 +63,17 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
 
       }
       
-      if(nrow(events_data_scene.df) != 0 &
-         nrow(gazesample_data_scene.df) != 0){
-
-        checked_result2 <- check_aoi_eve(emdat_export.df.scene,
-                                         participant,
-                                         a_scene,
-                                         segment.names,
-                                         aoi_file.df,
-                                         events_data_scene.df,
-                                         gazesample_data_scene.df)
-      }
+      # if(nrow(events_data_scene.df) != 0 &
+      #    nrow(gazesample_data_scene.df) != 0){
+      # 
+      #   checked_result2 <- check_aoi_eve(emdat_export.df.scene,
+      #                                    participant,
+      #                                    a_scene,
+      #                                    segment.names,
+      #                                    aoi_file.df,
+      #                                    events_data_scene.df,
+      #                                    gazesample_data_scene.df)
+      # }
     }
   }
   report_success(participant, cumulative_counter)
@@ -142,7 +142,7 @@ check_aoi_fix <- function(emdat_output.df,
   ### single_numfixations ###
   output_value <- subset(emdat_output.df, select = single_numfixations)[1,]
   numfixs <- nrow(internal_data.df)
-  
+ 
   verify_equivalence(numfixs ,output_value, participant, a_scene, "single_numfixations")
   
   ### single_proportionnum ###
@@ -153,8 +153,16 @@ check_aoi_fix <- function(emdat_output.df,
   
   ### single_fixationrate ###
   output_value <- subset(emdat_output.df, select = single_fixationrate)[1,]
+  
   fix_duration <- sum(internal_data.df$fixationduration)
-  internal_value <- numfixs / fix_duration
+  
+  if(nrow(internal_data.df) != 0){
+    
+    internal_value <- numfixs / fix_duration
+  } else {
+    
+    internal_value <- 0
+  }
   
   verify_equivalence(internal_value ,output_value, participant, a_scene, "single_fixationrate")
   
@@ -185,10 +193,22 @@ check_aoi_fix <- function(emdat_output.df,
   ### single_stddevfixationduration ###
   output_value <- subset(emdat_output.df, select = single_stddevfixationduration)[1,]
   
-  if(nrow(internal_data.df) != 0){
+  if(nrow(internal_data.df) > 1){
     
     internal_value <- sd(internal_data.df$fixationduration)
-  } else{
+  } else if(nrow(internal_data.df) == 1){
+    
+    if(is.nan(output_value)){
+      
+      # sd evaluate to NaN in EMDAT while to NA in R if argument length is one
+      # but cannot pass these values directly to verify_equivalence  
+      internal_value <- 0.0
+      output_value <- 0.0
+    } else {
+      internal_value <- NA
+    }
+    
+  } else {
     
     internal_value <- -1
   }
@@ -455,20 +475,20 @@ run_part2Test <- function(participants, aoi_file_name, last_participant){
 
 # Set up the tests: choose the range of particpants to run the tests on
 
-participants <- generate_participant_list(101:101)
+participants <- generate_participant_list(101:142)
 
 # Run
 # Note: second argument takes the last participant of the study, not necessarily the
 #       last element in the list of participants given to the first argument
 
-run_part2Test(participants, "single_aoi" , "101b")
+run_part2Test(participants, "single_aoi" , "162b")
 
 
 #### To debug #####
 
 # Runs tests on a given individual participant and scene
 
-# seg_file <- paste(root_path, "SegFiles/P", "101a", ".seg", sep = "")
+# seg_file <- paste(root_path, "SegFiles/P", "121a", ".seg", sep = "")
 # aoi_file <- paste(aoi_file_path, "single_aoi", ".aoi", sep = "")
 # 
 # readfiles_aoi_debug <- function(participant, seg_file, aoi_file, last_participant, a_scene){
@@ -492,7 +512,7 @@ run_part2Test(participants, "single_aoi" , "101b")
 #   fixation_data.df <- read.csv(paste(root_path,"EMDATinternaldata_fixations_", participant, ".csv", sep=""), sep=",")
 #   events_data.df <- read.csv(paste(root_path, "EMDATinternaldata_events_", participant, ".csv", sep=""), sep=",")
 #   gazesample_data.df <- read.csv(paste(root_path, "EMDATinternaldata_gazesamples_", participant, ".csv", sep=""), sep=",")
-#   
+# 
 #   # extracts segments within a given scene
 #   segment.names <- unique(subset(seg_file.df, scene==a_scene)[,"segment"])
 # 
@@ -500,44 +520,39 @@ run_part2Test(participants, "single_aoi" , "101b")
 #   emdat_export.df.scene <- subset(emdat_export.df, Sc_id == a_scene)
 # 
 #   # if-statement below guards aginst missing scenes in the files
-#   if(nrow(emdat_export.df.scene) != 0){
+#   if(nrow(emdat_export.df.scene) != 0) {
 # 
 #     # keeps all segments belonging to the scene in data frame format
 #     gazesample_data_scene.df <- subset(gazesample_data.df, scene == a_scene)
-#     
 #     fixation_data_scene.df <- subset(fixation_data.df, scene == a_scene)
-#     aoi_fixation_data_scene.df <- subset(fixation_data_scene.df,
-#                                          mappedfixationpointx > get_tuple_element(1, top_left) &
-#                                          mappedfixationpointx <= get_tuple_element(1, top_right) &
-#                                          mappedfixationpointy <= get_tuple_element(2, bottom_right) &
-#                                          mappedfixationpointy > get_tuple_element(2, top_right))
-# 
 #     events_data_scene.df <- subset(events_data.df, scene == a_scene)
 # 
-#     if(nrow(aoi_fixation_data_scene.df) != 0){
+# 
+#     if(nrow(fixation_data_scene.df) != 0 &
+#        nrow(gazesample_data_scene.df) != 0){
 # 
 #       checked_result1 <- check_aoi_fix(emdat_export.df.scene,
 #                                        participant,
 #                                        a_scene,
 #                                        segment.names,
+#                                        aoi_file.df,
 #                                        gazesample_data_scene.df,
-#                                        fixation_data_scene.df,
-#                                        aoi_fixation_data_scene.df)
+#                                        fixation_data_scene.df)
 # 
-#       }
+#     }
 # 
-#        # if(nrow(events_data_scene.df) != 0 &
-#        #    nrow(gazesample_data_scene.df) != 0){
-#        #
-#        #   checked_result2 <- check_aoi_eve(emdat_export.df.scene,
-#        #                                            participant,
-#        #                                            a_scene,
-#        #                                            segment.names,
-#        #                                            events_data_scene.df,
-#        #                                            gazesample_data_scene.df)
-#        # }
-# 
+#     # if(nrow(events_data_scene.df) != 0 &
+#     #    nrow(gazesample_data_scene.df) != 0){
+#     #
+#     #   checked_result2 <- check_aoi_eve(emdat_export.df.scene,
+#     #                                    participant,
+#     #                                    a_scene,
+#     #                                    segment.names,
+#     #                                    aoi_file.df,
+#     #                                    events_data_scene.df,
+#     #                                    gazesample_data_scene.df)
+#     # }
 #   }
 # }
 # 
-# readfiles_aoi_debug("101a", seg_file, aoi_file, "101b", "Event_72")
+# readfiles_aoi_debug("121a", seg_file, aoi_file, "162b", "Event_25")
