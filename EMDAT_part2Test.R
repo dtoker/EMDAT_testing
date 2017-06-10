@@ -79,10 +79,10 @@ readfiles_part2 <- function(participant, seg_file, last_participant){
       gazesample_data_scene.df <- subset(gazesample_data.df, scene == a_scene)
       saccade_data_scene.df <- subset(saccade_data.df, scene == a_scene)
       events_data_scene.df <- subset(events_data.df, scene == a_scene)
-    
+      
+      #
       if(nrow(fixation_data_scene.df) != 0 &
-         nrow(gazesample_data_scene.df) != 0 &
-         nrow(saccade_data_scene.df) != 0){
+         nrow(gazesample_data_scene.df) != 0){
         checked_result1 <- check_correctness_fix(emdat_export.df.scene,
                                                  participant,
                                                  a_scene,
@@ -91,15 +91,12 @@ readfiles_part2 <- function(participant, seg_file, last_participant){
                                                  gazesample_data_scene.df,
                                                  saccade_data_scene.df)
       }
-      if(nrow(saccade_data_scene.df) != 0){
-        checked_result2 <- check_correctness_sac(emdat_export.df.scene,
+      checked_result2 <- check_correctness_sac(emdat_export.df.scene,
                                                  participant,
                                                  a_scene,
                                                  segment.names,
                                                  saccade_data_scene.df)
-      }
-      if(nrow(events_data_scene.df) != 0 &
-         nrow(gazesample_data_scene.df) != 0){
+      if(nrow(gazesample_data_scene.df) != 0){
         checked_result3 <- check_correctness_eve(emdat_export.df.scene,
                                                  participant,
                                                  a_scene,
@@ -107,13 +104,13 @@ readfiles_part2 <- function(participant, seg_file, last_participant){
                                                  events_data_scene.df,
                                                  gazesample_data_scene.df)
       }
-      #if(nrow(gazesample_data_scene.df) != 0){
+      if(nrow(gazesample_data_scene.df) != 0){
         checked_result4 <- check_correctness_gazesample(emdat_export.df.scene, 
                                                         participant, 
                                                         a_scene,
                                                         segment.names,
                                                         gazesample_data_scene.df)
-      #}
+      }
     }
   }
   report_success(participant, cumulative_counter)
@@ -178,8 +175,17 @@ check_correctness_fix <- function(emdat_output.df,
   verify_equivalence(internal_value, output_value, participant, a_scene, "sumfixationduration")
 
 ### stddevfixationduration ###
-  internal_value <- sd(subset(internal_data.df, select=fixationduration)$fixationduration)
+  fix_dur <- subset(internal_data.df, select=fixationduration)$fixationduration 
+  
+  if(length(fix_dur) > 1){
+    
+    internal_value <- sd(fix_dur)
+  } else {
+    
+    internal_value <- 0
+  }
   output_value <- subset(emdat_output.df, select=stddevfixationduration)[1,]
+  
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevfixationduration")
   
 ### meanfixationduration ###
@@ -206,17 +212,28 @@ check_correctness_fix <- function(emdat_output.df,
   output_mean <- subset(emdat_output.df, select = meanpathdistance)[1,]
   output_velocity <- subset(emdat_output.df, select=eyemovementvelocity)[1,]
   
-  results <- find_sum_mean_rate(internal_data_vector, 
-                                find_path_length_vector, segs_length, scene_length)
-  
+  if(nrow(internal_data.df) > 1){
+    
+    results <- find_sum_mean_rate(internal_data_vector, 
+                                  find_path_length_vector, segs_length, scene_length)
+  } else{
+    
+    results <- list(sum = -1, mean = -1, rate = -1)
+  }
   verify_equivalence(results$sum, output_sum, participant, a_scene, "sumpathdistance")
   verify_equivalence(results$mean, output_mean, participant, a_scene, "meanpathdistance")
   verify_equivalence(results$rate, output_velocity, participant, a_scene, "eyemovementvelocity")
 
 ### stddevpathdistance ###
   output_value <- subset(emdat_output.df, select = stddevpathdistance)[1,]
-  internal_value <- find_fixation_sd(results$data_storage, results$mean, segs_length)
   
+  if(nrow(internal_data.df) > 1){
+    
+    internal_value <- find_fixation_sd(results$data_storage, results$mean, segs_length)
+  } else{
+    
+    internal_value <- -1
+  }
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevpathdistance")
 
 ### sumabspathangles ###
@@ -226,8 +243,14 @@ check_correctness_fix <- function(emdat_output.df,
   output_mean <- subset(emdat_output.df, select = meanabspathangles)[1,]
   output_rate <- subset(emdat_output.df, select = abspathanglesrate)[1,]
   
-  results <- find_sum_mean_rate(internal_data_vector, 
-                                find_abs_angle_vector, segs_length, scene_length)
+  if(nrow(internal_data.df) > 1){
+    
+    results <- find_sum_mean_rate(internal_data_vector, 
+                                  find_abs_angle_vector, segs_length, scene_length)
+  } else{
+    
+    results <- list(sum = -1, mean = -1, rate = -1)
+  }
   
   verify_equivalence(results$sum, output_sum, participant, a_scene, "sumabspathangles")
   verify_equivalence(results$mean, output_mean, participant, a_scene, "meanabspathangles")
@@ -236,21 +259,34 @@ check_correctness_fix <- function(emdat_output.df,
   
 ### stddevabspathangles ###
   output_value <- subset(emdat_output.df, select = stddevabspathangles)[1,]
-  internal_value <- find_fixation_sd(results$data_storage, results$mean, segs_length)
   
+  if(nrow(internal_data.df) > 1){
+    
+    internal_value <- find_fixation_sd(results$data_storage, results$mean, segs_length)
+  } else{
+    
+    internal_value <- -1
+  }
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevabspathangles")
   
 ### fixationsaccadetimeratio ###
   output_value <- subset(emdat_output.df, select=fixationsaccadetimeratio)[1,]
   numerator <- 0
   
-  for(i in 1:segs_length){
+  if(nrow(saccade_data.df) != 0){
     
-    fix_sum <- sum(subset(internal_data_vector[[i]], select=fixationduration))
-    sac_sum <- sum(subset(saccade_data_vector[[i]], select=saccadeduration))
-    numerator <- numerator + fix_sum/sac_sum
+    for(i in 1:segs_length){
+    
+      fix_sum <- sum(subset(internal_data_vector[[i]], select=fixationduration))
+      sac_sum <- sum(subset(saccade_data_vector[[i]], select=saccadeduration))
+      numerator <- numerator + fix_sum/sac_sum
+    }
+    
+    internal_value <- numerator/segs_length
+  } else {
+    
+    internal_value <- -1
   }
-  internal_value <- numerator/segs_length 
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "fixationsaccadetimeratio")
   
@@ -261,17 +297,28 @@ check_correctness_fix <- function(emdat_output.df,
   output_mean <- subset(emdat_output.df, select = meanrelpathangles)[1,]
   output_rate <- subset(emdat_output.df, select = relpathanglesrate)[1,]
   
-  results <- find_sum_mean_rate(internal_data_vector, 
-                                find_rel_angle_vector, segs_length, scene_length)
-  
+  if(nrow(internal_data.df) > 1){
+    
+    results <- find_sum_mean_rate(internal_data_vector, 
+                                  find_rel_angle_vector, segs_length, scene_length)
+  } else{
+    
+    results <- list(sum = -1, mean = -1, rate = -1)
+  }
   verify_equivalence(results$sum, output_sum, participant, a_scene, "sumrelpathangles")
   verify_equivalence(results$mean, output_mean, participant, a_scene, "meanrelpathangles")
   verify_equivalence(results$rate, output_rate, participant, a_scene, "relpathanglesrate")
   
 ### stddevrelpathangles ###
   output_value <- subset(emdat_output.df, select = stddevrelpathangles)[1,]
-  internal_value <- find_fixation_sd(results$data_storage, results$mean, segs_length)
   
+  if(nrow(internal_data.df) > 1){
+    
+    internal_value <- find_fixation_sd(results$data_storage, results$mean, segs_length)
+  } else{
+    
+    internal_value <- -1
+  }
   verify_equivalence(internal_value, output_value, participant, a_scene, "stddevrelpathangles")
 }
 
@@ -312,20 +359,38 @@ check_correctness_sac <- function(emdat_output.df,
  
 ### longestsaccadedistance ###
   output_value <- subset(emdat_output.df, select=longestsaccadedistance)[1,]
-  internal_value <- max(subset(internal_data.df, select=saccadedistance)$saccadedistance)
   
+  if(nrow(internal_data.df) != 0){
+    
+   internal_value <- max(subset(internal_data.df, select=saccadedistance)$saccadedistance)
+  } else{
+    
+    internal_value <- -1
+  }
   verify_equivalence(internal_value, output_value, participant, a_scene, "longestsaccadedistance")
   
 ### longestsaccadeduration ###
   output_value <- subset(emdat_output.df, select=longestsaccadeduration)[1,]
-  internal_value <- max(subset(internal_data.df, select=saccadeduration)$saccadeduration)
   
+  if(nrow(internal_data.df) != 0){
+    
+    internal_value <- max(subset(internal_data.df, select=saccadeduration)$saccadeduration)
+  } else{
+    
+    internal_value <- -1
+  }
   verify_equivalence(internal_value, output_value, participant, a_scene, "longestsaccadeduration")
   
 ### maxsaccadespeed ###  
   output_value <- subset(emdat_output.df, select=maxsaccadespeed)[1,]
-  internal_value <- max(subset(internal_data.df, select=saccadespeed)$saccadespeed)
   
+  if(nrow(internal_data.df) != 0){
+    
+    internal_value <- max(subset(internal_data.df, select=saccadespeed)$saccadespeed)
+  } else{
+    
+    internal_value <- -1
+  }
   verify_equivalence(internal_value, output_value, participant, a_scene, "maxsaccadespeed")
 
 ### numsaccades ###
@@ -381,20 +446,38 @@ check_correctness_sac <- function(emdat_output.df,
   
 ### sumsaccadedistance ###
   output_value <- subset(emdat_output.df, select=sumsaccadedistance)[1,]
-  internal_value <- sum(subset(internal_data.df, select=saccadedistance)$saccadedistance)
   
+  if(nrow(internal_data.df) != 0){
+    
+    internal_value <- sum(subset(internal_data.df, select=saccadedistance)$saccadedistance)
+  } else{
+    
+    internal_value <- -1
+  }
   verify_equivalence(internal_value, output_value, participant, a_scene, "sumsaccadedistance")
   
 ### sumsaccadeduration ###
   output_value <- subset(emdat_output.df, select=sumsaccadeduration)[1,]
-  internal_value <- sum(subset(internal_data.df, select=saccadeduration)$saccadeduration)
   
+  if(nrow(internal_data.df) != 0){
+    
+    internal_value <- sum(subset(internal_data.df, select=saccadeduration)$saccadeduration)
+  }else {
+    
+    internal_value <- -1
+  }
   verify_equivalence(internal_value, output_value, participant, a_scene, "sumsaccadeduration")
   
 ### minsaccadespeed ###  
   output_value <- subset(emdat_output.df, select=minsaccadespeed)[1,]
-  internal_value <- min(subset(internal_data.df, select=saccadespeed)$saccadespeed)
   
+  if(nrow(internal_data.df) != 0){
+    
+    internal_value <- min(subset(internal_data.df, select=saccadespeed)$saccadespeed)
+  } else{
+    
+    internal_value <- Inf 
+  }
   verify_equivalence(internal_value, output_value, participant, a_scene, "minsaccadespeed")
 }  
 
@@ -766,11 +849,11 @@ participants <- generate_participant_list(144:162)
 run_part2Test(participants, "162b")
 
 
-#### To debug #####
-
-# Runs tests on a given individual participant and scene
-
-# path <- paste(root_path, "SegFiles/P", "140a", ".seg", sep = "")
+# #### To debug #####
+# 
+# # Runs tests on a given individual participant and scene
+# 
+# path <- paste(root_path, "SegFiles/P", "121a", ".seg", sep = "")
 # 
 # readfiles_part2_debug <- function(participant, seg_file, last_participant, a_scene){
 # 
@@ -798,25 +881,25 @@ run_part2Test(participants, "162b")
 #                                            gazesample_data_scene.df,
 #                                            saccade_data_scene.df)
 # 
-#   # checked_result2 <- check_correctness_sac(emdat_export.df.scene,
-#   #                                          participant,
-#   #                                          a_scene,
-#   #                                          segment.names,
-#   #                                          saccade_data_scene.df)
+#    # checked_result2 <- check_correctness_sac(emdat_export.df.scene,
+#    #                                          participant,
+#    #                                          a_scene,
+#    #                                          segment.names,
+#    #                                          saccade_data_scene.df)
 # 
-#   # checked_result3 <- check_correctness_eve(emdat_export.df.scene,
-#   #                                          participant,
-#   #                                          a_scene,
-#   #                                          segment.names,
-#   #                                          events_data_scene.df,
-#   #                                          gazesample_data_scene.df)
-#   #
-#   # checked_result4 <- check_correctness_gazesample(emdat_export.df.scene,
-#   #                                                 participant,
-#   #                                                 a_scene,
-#   #                                                 segment.names,
-#   #                                                 gazesample_data_scene.df)
-# }
-
-#readfiles_part2_debug("140a", path, "162b", "Event_38")
+#    # checked_result3 <- check_correctness_eve(emdat_export.df.scene,
+#    #                                          participant,
+#    #                                          a_scene,
+#    #                                          segment.names,
+#    #                                          events_data_scene.df,
+#    #                                          gazesample_data_scene.df)
+#    #
+#    # checked_result4 <- check_correctness_gazesample(emdat_export.df.scene,
+#    #                                                 participant,
+#    #                                                 a_scene,
+#    #                                                 segment.names,
+#    #                                                 gazesample_data_scene.df)
+#  }
+# 
+# readfiles_part2_debug("121a", path, "162b", "Event_25")
 

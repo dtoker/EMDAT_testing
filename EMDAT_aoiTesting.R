@@ -32,6 +32,12 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
   events_data.df <- read.csv(paste(root_path, "EMDATinternaldata_events_", participant, ".csv", sep=""), sep=",")
   gazesample_data.df <- read.csv(paste(root_path, "EMDATinternaldata_gazesamples_", participant, ".csv", sep=""), sep=",")
   
+  # this participant has None vlaue in x_ and y_coords 
+  if(participant == "147b"){
+    events_data.df$x_coord <- replace(events_data.df$x_coord, which(events_data.df$x_coord == 'None'), NA)
+    events_data.df$y_coord <- replace(events_data.df$y_coord, which(events_data.df$y_coord == 'None'), NA)
+  }
+  
   # loops over the scenes
   for (a_scene in scene.names) {
     
@@ -50,30 +56,29 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
       events_data_scene.df <- subset(events_data.df, scene == a_scene)
       
       
-      if(nrow(fixation_data_scene.df) != 0 &
-         nrow(gazesample_data_scene.df) != 0){
-
-        checked_result1 <- check_aoi_fix(emdat_export.df.scene,
-                                         participant,
-                                         a_scene,
-                                         segment.names,
-                                         aoi_file.df,
-                                         gazesample_data_scene.df,
-                                         fixation_data_scene.df)
-
-      }
-      
-      # if(nrow(events_data_scene.df) != 0 &
+      # if(nrow(fixation_data_scene.df) != 0 &
       #    nrow(gazesample_data_scene.df) != 0){
       # 
-      #   checked_result2 <- check_aoi_eve(emdat_export.df.scene,
+      #   checked_result1 <- check_aoi_fix(emdat_export.df.scene,
       #                                    participant,
       #                                    a_scene,
       #                                    segment.names,
       #                                    aoi_file.df,
-      #                                    events_data_scene.df,
-      #                                    gazesample_data_scene.df)
+      #                                    gazesample_data_scene.df,
+      #                                    fixation_data_scene.df)
+      # 
       # }
+      
+      if(nrow(gazesample_data_scene.df) != 0){
+
+        checked_result2 <- check_aoi_eve(emdat_export.df.scene,
+                                         participant,
+                                         a_scene,
+                                         segment.names,
+                                         aoi_file.df,
+                                         events_data_scene.df,
+                                         gazesample_data_scene.df)
+      }
     }
   }
   report_success(participant, cumulative_counter)
@@ -316,14 +321,32 @@ check_aoi_eve <- function(emdat_output.df,
   bottom_right <- aoi_file.df$BR
   bottom_left <-  aoi_file.df$BL
   
-  # get start and end times of all_data for the scene
+  
+  # if(participant != "147b"){
+  #   internal_data.df <- subset(events_data_scene.df,
+  #                            grepl('MouseClick', event) &
+  #                            x_coord > get_tuple_element(1, top_left) &
+  #                            x_coord <= get_tuple_element(1, top_right) &
+  #                            y_coord <= get_tuple_element(2, bottom_right) &
+  #                            y_coord > get_tuple_element(2, top_right))
+  # 
+  # } else{
+  #   internal_data.df <- subset(events_data_scene.df,
+  #                            grepl('MouseClick', event) &
+  #                            as.numeric(as.character(x_coord)) > get_tuple_element(1, top_left) &
+  #                            as.numeric(as.character(x_coord)) <= get_tuple_element(1, top_right) &
+  #                            as.numeric(as.character(y_coord)) <= get_tuple_element(2, bottom_right) &
+  #                            as.numeric(as.character(y_coord)) > get_tuple_element(2, top_right))
+  # }
+  
   internal_data.df <- subset(events_data_scene.df,
                              grepl('MouseClick', event) &
-                             x_coord > get_tuple_element(1, top_left) &
-                             x_coord <= get_tuple_element(1, top_right) &
-                             y_coord <= get_tuple_element(2, bottom_right) &
-                             y_coord > get_tuple_element(2, top_right))
+                             as.numeric(as.character(x_coord)) > get_tuple_element(1, top_left) &
+                             as.numeric(as.character(x_coord)) <= get_tuple_element(1, top_right) &
+                             as.numeric(as.character(y_coord)) <= get_tuple_element(2, bottom_right) &
+                             as.numeric(as.character(y_coord)) > get_tuple_element(2, top_right))
   
+   
   # get start and end times of all_data for the scene
   start_and_end_times <- get_seg_start_and_end_times(gazesample_data_scene.df)
   length <- start_and_end_times$end - start_and_end_times$start
@@ -342,15 +365,7 @@ check_aoi_eve <- function(emdat_output.df,
   ### single_numevents ###
   output_value <- subset(emdat_output.df, select = single_numevents)[1,]
   
-  column_length <- nrow(internal_data.df)
-    
-  if(column_length != 0){
-    
-    internal_value <- column_length
-  } else{
-    
-    internal_value <- 0
-  }
+  internal_value <- nrow(internal_data.df)
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "single_numevents")
   
@@ -366,8 +381,10 @@ check_aoi_eve <- function(emdat_output.df,
   output_value <- subset(emdat_output.df, select = single_rightclicrate)[1,]
   
   if(length != 0){
+    
     internal_value <- internal_value / length
   } else {
+    
     internal_value <- 0 
   }
   
@@ -471,16 +488,16 @@ run_part2Test <- function(participants, aoi_file_name, last_participant){
   cumulative_counter <<- 0
 }
 
-##### To Run #####
-
-# Set up the tests: choose the range of particpants to run the tests on
-
-participants <- generate_participant_list(101:142)
-
-# Run
-# Note: second argument takes the last participant of the study, not necessarily the
-#       last element in the list of participants given to the first argument
-
+# ##### To Run #####
+# 
+# # Set up the tests: choose the range of particpants to run the tests on
+# 
+participants <- generate_participant_list(144:162)
+# 
+# # Run
+# # Note: second argument takes the last participant of the study, not necessarily the
+# #       last element in the list of participants given to the first argument
+# 
 run_part2Test(participants, "single_aoi" , "162b")
 
 
@@ -488,7 +505,12 @@ run_part2Test(participants, "single_aoi" , "162b")
 
 # Runs tests on a given individual participant and scene
 
-# seg_file <- paste(root_path, "SegFiles/P", "121a", ".seg", sep = "")
+# ##############
+# part <- "147b"
+# test_scene <- "Event_79"
+# ##############
+# 
+# seg_file <- paste(root_path, "SegFiles/P", part, ".seg", sep = "")
 # aoi_file <- paste(aoi_file_path, "single_aoi", ".aoi", sep = "")
 # 
 # readfiles_aoi_debug <- function(participant, seg_file, aoi_file, last_participant, a_scene){
@@ -528,31 +550,32 @@ run_part2Test(participants, "single_aoi" , "162b")
 #     events_data_scene.df <- subset(events_data.df, scene == a_scene)
 # 
 # 
-#     if(nrow(fixation_data_scene.df) != 0 &
-#        nrow(gazesample_data_scene.df) != 0){
-# 
-#       checked_result1 <- check_aoi_fix(emdat_export.df.scene,
-#                                        participant,
-#                                        a_scene,
-#                                        segment.names,
-#                                        aoi_file.df,
-#                                        gazesample_data_scene.df,
-#                                        fixation_data_scene.df)
-# 
-#     }
-# 
-#     # if(nrow(events_data_scene.df) != 0 &
+#     # if(nrow(fixation_data_scene.df) != 0 &
 #     #    nrow(gazesample_data_scene.df) != 0){
 #     #
-#     #   checked_result2 <- check_aoi_eve(emdat_export.df.scene,
+#     #   checked_result1 <- check_aoi_fix(emdat_export.df.scene,
 #     #                                    participant,
 #     #                                    a_scene,
 #     #                                    segment.names,
 #     #                                    aoi_file.df,
-#     #                                    events_data_scene.df,
-#     #                                    gazesample_data_scene.df)
+#     #                                    gazesample_data_scene.df,
+#     #                                    fixation_data_scene.df)
+#     #
 #     # }
+# 
+#     if(nrow(events_data_scene.df) != 0 &
+#        nrow(gazesample_data_scene.df) != 0){
+# 
+#       checked_result2 <- check_aoi_eve(emdat_export.df.scene,
+#                                        participant,
+#                                        a_scene,
+#                                        segment.names,
+#                                        aoi_file.df,
+#                                        events_data_scene.df,
+#                                        gazesample_data_scene.df)
+#     }
 #   }
+#   report_success(participant, cumulative_counter)
 # }
 # 
-# readfiles_aoi_debug("121a", seg_file, aoi_file, "162b", "Event_25")
+# readfiles_aoi_debug(part, seg_file, aoi_file, "162b", test_scene)
