@@ -67,7 +67,7 @@ report_success <- function(participant, cumulative_counter){
   
   writeLines(paste("######## Results for ", participant, " #########\nTotal number of tests: ", 
                    total_counter, sep = ""))
-  writeLines(paste("The number of failed tests: ", total_counter - success_counter, sep = ""))
+  writeLines(paste("Number of failed tests: ", total_counter - success_counter, sep = ""))
   
   if(success_counter == total_counter){
     
@@ -526,17 +526,25 @@ get_seg_start_and_end_times <- function(seg) {
 
 # tells which elements of fix_data_set is inside the rectangle specified by the
 # values of the reamining arguments 
+# is_inside <-  function(fix_data_set, x_left, x_right, y_bottom, y_top) {
+#   
+#     fix_data_set$mappedfixationpointx > get_tuple_element(1, x_left) &
+#     fix_data_set$mappedfixationpointx <= get_tuple_element(1, x_right) &
+#     fix_data_set$mappedfixationpointy <= get_tuple_element(2, y_bottom) &   
+#     fix_data_set$mappedfixationpointy > get_tuple_element(2, y_top) 
+# }
+
 is_inside <-  function(fix_data_set, x_left, x_right, y_bottom, y_top) {
   
-    fix_data_set$mappedfixationpointx > get_tuple_element(1, x_left) &
-    fix_data_set$mappedfixationpointx <= get_tuple_element(1, x_right) &
-    fix_data_set$mappedfixationpointy <= get_tuple_element(2, y_bottom) &   
-    fix_data_set$mappedfixationpointy > get_tuple_element(2, y_top) 
+  fix_data_set$mappedfixationpointx > x_left &
+  fix_data_set$mappedfixationpointx <= x_right &
+  fix_data_set$mappedfixationpointy <= y_bottom &   
+  fix_data_set$mappedfixationpointy > y_top 
 }
 
 # computes the number of incoming saccades from inside aoi2 to those points inside aoi1
 # alos keeps track of the cumulative total if repeatedly applied 
-trans_from <- function(fix_data_set, total_count, aoi1, aoi2){
+trans_from <- function(fix_data_set, aoi1, aoi2){
   
   inside_indices <- which(is_inside(fix_data_set, aoi1$x_left, aoi1$x_right, aoi1$y_bottom, aoi1$y_top))
   
@@ -547,10 +555,9 @@ trans_from <- function(fix_data_set, total_count, aoi1, aoi2){
     if(is_inside(fix_data_set[i-1,], aoi2$x_left, aoi2$x_right, aoi2$y_bottom, aoi2$y_top)){
       
       count_per_aoi <- count_per_aoi + 1
-      total_count <- total_count + 1
     }
   }
-  return(list(count_per_aoi = count_per_aoi, total_count = total_count)) 
+  return(count_per_aoi) 
 }
 
 

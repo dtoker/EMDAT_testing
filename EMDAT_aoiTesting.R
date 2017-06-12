@@ -55,19 +55,19 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
       fixation_data_scene.df <- subset(fixation_data.df, scene == a_scene)
       events_data_scene.df <- subset(events_data.df, scene == a_scene)
       
+
+      if(nrow(fixation_data_scene.df) != 0 &
+         nrow(gazesample_data_scene.df) != 0){
       
-      # if(nrow(fixation_data_scene.df) != 0 &
-      #    nrow(gazesample_data_scene.df) != 0){
-      # 
-      #   checked_result1 <- check_aoi_fix(emdat_export.df.scene,
-      #                                    participant,
-      #                                    a_scene,
-      #                                    segment.names,
-      #                                    aoi_file.df,
-      #                                    gazesample_data_scene.df,
-      #                                    fixation_data_scene.df)
-      # 
-      # }
+         checked_result1 <- check_aoi_fix(emdat_export.df.scene,
+                                          participant,
+                                          a_scene,
+                                          segment.names,
+                                          aoi_file.df,
+                                          gazesample_data_scene.df,
+                                          fixation_data_scene.df)
+      
+      }
       
       if(nrow(gazesample_data_scene.df) != 0){
 
@@ -88,20 +88,20 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
 # LIST OF COLUMS TO TEST:
 
 # single_numfixations
-# single_meanfixationduration
-# single_fixationrate
-# single_longestfixation
 # single_proportionnum
-# single_proportiontime
-# single_timetofirstfixation
-# single_stddevfixationduration
-# single_timetolastfixation
+# single_fixationrate
 # single_totaltimespent
+# single_proportiontime
+# single_meanfixationduration
+# single_stddevfixationduration
+# single_longestfixation
+# single_timetofirstfixation
+# single_timetolastfixation
 # single_numtransfrom_single
 # single_proptransfrom_single
 
-# TODO?:
 
+# TODO?:
 # single_numtransto_single	
 # single_proptransto_single	
 
@@ -115,18 +115,16 @@ check_aoi_fix <- function(emdat_output.df,
   
   ### set up the tests ###
   
-  # read aoi coordinates
-  top_left <- aoi_file.df$TL
-  top_right <- aoi_file.df$TR
-  bottom_right <- aoi_file.df$BR
-  bottom_left <-  aoi_file.df$BL
-  
-  # get data inside aoi
-  internal_data.df <- subset(fixation_data_scene.df, 
-                             mappedfixationpointx > get_tuple_element(1, top_left) &
-                             mappedfixationpointx <= get_tuple_element(1, top_right) &
-                             mappedfixationpointy <= get_tuple_element(2, bottom_right) &   
-                             mappedfixationpointy > get_tuple_element(2, top_right))
+  left <- get_tuple_element(1, aoi_file.df$TL)
+  right <- get_tuple_element(1, aoi_file.df$TR)
+  bottom <- get_tuple_element(2, aoi_file.df$BR)
+  top <- get_tuple_element(2, aoi_file.df$TL)
+    
+  internal_data.df <- subset(fixation_data_scene.df,
+                             mappedfixationpointx > left &
+                             mappedfixationpointx <= right &
+                             mappedfixationpointy <= bottom &
+                             mappedfixationpointy > top)
   
   # get start and end times of all_data for the scene
   start_and_end_times <- get_seg_start_and_end_times(gazesample_data_scene.df)
@@ -263,22 +261,24 @@ check_aoi_fix <- function(emdat_output.df,
   verify_equivalence(internal_value, output_value, participant, a_scene, "single_timetolastfixation")
   
   ### single_numtransfrom_single ###
+  total_count <- 0
+  
   output_value <- subset(emdat_output.df, select = single_numtransfrom_single)[1,]
   
-  aoi1 <- list(x_left = top_left , x_right = top_right, y_bottom = bottom_right, y_top = top_right)
-  aoi2 <- list(x_left = top_left , x_right = top_right, y_bottom = bottom_right, y_top = top_right)
+  aoi1 <- list(x_left = left , x_right = right, y_bottom = bottom, y_top = top)
+  aoi2 <- list(x_left = left , x_right = right, y_bottom = bottom, y_top = top)
   
-  counts <- trans_from(fixation_data_scene.df, 0, aoi1, aoi2)
-  internal_value <- counts$count_per_aoi
+  internal_value <- trans_from(fixation_data_scene.df, aoi1, aoi2)
+  total_count <- internal_value
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "single_numtransfrom_single")
   
   ### single_proptransfrom_single ###
   output_value <- subset(emdat_output.df, select = single_proptransfrom_single)[1,]
   
-  if(counts$total_count != 0){
+  if(total_count != 0){
     
-    internal_value <- internal_value / counts$total_count
+    internal_value <- internal_value / total_count
   } else{
     internal_value <- 0
   }
@@ -291,14 +291,16 @@ check_aoi_fix <- function(emdat_output.df,
 
 # single_numevents
 # single_numrightclic
-# single_numdoubleclic
-# single_numleftclic
-# single_doubleclicrate
-# single_leftclicrate
 # single_rightclicrate
+# single_numdoubleclic
+# single_doubleclicrate
+# single_numleftclic
+# single_leftclicrate
 # single_timetofirstdoubleclic
 # single_timetofirstleftclic
 # single_timetofirstrightclic
+
+
 
 # Not tested; these are set to -1 in the emdat code:	
 # single_timetolastdoubleclic	
@@ -492,7 +494,7 @@ run_part2Test <- function(participants, aoi_file_name, last_participant){
 # 
 # # Set up the tests: choose the range of particpants to run the tests on
 # 
-participants <- generate_participant_list(144:162)
+participants <- generate_participant_list(101:142)
 # 
 # # Run
 # # Note: second argument takes the last participant of the study, not necessarily the
