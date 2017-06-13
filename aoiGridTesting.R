@@ -28,18 +28,8 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
   aoi_file.df <- read.csv(aoi_file, sep="\t", header = FALSE, col.names = c("aoi_name","TL","TR","BR", "BL"))
   aoi.names <- unique(aoi_file.df[, "aoi_name"])
   
-  # read aoi coordinates
-  extract_aoi_coordinate <- function(aoi_name){
-    
-    aoi <- aoi_file.df[aoi_name,]
-    aoi_element <- list(aoi_name = aoi_name, left = 0, right = 0, bottom = 0, top = 0)
-    aoi_element$left <- get_tuple_element(1, aoi$TL)
-    aoi_element$right <- get_tuple_element(1, aoi$TR)
-    aoi_element$bottom <- get_tuple_element(2, aoi$BR)
-    aoi_element$top <-  get_tuple_element(2, aoi$TR)
-    return(aoi_element) 
-  }
-  aois <- lapply(aoi.names, extract_aoi_coordinate)
+  # store aoi names and boundaries in df 
+  aois <- lapply(aoi.names, extract_aoi_coordinate, aoi_file.df= aoi_file.df)
   aois.df <- Reduce(rbind, aois)
   
   # reads in the internal EMDAT data files necessary for computing expecetd values, 
@@ -48,7 +38,8 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
   events_data.df <- read.csv(paste(root_path, "EMDATinternaldata_events_", participant, ".csv", sep=""), sep=",")
   gazesample_data.df <- read.csv(paste(root_path, "EMDATinternaldata_gazesamples_", participant, ".csv", sep=""), sep=",")
   
-  # this participant has None vlaue in x_ and y_coords 
+  # this participant has None vlaues in x_ and y_coords; replace them with NA
+  # to handle those rows together with the other numerical entries without a warning message later    
   if(participant == "147b"){
     events_data.df$x_coord <- replace(events_data.df$x_coord, which(events_data.df$x_coord == 'None'), NA)
     events_data.df$y_coord <- replace(events_data.df$y_coord, which(events_data.df$y_coord == 'None'), NA)
@@ -134,16 +125,17 @@ check_aoi_fix <- function(emdat_output.df,
                           fixation_data_scene.df){
   
   ### set up the tests ###
-  
   aoi <- aois.df[aoi_name = aoi_name,]
   aoi_feature_name_root <- paste("X", aoi_name, "_", sep = "")
   
   # get data inside aoi
+  # internal_data.df <- subset(fixation_data_scene.df, 
+  #                            mappedfixationpointx > aoi$left &
+  #                            mappedfixationpointx <= aoi$right &
+  #                            mappedfixationpointy <= aoi$bottom &   
+  #                            mappedfixationpointy > aoi$top)
   internal_data.df <- subset(fixation_data_scene.df, 
-                             mappedfixationpointx > aoi$left &
-                             mappedfixationpointx <= aoi$right &
-                             mappedfixationpointy <= aoi$bottom &   
-                             mappedfixationpointy > aoi$top)
+                             is_inside(fixation_data_scene.df, aoi$left, aoi$right, aoi$bottom, aoi$top))
   
   # get start and end times of all_data for the scene
   start_and_end_times <- get_seg_start_and_end_times(gazesample_data_scene.df)
