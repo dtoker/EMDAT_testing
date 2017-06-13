@@ -128,6 +128,7 @@ check_aoi_fix <- function(emdat_output.df,
   aoi <- aois.df[aoi_name = aoi_name,]
   aoi_feature_name_root <- paste("X", aoi_name, "_", sep = "")
   
+  
   # get data inside aoi
   # internal_data.df <- subset(fixation_data_scene.df, 
   #                            mappedfixationpointx > aoi$left &
@@ -353,6 +354,7 @@ check_aoi_eve <- function(emdat_output.df,
   aoi <- aois.df[aoi_name = aoi_name,]
   aoi_feature_name_root <- paste("X", aoi_name, "_", sep = "")
   
+  
   internal_data.df <- subset(events_data_scene.df,
                              grepl('MouseClick', event) &
                              as.numeric(as.character(x_coord)) > aoi$left &
@@ -516,13 +518,13 @@ run_part2Test <- function(participants, aoi_file_name, last_participant){
 # 
 # # Set up the tests: choose the range of particpants to run the tests on
 # 
-participants <- generate_participant_list(101:101)
+participants <- generate_participant_list(144:162)
 # 
 # # Run
 # # Note: second argument takes the last participant of the study, not necessarily the
 # #       last element in the list of participants given to the first argument
 # 
-run_part2Test(participants, "grid2x2" , "101b")
+run_part2Test(participants, "grid2x2" , "162b")
 
 
 #### To debug #####

@@ -550,6 +550,7 @@ trans_from <- function(fix_data_set, aoi1, aoi2){
   
   count_per_aoi <- 0
   
+  # disregard first element in inside_indices
   for(i in setdiff(inside_indices, 1)){
     
     if(is_inside(fix_data_set[i-1,], aoi2$x_left, aoi2$x_right, aoi2$y_bottom, aoi2$y_top)){
