@@ -575,17 +575,25 @@ extract_aoi_coordinate <- function(aoi_file.df, aoi_name){
   return(aoi_element) 
 }
 
-# extract_aoi_coordinate <- function(aoi_file.df, aoi_name){
-#   
-#   aoi <- aoi_file.df[aoi_file.df$aoi_name == aoi_name,]
-#   aoi_element <- list(aoi_name = aoi_name, left = 0, right = 0, bottom = 0, top = 0)
-#   aoi_element$left <- get_tuple_element(1, aoi$TL)
-#   aoi_element$right <- get_tuple_element(1, aoi$TR)
-#   aoi_element$bottom <- get_tuple_element(2, aoi$BR)
-#   aoi_element$top <-  get_tuple_element(2, aoi$TR)
-#   
-#   return(aoi_element) 
-# }
+# Given all particapnts data, returns only the scenes belonging to the given participant
+# Used for three participants study
+# This idea of row retrieval is from 
+# http://stackoverflow.com/questions/5553802/get-row-number-for-r-data-frame   
+get_features_df_for_participant_for_3 <- function(emdat_export_all.df, participant, Sc_ids, last_participant){
+  
+  start_row <- which(Sc_ids==paste(participant, "_allsc", sep = "")) + 1
+  
+  if(participant != last_participant){
+    
+    participant <- as.numeric(participant) + 1
+    participant <- as.character(participant)
+    end_row <- which(Sc_ids==paste(participant, "_allsc", sep = "")) - 1
+  } else{
+    
+    end_row <- length(Sc_ids)
+  }
+  return(emdat_export_all.df[start_row : end_row, ])
+}
 
 
 
