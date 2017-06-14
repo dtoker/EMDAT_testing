@@ -840,7 +840,7 @@ run_part2Test <- function(participants, last_participant){
 
 # Set up the tests: choose the range of particpants to run the tests on
 
-participants <- generate_participant_list(144:162)
+participants <- generate_participant_list(101:142)
 
 # Run
 # Note: second argument takes the last participant of the study, not necessarily the

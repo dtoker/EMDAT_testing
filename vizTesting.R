@@ -28,20 +28,9 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
   aoi_file.df <- read.csv(aoi_file, sep="\t", header = FALSE, col.names = c("aoi_name","TL","TR","BR", "BL"), stringsAsFactors = FALSE)
   aoi.names <- aoi_file.df[, "aoi_name"]
   
-  extract_aoi_coordinate <- function(aoi_file.df, aoi_name){
-    
-    aoi <- aoi_file.df[aoi_file.df$aoi_name == aoi_name,]
-    aoi_element <- list(aoi_name = aoi_name, left = 0, right = 0, bottom = 0, top = 0)
-    aoi_element$left <- get_tuple_element(1, aoi$TL)
-    aoi_element$right <- get_tuple_element(1, aoi$TR)
-    aoi_element$bottom <- get_tuple_element(2, aoi$BR)
-    aoi_element$top <-  get_tuple_element(2, aoi$TR)
-    
-    return(aoi_element) 
-  }
   # store aoi names and boundaries in df 
   aois <- lapply(aoi.names, extract_aoi_coordinate, aoi_file.df= aoi_file.df)
-  aois.df <- Reduce(rbind, aois)
+  aois.data <- Reduce(rbind2, aois)
   
   # reads in the internal EMDAT data files necessary for computing expecetd values, 
   # once for the given participant 
@@ -76,30 +65,30 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
       
       if(nrow(fixation_data_scene.df) != 0 &
          nrow(gazesample_data_scene.df) != 0){
-        
+
         for(aoi_name in aoi.names){
-          
+
           check_aoi_fix(emdat_export.df.scene,
                         participant,
                         a_scene,
                         aoi_name,
-                        aois.df,
+                        aois.data,
                         segment.names,
                         gazesample_data_scene.df,
                         fixation_data_scene.df)
         }
-        
+
       }
       
       if(nrow(gazesample_data_scene.df) != 0){
-        
+
         for(aoi_name in aoi.names){
-          
+
           check_aoi_eve(emdat_export.df.scene,
                         participant,
                         a_scene,
                         aoi_name,
-                        aois.df,
+                        aois.data,
                         segment.names,
                         events_data_scene.df,
                         gazesample_data_scene.df)
@@ -130,15 +119,14 @@ check_aoi_fix <- function(emdat_output.df,
                           participant, 
                           a_scene,
                           aoi_name,
-                          aois.df,
+                          aois.data,
                           segment.names,
                           gazesample_data_scene.df,
                           fixation_data_scene.df){
   
   ### set up the tests ###
-  aoi <- aois.df[aoi_name = aoi_name,]
-  aoi_feature_name_root <- paste("X", aoi_name, "_", sep = "")
-  
+  aoi <- aois.data[aois.data[,"aoi_name"] == aoi_name,]
+  aoi_feature_name_root <- paste(aoi_name, "_", sep = "")
   
   # get data inside aoi
   # internal_data.df <- subset(fixation_data_scene.df, 
@@ -296,11 +284,11 @@ check_aoi_fix <- function(emdat_output.df,
   ### numtransfrom_ ###
   aoi1 <- list(x_left = aoi$left , x_right = aoi$right, y_bottom = aoi$bottom, y_top = aoi$top)
   total_count <- 0
-  internal_values <- list(nrow(aois.df))
+  internal_values <- list(nrow(aois.data))
   
-  for(name in aois.df[,1]){
+  for(name in aois.data[,1]){
     
-    aoi2 <- aois.df[aoi_name = name,]
+    aoi2 <- aois.data[aois.data[,"aoi_name"] == name,]
     feature_name <- paste(aoi_feature_name_root, "numtransfrom_", name, sep = "")
     output_value <- subset(emdat_output.df, select = feature_name)[1,]
     
@@ -314,7 +302,7 @@ check_aoi_fix <- function(emdat_output.df,
   }
   
   ### proptransfrom_ ###
-  for(name in aois.df[,1]){
+  for(name in aois.data[,1]){
     
     feature_name <- paste(aoi_feature_name_root, "proptransfrom_", name, sep = "")
     output_value <- subset(emdat_output.df, select = feature_name)[1,]
@@ -355,15 +343,15 @@ check_aoi_eve <- function(emdat_output.df,
                           participant, 
                           a_scene,
                           aoi_name,
-                          aois.df,
+                          aois.data,
                           segment.names,
                           events_data_scene.df,
                           gazesample_data_scene.df){
   
   ### set up the tests ###
   
-  aoi <- aois.df[aoi_name = aoi_name,]
-  aoi_feature_name_root <- paste("X", aoi_name, "_", sep = "")
+  aoi <- aois.data[aois.data[,"aoi_name"] == aoi_name,]
+  aoi_feature_name_root <- paste(aoi_name, "_", sep = "")
   
   
   internal_data.df <- subset(events_data_scene.df,

@@ -565,7 +565,7 @@ trans_from <- function(fix_data_set, aoi1, aoi2){
 # from df of the form col.names = c("aoi_name","TL","TR","BR", "BL")
 extract_aoi_coordinate <- function(aoi_file.df, aoi_name){
   
-  aoi <- aoi_file.df[aoi_name,]
+  aoi <- aoi_file.df[aoi_file.df$aoi_name == aoi_name,]
   aoi_element <- list(aoi_name = aoi_name, left = 0, right = 0, bottom = 0, top = 0)
   aoi_element$left <- get_tuple_element(1, aoi$TL)
   aoi_element$right <- get_tuple_element(1, aoi$TR)
@@ -575,6 +575,17 @@ extract_aoi_coordinate <- function(aoi_file.df, aoi_name){
   return(aoi_element) 
 }
 
+# extract_aoi_coordinate <- function(aoi_file.df, aoi_name){
+#   
+#   aoi <- aoi_file.df[aoi_file.df$aoi_name == aoi_name,]
+#   aoi_element <- list(aoi_name = aoi_name, left = 0, right = 0, bottom = 0, top = 0)
+#   aoi_element$left <- get_tuple_element(1, aoi$TL)
+#   aoi_element$right <- get_tuple_element(1, aoi$TR)
+#   aoi_element$bottom <- get_tuple_element(2, aoi$BR)
+#   aoi_element$top <-  get_tuple_element(2, aoi$TR)
+#   
+#   return(aoi_element) 
+# }
 
 
 
