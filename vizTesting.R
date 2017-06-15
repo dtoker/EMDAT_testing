@@ -102,18 +102,18 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
 # This function checks the correctness of fixations
 # LIST OF COLUMS TO TEST:
 
-# single_numfixations
-# single_proportionnum
-# single_fixationrate
-# single_totaltimespent
-# single_proportiontime
-# single_meanfixationduration
-# single_stddevfixationduration
-# single_longestfixation
-# single_timetofirstfixation
-# single_timetolastfixation
-# single_numtransfrom_single
-# single_proptransfrom_single
+# numfixations
+# proportionnum
+# fixationrate
+# totaltimespent
+# proportiontime
+# meanfixationduration
+# stddevfixationduration
+# longestfixation
+# timetofirstfixation
+# timetolastfixation
+# numtransfrom
+# proptransfrom
 
 check_aoi_fix <- function(emdat_output.df, 
                           participant, 
@@ -323,21 +323,21 @@ check_aoi_fix <- function(emdat_output.df,
 # This function checks the correctness of events
 # LIST OF COLUMS TO TEST:
 
-# single_numevents
-# single_numrightclic
-# single_rightclicrate
-# single_numdoubleclic
-# single_doubleclicrate
-# single_numleftclic
-# single_leftclicrate
-# single_timetofirstdoubleclic
-# single_timetofirstleftclic
-# single_timetofirstrightclic
+# numevents
+# numrightclic
+# rightclicrate
+# numdoubleclic
+# doubleclicrate
+# numleftclic
+# leftclicrate
+# timetofirstdoubleclic
+# timetofirstleftclic
+# timetofirstrightclic
 
 # Not tested; these are set to -1 in the emdat code:	
-# single_timetolastdoubleclic	
-# single_timetolastleftclic	
-# single_timetolastrightclic	
+# timetolastdoubleclic	
+# timetolastleftclic	
+# timetolastrightclic	
 
 check_aoi_eve <- function(emdat_output.df, 
                           participant, 
@@ -491,6 +491,25 @@ check_aoi_eve <- function(emdat_output.df,
   }
   
   verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
+  
+  # ### timetolastdoubleclic ###
+  # feature_name <- paste(aoi_feature_name_root, "timetolastdoubleclic", sep = "")
+  # output_value <- subset(emdat_output.df, select = feature_name)[1,]
+  # 
+  # verify_equivalence(-1, output_value, participant, a_scene, feature_name)
+  # 
+  # ### timetolastleftclic ###
+  # feature_name <- paste(aoi_feature_name_root, "timetolastleftclic", sep = "")
+  # output_value <- subset(emdat_output.df, select = feature_name)[1,]
+  # 
+  # verify_equivalence(-1, output_value, participant, a_scene, feature_name)
+  # 
+  # ### timetolastrightclic ###
+  # feature_name <- paste(aoi_feature_name_root, "timetolastrightclic", sep = "")
+  # output_value <- subset(emdat_output.df, select = feature_name)[1,]
+  # 
+  # verify_equivalence(-1, output_value, participant, a_scene, feature_name)
+  
 }
 ##########################################################################################
 
@@ -517,7 +536,7 @@ run_part2Test <- function(participants, aoi_file_name, last_participant){
 # 
 # # Set up the tests: choose the range of particpants to run the tests on
 # 
-participants <- generate_participant_list(144:162)
+participants <- generate_participant_list(101:142)
 # 
 # # Run
 # # Note: second argument takes the last participant of the study, not necessarily the
