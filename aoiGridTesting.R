@@ -28,7 +28,7 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
   aoi_file.df <- read.csv(aoi_file, sep="\t", header = FALSE, col.names = c("aoi_name","TL","TR","BR", "BL"))
   aoi.names <- unique(aoi_file.df[, "aoi_name"])
   
-  # store aoi names and boundaries in df 
+  # store aoi names and boundaries in matrix 
   aois <- lapply(aoi.names, extract_aoi_coordinate, aoi_file.df= aoi_file.df)
   aois.data <- Reduce(rbind, aois)
   
@@ -285,7 +285,7 @@ check_aoi_fix <- function(emdat_output.df,
   ### numtransfrom_ ###
   aoi1 <- list(x_left = aoi$left , x_right = aoi$right, y_bottom = aoi$bottom, y_top = aoi$top)
   total_count <- 0
-  internal_values <- list(nrow(aois.data))
+  internal_values <- list()
   
   for(name in aois.data[,1]){
     

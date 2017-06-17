@@ -499,7 +499,8 @@ generate_participant_list <- function(p_range){
 } 
 
 
-# tuple is numeric: either 1 or 2 
+# converts an element, specified by numeral 1 or 2, of a given string tuple 
+# of the form "number1, number2" into the corresponding number 
 get_tuple_element <- function(tuple, tuples) {
   
   tuples <- as.character(tuples)
@@ -526,14 +527,6 @@ get_seg_start_and_end_times <- function(seg) {
 
 # tells which elements of fix_data_set is inside the rectangle specified by the
 # values of the reamining arguments 
-# is_inside <-  function(fix_data_set, x_left, x_right, y_bottom, y_top) {
-#   
-#     fix_data_set$mappedfixationpointx > get_tuple_element(1, x_left) &
-#     fix_data_set$mappedfixationpointx <= get_tuple_element(1, x_right) &
-#     fix_data_set$mappedfixationpointy <= get_tuple_element(2, y_bottom) &   
-#     fix_data_set$mappedfixationpointy > get_tuple_element(2, y_top) 
-# }
-
 is_inside <-  function(fix_data_set, x_left, x_right, y_bottom, y_top) {
   
   fix_data_set$mappedfixationpointx > x_left &
