@@ -174,7 +174,13 @@ check_aoi_fix <- function(emdat_output.df,
     internal_value <- numfixs / fix_duration
   } else {
     
-    internal_value <- 0
+    if(segs_length > 1){
+      
+      internal_value <- -1
+    } else{
+      
+      internal_value <- 0
+    }
   }
   
   verify_equivalence(internal_value ,output_value, participant, a_scene, feature_name)

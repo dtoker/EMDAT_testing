@@ -588,5 +588,8 @@ get_features_df_for_participant_for_3 <- function(emdat_export_all.df, participa
   return(emdat_export_all.df[start_row : end_row, ])
 }
 
-
+set_root_name <- function(root){
+  
+  return(paste(root, "_", sep = ""))
+}
 

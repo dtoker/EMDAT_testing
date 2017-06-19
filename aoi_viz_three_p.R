@@ -43,7 +43,8 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
   events_data.df <- read.csv(paste(root_path, "EMDATdata_eve_P", participant, ".tsv", sep=""), sep="\t")
   gazesample_data.df <- read.csv(paste(root_path, "EMDATdata_gazesample_P", participant, ".tsv", sep=""), sep="\t")
   
-  # replace None vlaue in x_ and y_coords with NA 
+  # replace None vlaue in x_ and y_coords with NA to elegantly handle inequality comparisons later
+  # in check_aoi_eve 
   events_data.df$x_coord <- replace(events_data.df$x_coord, which(events_data.df$x_coord == 'None'), NA)
   events_data.df$y_coord <- replace(events_data.df$y_coord, which(events_data.df$y_coord == 'None'), NA)
   
@@ -103,18 +104,18 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
 # This function checks the correctness of fixations
 # LIST OF COLUMS TO TEST:
 
-# single_numfixations
-# single_proportionnum
-# single_fixationrate
-# single_totaltimespent
-# single_proportiontime
-# single_meanfixationduration
-# single_stddevfixationduration
-# single_longestfixation
-# single_timetofirstfixation
-# single_timetolastfixation
-# single_numtransfrom_single
-# single_proptransfrom_single
+# numfixations
+# proportionnum
+# fixationrate
+# totaltimespent
+# proportiontime
+# meanfixationduration
+# stddevfixationduration
+# longestfixation
+# timetofirstfixation
+# timetolastfixation
+# numtransfrom
+# proptransfrom
 
 check_aoi_fix <- function(emdat_output.df, 
                           participant, 
@@ -127,7 +128,14 @@ check_aoi_fix <- function(emdat_output.df,
   
   ### set up the tests ###
   aoi <- aois.data[aois.data[,"aoi_name"] == aoi_name,]
-  aoi_feature_name_root <- paste(aoi_name, "_", sep = "")
+  
+  if(class(aoi_name) == "integer"){
+    
+    aoi_feature_name_root <- set_root_name(paste("X", aoi_name, sep = ""))
+  } else {
+    
+    aoi_feature_name_root <- set_root_name(aoi_name)
+  }
   
   internal_data.df <- subset(fixation_data_scene.df, 
                              is_inside(fixation_data_scene.df, aoi$left, aoi$right, aoi$bottom, aoi$top))
@@ -384,21 +392,21 @@ check_aoi_fix <- function(emdat_output.df,
 # This function checks the correctness of events
 # LIST OF COLUMS TO TEST:
 
-# single_numevents
-# single_numrightclic
-# single_rightclicrate
-# single_numdoubleclic
-# single_doubleclicrate
-# single_numleftclic
-# single_leftclicrate
-# single_timetofirstdoubleclic
-# single_timetofirstleftclic
-# single_timetofirstrightclic
+# numevents
+# numrightclic
+# rightclicrate
+# numdoubleclic
+# doubleclicrate
+# numleftclic
+# leftclicrate
+# timetofirstdoubleclic
+# timetofirstleftclic
+# timetofirstrightclic
 
 # Not tested; these are set to -1 in the emdat code:	
-# single_timetolastdoubleclic	
-# single_timetolastleftclic	
-# single_timetolastrightclic	
+# timetolastdoubleclic	
+# timetolastleftclic	
+# timetolastrightclic	
 
 check_aoi_eve <- function(emdat_output.df, 
                           participant, 
@@ -411,7 +419,14 @@ check_aoi_eve <- function(emdat_output.df,
   
   ### set up the tests ###
   aoi <- aois.data[aois.data[,"aoi_name"] == aoi_name,]
-  aoi_feature_name_root <- paste(aoi_name, "_", sep = "")
+  
+  if(class(aoi_name) == "integer"){
+    
+    aoi_feature_name_root <- set_root_name(paste("X", aoi_name, sep = ""))
+  } else {
+    
+    aoi_feature_name_root <- set_root_name(aoi_name)
+  }
   
   internal_data.df <- subset(events_data_scene.df,
                              grepl('MouseClick', event) &
@@ -623,7 +638,7 @@ check_aoi_eve <- function(emdat_output.df,
 ##########################################################################################
 
 # When called, commences the tests for the given list of participants
-run_part2Test <- function(participants, aoi_file_name, last_participant){
+run_aoiTest <- function(participants, aoi_file_name, last_participant){
   
   aoi_file <- paste(aoi_file_path, aoi_file_name, ".aoi", sep = "")
   
@@ -647,8 +662,8 @@ participants <- list("16", "17", "18")
 # Run
 # Note: last_participant refers to the last in the EMDAT output file used, not necessarily that
 #       in the list of participants
-run_part2Test(participants, "viz-specific", "18")
-
+run_aoiTest(participants, "viz-specific", "18")
+#run_aoiTest(participants, "grid2x2", "18")
 
 
 
