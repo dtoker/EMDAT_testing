@@ -284,7 +284,7 @@ check_aoi_fix <- function(emdat_output.df,
   ### numtransfrom_ ###
   aoi1 <- list(x_left = aoi$left , x_right = aoi$right, y_bottom = aoi$bottom, y_top = aoi$top)
   total_count <- 0
-  internal_values <- list(nrow(aois.data))
+  internal_values <- list()
   
   for(name in aois.data[,1]){
     
