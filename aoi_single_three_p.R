@@ -1,7 +1,6 @@
-### TEST SCRIPT ###
-
 source("EMDAT_testUtils.R")
 
+### set up the tests by initializing varibales in a global scope ###
 root_path <- "Part2_EMDATInternal_EMDATOutput/old_data/"
 aoi_file_path <- "Part1_TobiiV3Output_EMDATInternal/old_data/"
 
@@ -15,6 +14,7 @@ Sc_ids <- as.character(emdat_export_all.df[,1])
 
 cumulative_counter <- 0
 
+### test scripts ###
 readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
   
   # reads the pertinent part of the features file for the given participant (*)
@@ -34,7 +34,8 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
   events_data.df <- read.csv(paste(root_path, "EMDATdata_eve_P", participant, ".tsv", sep=""), sep="\t")
   gazesample_data.df <- read.csv(paste(root_path, "EMDATdata_gazesample_P", participant, ".tsv", sep=""), sep="\t")
   
-  # replace None vlaue in x_ and y_coords with NA 
+  # replace None vlaue in x_ and y_coords with NA to elegantly handle inequality comparisons later
+  # in check_aoi_eve
   events_data.df$x_coord <- replace(events_data.df$x_coord, which(events_data.df$x_coord == 'None'), NA)
   events_data.df$y_coord <- replace(events_data.df$y_coord, which(events_data.df$y_coord == 'None'), NA)
   
@@ -47,7 +48,7 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
     # reads the pertinent part of the file from (*) above for the given scene 
     emdat_export.df.scene <- subset(emdat_export.df, Sc_id == a_scene)
     
-    # if-statement below guards aginst missing scenes in the files   
+    # if-statement below guards against missing scenes in the files   
     if(nrow(emdat_export.df.scene) != 0) {
       
       # keeps all segments belonging to the scene in data frame format
@@ -55,28 +56,27 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
       fixation_data_scene.df <- subset(fixation_data.df, grepl(a_scene, scene) & !grepl(participant, scene))
       events_data_scene.df <- subset(events_data.df, grepl(a_scene, scene) & !grepl(participant, scene))
       
-      
       if(nrow(fixation_data_scene.df) != 0 &
          nrow(gazesample_data_scene.df) != 0){
         
-        checked_result1 <- check_aoi_fix(emdat_export.df.scene,
-                                         participant,
-                                         a_scene,
-                                         segment.names,
-                                         aoi,
-                                         gazesample_data_scene.df,
-                                         fixation_data_scene.df)
+        check_aoi_fix(emdat_export.df.scene,
+                      participant,
+                      a_scene,
+                      segment.names,
+                      aoi,
+                      gazesample_data_scene.df,
+                      fixation_data_scene.df)
       }
       
       if(nrow(gazesample_data_scene.df) != 0){
         
-        checked_result2 <- check_aoi_eve(emdat_export.df.scene,
-                                         participant,
-                                         a_scene,
-                                         segment.names,
-                                         aoi,
-                                         events_data_scene.df,
-                                         gazesample_data_scene.df)
+        check_aoi_eve(emdat_export.df.scene,
+                      participant,
+                      a_scene,
+                      segment.names,
+                      aoi,
+                      events_data_scene.df,
+                      gazesample_data_scene.df)
       }
     }
   }
@@ -178,7 +178,7 @@ check_aoi_fix <- function(emdat_output.df,
     internal_value <- mean(internal_data.df$fixationduration)
   } else{
     
-    internal_value <- -1
+    internal_value <- 0
   }
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "single_meanfixationduration")
@@ -333,8 +333,6 @@ check_aoi_fix <- function(emdat_output.df,
 # single_timetofirstleftclic
 # single_timetofirstrightclic
 
-
-
 # Not tested; these are set to -1 in the emdat code:	
 # single_timetolastdoubleclic	
 # single_timetolastleftclic	
@@ -349,7 +347,6 @@ check_aoi_eve <- function(emdat_output.df,
                           gazesample_data_scene.df){
   
   ### set up the tests ###
-  
   internal_data.df <- subset(events_data_scene.df,
                              grepl('MouseClick', event) &
                              as.numeric(as.character(x_coord)) > aoi$left &
@@ -545,11 +542,10 @@ check_aoi_eve <- function(emdat_output.df,
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "single_timetofirstrightclic")
 }
+
 ##########################################################################################
 
-# When called, commences the part2 tests for the given list of participants
-# last_participant refers to the last in the given study, not necessarily that
-# in the list of participants
+# When called, commences the tests for the given list of participants
 run_part2Test <- function(participants, aoi_file_name, last_participant){
   
   aoi_file <- paste(aoi_file_path, aoi_file_name, ".aoi", sep = "")
@@ -569,13 +565,18 @@ run_part2Test <- function(participants, aoi_file_name, last_participant){
 ##### To Run #####
 
 # Set up the tests: choose the range of particpants to run the tests on
-
 participants <- list("16", "17", "18")
 
 # Run
-# Note: second argument takes the last participant of the study, not necessarily the
-#       last element in the list of participants given to the first argument
-
+# Note: last_participant refers to the last in the EMDAT output file used, not necessarily that
+#       in the list of participants
 run_part2Test(participants, "single_aoi", "18")
+
+
+
+
+
+
+
 
 

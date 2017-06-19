@@ -1,7 +1,6 @@
-### TEST SCRIPT ###
-
 source("EMDAT_testUtils.R")
 
+### set up the tests by initializing varibales in a global scope ###
 root_path <- "Part2_EMDATInternal_EMDATOutput/old_data/"
 aoi_file_path <- "Part1_TobiiV3Output_EMDATInternal/old_data/"
 
@@ -15,6 +14,7 @@ Sc_ids <- as.character(emdat_export_all.df[,1])
 
 cumulative_counter <- 0
 
+### test scripts ###
 readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
   
   # reads the pertinent part of the features file for the given participant (*)
@@ -444,7 +444,7 @@ check_aoi_eve <- function(emdat_output.df,
   
   internal_value <- nrow(internal_data.df)
   
-  verify_equivalence(internal_value, output_value, participant, a_scene, "numevents")
+  verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
   
   ### numrightclic ###
   feature_name <- paste(aoi_feature_name_root, "numrightclic", sep = "")
@@ -453,7 +453,7 @@ check_aoi_eve <- function(emdat_output.df,
   rightclicks.df <- subset(internal_data.df, event=="RightMouseClick")
   internal_value <- nrow(rightclicks.df)
   
-  verify_equivalence(internal_value, output_value, participant, a_scene, "numrightclic")
+  verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
   
   ### rightclicrate ###
   feature_name <- paste(aoi_feature_name_root, "rightclicrate", sep = "")
@@ -467,7 +467,7 @@ check_aoi_eve <- function(emdat_output.df,
     internal_value <- 0 
   }
   
-  verify_equivalence(internal_value, output_value, participant, a_scene, "rightclicrate")
+  verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
   
   ### numdoubleclic ###
   feature_name <- paste(aoi_feature_name_root, "numdoubleclic", sep = "")
@@ -488,7 +488,7 @@ check_aoi_eve <- function(emdat_output.df,
   }
   internal_value <- double_clicks
   
-  verify_equivalence(internal_value, output_value, participant, a_scene, "numdoubleclic")
+  verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
   
   ### doubleclicrate ###
   feature_name <- paste(aoi_feature_name_root, "doubleclicrate", sep = "")
@@ -502,7 +502,7 @@ check_aoi_eve <- function(emdat_output.df,
     internal_value <- 0 
   }
   
-  verify_equivalence(internal_value, output_value, participant, a_scene, "doubleclicrate")
+  verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
   
   ### numleftclic ###
   feature_name <- paste(aoi_feature_name_root, "numleftclic", sep = "")
@@ -510,7 +510,7 @@ check_aoi_eve <- function(emdat_output.df,
   
   internal_value <- left_clicks
   
-  verify_equivalence(internal_value, output_value, participant, a_scene, "numleftclic")
+  verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
   
   ### leftclicrate ###
   feature_name <- paste(aoi_feature_name_root, "leftclicrate", sep = "")
@@ -524,7 +524,7 @@ check_aoi_eve <- function(emdat_output.df,
     internal_value <- 0 
   }
   
-  verify_equivalence(internal_value, output_value, participant, a_scene, "leftclicrate")
+  verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
   
   ### timetofirstdoubleclic ###
   feature_name <- paste(aoi_feature_name_root, "timetofirstdoubleclic", sep = "")
@@ -556,7 +556,7 @@ check_aoi_eve <- function(emdat_output.df,
     i <- i + 1
   }
   
-  verify_equivalence(internal_value, output_value, participant, a_scene, "timetofirstdoubleclic")
+  verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
   
   ### timetofirstleftclic ###
   feature_name <- paste(aoi_feature_name_root, "timetofirstleftclic", sep = "")
@@ -586,7 +586,7 @@ check_aoi_eve <- function(emdat_output.df,
     i <- i + 1
   }
   
-  verify_equivalence(internal_value, output_value, participant, a_scene, "timetofirstleftclic")
+  verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
   
   ### timetofirstrightclic ###
   feature_name <- paste(aoi_feature_name_root, "timetofirstrightclic", sep = "")
@@ -617,13 +617,12 @@ check_aoi_eve <- function(emdat_output.df,
     i <- i + 1
   }
   
-  verify_equivalence(internal_value, output_value, participant, a_scene, "timetofirstrightclic")
+  verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
 }
+
 ##########################################################################################
 
-# When called, commences the part2 tests for the given list of participants
-# last_participant refers to the last in the given study, not necessarily that
-# in the list of participants
+# When called, commences the tests for the given list of participants
 run_part2Test <- function(participants, aoi_file_name, last_participant){
   
   aoi_file <- paste(aoi_file_path, aoi_file_name, ".aoi", sep = "")
@@ -643,12 +642,15 @@ run_part2Test <- function(participants, aoi_file_name, last_participant){
 ##### To Run #####
 
 # Set up the tests: choose the range of particpants to run the tests on
-
 participants <- list("16", "17", "18")
 
 # Run
-# Note: second argument takes the last participant of the study, not necessarily the
-#       last element in the list of participants given to the first argument
-
+# Note: last_participant refers to the last in the EMDAT output file used, not necessarily that
+#       in the list of participants
 run_part2Test(participants, "viz-specific", "18")
+
+
+
+
+
 
