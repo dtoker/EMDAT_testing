@@ -536,7 +536,6 @@ is_inside <-  function(fix_data_set, x_left, x_right, y_bottom, y_top) {
 }
 
 # computes the number of incoming saccades from inside aoi2 to those points inside aoi1
-# alos keeps track of the cumulative total if repeatedly applied 
 trans_from <- function(fix_data_set, aoi1, aoi2){
   
   inside_indices <- which(is_inside(fix_data_set, aoi1$x_left, aoi1$x_right, aoi1$y_bottom, aoi1$y_top))
