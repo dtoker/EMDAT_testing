@@ -27,7 +27,7 @@ verify_equivalence <- function(internal_value, output_value, participant, a_scen
   
   #### for debugging ####
   
-  #print(paste("--------- processing ", participant, " ", a_scene, " ", error_name, " --------", sep = ""))
+  print(paste("--------- processing ", participant, " ", a_scene, " ", error_name, " --------", sep = ""))
   
   #######################
   
