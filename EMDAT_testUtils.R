@@ -27,7 +27,7 @@ verify_equivalence <- function(internal_value, output_value, participant, a_scen
   
   #### for debugging ####
   
-  print(paste("--------- processing ", participant, " ", a_scene, " ", error_name, " --------", sep = ""))
+  #print(paste("--------- processing ", participant, " ", a_scene, " ", error_name, " --------", sep = ""))
   
   #######################
   
@@ -58,6 +58,45 @@ verify_equivalence <- function(internal_value, output_value, participant, a_scen
         #                  " output_value: ",
         #                  formatC(output_value, format="e", digits = 15),
         #                  sep = ""))
+    }
+  )
+}
+
+assert_true <- function(boolean_value, participant, a_scene, 
+                        debugging_value = "no debugging value specified"){
+  
+  total_counter <<- total_counter + 1
+  
+  error_specification <- "Boolean assertion error. "
+  
+  #### for debugging ####
+  
+  #print(paste("--------- processing ", participant, " ", a_scene, " ", " --------", sep = ""))
+  
+  #######################
+  
+  try(
+    if(!boolean_value){
+      
+      stop(paste(error_specification,
+                 "participant: ",
+                 participant,
+                 " scene: ",
+                 a_scene,
+                 " debugging value: ",
+                 debugging_value,
+                 sep = ""))
+    } else{
+      
+      writeLines(paste( "participant: ",
+                        participant,
+                        " scene: ",
+                        a_scene,
+                        " debugging value: ",
+                        debugging_value,
+                        sep = ""))
+      
+      success_counter <<- success_counter + 1
     }
   )
 }
