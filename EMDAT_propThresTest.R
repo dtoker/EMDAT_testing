@@ -2,14 +2,14 @@
 
 source("EMDAT_testUtils.R")
 
-root <- "Part2_EMDATInternal_EMDATOutput/three_parts_study_data/"
+root <- "Part2_EMDATInternal_EMDATOutput/intervention_study_data/"
 feature_files_path <- paste(root, "features/", sep = "")
-export_files_root <- "Part1_TobiiV3Output_EMDATInternal/three_parts_study_data/seg_and_export/P"
+export_files_root <- "Part1_TobiiV3Output_EMDATInternal/intervention_study_data/seg_and_export/P"
 internal_data_files_path <- paste(root, "EMDAT_internal_data/", sep = "")
 seg_files_path <- paste(root, "seg_files/P", sep = "")
 
 emdat_export_all.df <- read.csv(paste(feature_files_path, 
-                                      "tobiiv3_sample_features_prop_thres",  
+                                      "tobiiv3_sample_features_prop_thres_intr",  
                                       ".tsv", 
                                       sep=""), 
                                 sep="\t")
@@ -21,11 +21,10 @@ valid_prop_threshold <- 0.8
 test_param <- function(participant, seg_file, last_participant){
   
   # reads the pertinent part of the features file for the given participant (*)
-  #emdat_export.df <- get_features_df_for_participant(emdat_export_all.df, participant, Sc_ids, last_participant)
-  emdat_export.df <- get_features_df_for_participant_for_3(emdat_export_all.df, participant, Sc_ids, last_participant)
+  emdat_export.df <- get_features_df_for_participant(emdat_export_all.df, participant, Sc_ids, last_participant)
   
   # reads in the needed internal EMDAT data files once for the given participant 
-  #fixation_data.df <- read.csv(paste(internal_data_files_path,"EMDATdata_fix_P", participant, ".tsv", sep=""), sep="\t")
+  fixation_data.df <- read.csv(paste(internal_data_files_path,"EMDATinternaldata_fixations_", participant, ".csv", sep=""), sep=",")
   
   # reads in tobii_export file for the participant and subset it for computation of validity     
   tobii_export.df <- read.csv(paste(export_files_root, participant, "_Data_Export.tsv", sep = ""), sep="\t")
@@ -59,7 +58,7 @@ test_param <- function(participant, seg_file, last_participant){
       tobii_seg.df <- subset(tobii_all.df,
                              (RecordingTimestamp >= start_time) & (RecordingTimestamp <= end_time))
       
-      if(nrow(tobii_seg.df) != 0){
+      if(nrow(tobii_seg.df) != 0 & nrow(fixation_data.df) != 0){
         
         total_data_size <- total_data_size + nrow(tobii_seg.df)
         
@@ -108,13 +107,10 @@ run_parameterTest <- function(participants, last_participant){
 
 # Set up the tests: choose the range of particpants to run the tests on
 
-participants <- list("16", "17", "18")
+participants <- generate_participant_list(103:103)
 
 # Run
 # Note: second argument takes the last participant of the study, not necessarily the
 #       last element in the list of participants given to the first argument
 
-run_parameterTest(participants, "18")
-
-
-
+run_parameterTest(participants, "162b")

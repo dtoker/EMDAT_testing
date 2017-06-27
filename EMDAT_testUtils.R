@@ -88,13 +88,13 @@ assert_true <- function(boolean_value, participant, a_scene,
                  sep = ""))
     } else{
       
-      writeLines(paste( "participant: ",
-                        participant,
-                        " scene: ",
-                        a_scene,
-                        " debugging value: ",
-                        debugging_value,
-                        sep = ""))
+      # writeLines(paste( "participant: ",
+      #                   participant,
+      #                   " scene: ",
+      #                   a_scene,
+      #                   " debugging value: ",
+      #                   debugging_value,
+      #                   sep = ""))
       
       success_counter <<- success_counter + 1
     }
