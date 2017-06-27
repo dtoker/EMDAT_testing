@@ -17,30 +17,106 @@ find_path_length_vector <- function(x_cord_vector, y_cord_vector){
 }
 
 # Checks whether the value computed from the internal data actually matches EMDAT output value
+# ,to the given number of significant figures, which is currently set to eight  
 # First argument: expected value. Second: actual value.  
-verify_equivalence <- function(internal_value, output_value, participant, a_scene, error_name){ 
+verify_equivalence <- function(internal_value, output_value, participant, a_scene, error_name){
+
+  total_counter <<- total_counter + 1
+
+  error_specification <- paste("Error: ", error_name, " does not match for participant:")
+  
+  #### for debugging ####
+  
+  #print(paste("--------- processing ", participant, " ", a_scene, " ", error_name, " --------", sep = ""))
+  
+  #######################
+  
+  try(
+    if(signif(internal_value, digits = 8) != signif(output_value, digits = 8)){
+
+      stop(paste(error_specification,
+                 participant,
+                 " and scene: ",
+                 a_scene,
+                 " internal_value: ",
+                 formatC(internal_value, format="e", digits = 15),
+                 " output_value: ",
+                 formatC(output_value, format="e", digits = 15),
+                 sep = ""))
+    } else{
+
+        success_counter <<- success_counter + 1
+        
+        # To pintout values for confirmation:
+        # writeLines(paste(participant,
+        #                  " and scene: ",
+        #                  a_scene,
+        #                  " ",
+        #                  error_name,
+        #                  " internal_value: ",
+        #                  formatC(internal_value, format="e", digits = 15),
+        #                  " output_value: ",
+        #                  formatC(output_value, format="e", digits = 15),
+        #                  sep = ""))
+    }
+  )
+}
+
+assert_true <- function(boolean_value, participant, a_scene, 
+                        debugging_value = "no debugging value specified"){
   
   total_counter <<- total_counter + 1
   
-  error_specification <- paste("Error: ", error_name, " does not match for participant:")
+  error_specification <- "Boolean assertion error. "
+  
+  #### for debugging ####
+  
+  #print(paste("--------- processing ", participant, " ", a_scene, " ", " --------", sep = ""))
+  
+  #######################
+  
   try(
-    if(internal_value  != output_value){
+    if(!boolean_value){
       
-      stop(paste(error_specification, participant, " and scene: ", a_scene))
+      stop(paste(error_specification,
+                 "participant: ",
+                 participant,
+                 " scene: ",
+                 a_scene,
+                 " debugging value: ",
+                 debugging_value,
+                 sep = ""))
     } else{
+      
+      writeLines(paste( "participant: ",
+                        participant,
+                        " scene: ",
+                        a_scene,
+                        " debugging value: ",
+                        debugging_value,
+                        sep = ""))
       
       success_counter <<- success_counter + 1
     }
   )
 }
 
-# notifies test success by printing out  
-report_success <- function(participant){
+# notifies test results for each particpant by printing out  
+report_success <- function(participant, cumulative_counter){
+  
+  writeLines(paste("######## Results for ", participant, " #########\nTotal number of tests: ", 
+                   total_counter, sep = ""))
+  writeLines(paste("Number of failed tests: ", total_counter - success_counter, sep = ""))
   
   if(success_counter == total_counter){
     
-    print(paste('All Tests Passed for P', participant, sep = ""))
+    writeLines(paste("All Tests Passed for P", participant, sep = ""))
   }
+  writeLines("###################################")
+  writeLines("")
+  
+  cumulative_counter <<- cumulative_counter + total_counter
+  
   # clear the counters
   success_counter <<- 0
   total_counter <<- 0
@@ -84,20 +160,39 @@ find_abs_angle_vector<- function(x_cord_vector, y_cord_vector){
 # computes and returns the relative angles of sucessive saccade paths in vector format
 find_rel_angle_vector<- function(x_cord_vector, y_cord_vector){
   
-  rel_angle_vector <- numeric(length(x_cord_vector)-2)
-  last_vector <- numeric(2)
-  next_vector <- numeric(2)
+  result_length <- length(x_cord_vector) - 2
+  rel_angle_vector <- numeric(result_length)
   
-  for(i in 1:(length(x_cord_vector)-2)){
+  if(result_length > 0){
     
-    last_vector[1] <- x_cord_vector[i] - x_cord_vector[i+1]
-    last_vector[2] <- y_cord_vector[i] - y_cord_vector[i+1]
-    next_vector[1] <- x_cord_vector[i+2] - x_cord_vector[i+1]
-    next_vector[2] <- y_cord_vector[i+2] - y_cord_vector[i+1]
-    normalized_last_vec <- normalize_vector(last_vector)
-    normalized_new_vec <- normalize_vector(next_vector)
-    rel_angle_vector[i]<- acos((normalized_last_vec%*%normalized_new_vec)[1,])
-  }
+    last_vector <- numeric(2)
+    next_vector <- numeric(2)
+  
+    for(i in 1:(length(x_cord_vector)-2)){
+    
+      last_vector[1] <- x_cord_vector[i] - x_cord_vector[i+1]
+      last_vector[2] <- y_cord_vector[i] - y_cord_vector[i+1]
+      next_vector[1] <- x_cord_vector[i+2] - x_cord_vector[i+1]
+      next_vector[2] <- y_cord_vector[i+2] - y_cord_vector[i+1]
+    
+      if((last_vector[1]==0 & last_vector[2]==0) | (next_vector[1]==0 & next_vector[2]==0)){
+      
+        rel_angle_vector[i]<- 0
+      } else{
+      
+          normalized_last_vec <- normalize_vector(last_vector)
+          normalized_new_vec <- normalize_vector(next_vector)
+          dot_product <- (normalized_last_vec%*%normalized_new_vec)[1,]
+          if(dot_product > 1 ){
+            dot_product = 1
+          } 
+          if(dot_product < -1){
+            dot_product = -1
+          }
+          rel_angle_vector[i]<- acos(dot_product)
+      }
+    }
+  } 
   return(rel_angle_vector)
 }
 
@@ -188,6 +283,10 @@ find_double_and_left_clicks <- function(internal_data.df){
         first_left <- FALSE
       }
     }
+    # this last element can not be checked in the for-loop above
+    if(double_left_marker[length(double_left_marker)]=="L" & first_left){
+      clicks[4] <- time_stamps[length(double_left_marker)]
+    } 
     return(clicks)
   }
 }
@@ -195,13 +294,21 @@ find_double_and_left_clicks <- function(internal_data.df){
 # Helper funciton for computing the numerator of aggregated sd
 compute_segsd_with_weight <- function(feature_value_vector, scene_mean){
   
-  numerator <- (length(feature_value_vector)-1)*(sd(feature_value_vector)^2)+
-                length(feature_value_vector)*(mean(feature_value_vector)-scene_mean)^2
+  vector_length <- length(feature_value_vector)
+  numerator <- 0
   
+  if(vector_length > 0){
+    stddev <- sd(feature_value_vector)
+    if(is.na(stddev)){
+      stddev <- 0
+    } 
+  
+    numerator <- (vector_length-1)*(stddev^2) + vector_length*(mean(feature_value_vector)-scene_mean)^2
+  }
   return(numerator)
 }
 
-# Helper funciton for computing the numerator of scene mean
+# Helper funciton for computing the numerator of scene mean (weighted)
 compute_segmean_with_weight <- function(feature_value_vector){
   
   numerator <- length(feature_value_vector)*mean(feature_value_vector)
@@ -209,16 +316,17 @@ compute_segmean_with_weight <- function(feature_value_vector){
 } 
 
 # Given an input vector, compute all of sum, mean, and rate (sum over scene_length)
-# for pathdistance, abspathangles, and relpathangles. Also returns mean before rounnding 
-# and result of applying the given vector function to the input, which are used for 
-# subsequent sd computation. 
+# for pathdistance, abspathangles, and relpathangles. 
 find_sum_mean_rate <- function(vector_input, vector_function, segs_length, scene_length){
   
   internal_sum <-0
   numerator <- 0
   denominator <- 0
+  
+  # this variable stores computed vectors to avoid recomputation  
   data_storage <- list()
-  results <- list(sum = 0, temp_mean = 0, mean = 0, rate = 0, data_storage = 0)
+  
+  results <- list(sum = 0, mean = 0, rate = 0, data_storage = 0)
   
   for(i in 1:segs_length){
     
@@ -231,10 +339,13 @@ find_sum_mean_rate <- function(vector_input, vector_function, segs_length, scene
     data_storage[[i]] <- result_vector
   }
   
-  results$rate <- signif(internal_sum / scene_length, digits = 12)
-  results$sum <- signif(internal_sum, digits = 12)
-  results$temp_mean <- numerator / denominator
-  results$mean <- signif(results$temp_mean, digits = 12)
+  results$rate <- internal_sum / scene_length
+  results$sum <- internal_sum
+  
+  if(denominator != 0){
+    results$mean <- numerator / denominator
+  }
+  
   results$data_storage <- data_storage
   
   return(results)
@@ -244,13 +355,16 @@ find_sum_mean_rate <- function(vector_input, vector_function, segs_length, scene
 find_fixation_sd <- function(data_storage, scene_mean, segs_length){
   numerator <- 0
   denominator <- 0
+  internal_value <- 0
   
   for(i in 1:segs_length){
     
     numerator <- numerator + compute_segsd_with_weight(data_storage[[i]], scene_mean)
     denominator <- denominator+length(data_storage[[i]])
   }
-  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
+  if(denominator > 1){
+    internal_value <- sqrt(numerator/(denominator-1))
+  }
   return(internal_value)
 }
 
@@ -260,7 +374,7 @@ find_saccade_mean <- function(input_vector, coloumn, segs_length){
   
   numerator <- 0
   denominator <- 0
-  results <- list(temp_mean = 0, mean = 0)
+  mean <- 0
   
   for(i in 1:segs_length){
     
@@ -269,10 +383,10 @@ find_saccade_mean <- function(input_vector, coloumn, segs_length){
     numerator <- numerator + compute_segmean_with_weight(data)
     denominator <- denominator+length(data)
   }
-  results$temp_mean <- numerator/denominator
-  results$mean <- signif(results$temp_mean, digits = 12)
-  
-  return(results)
+  if(denominator != 0){
+    mean <- numerator/denominator
+  }
+  return(mean)
 }
 
 # computes the sd for saccadedistance, saccadeduration, and saccadespeed
@@ -281,6 +395,7 @@ find_saccade_sd <- function(input_vector, coloumn, segs_length, scene_mean){
   
   numerator <- 0
   denominator <- 0
+  internal_value <- 0
   
   for(i in 1:segs_length){
     
@@ -290,19 +405,21 @@ find_saccade_sd <- function(input_vector, coloumn, segs_length, scene_mean){
     numerator <- numerator + compute_segsd_with_weight(data, scene_mean)
     denominator <- denominator+length(data)
   }
-  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = 12)
   
+  if(denominator > 1) {
+    
+    internal_value <- sqrt(numerator/(denominator-1))
+  }
   return(internal_value)
 }
 
 # computes the mean for headdistance, pupilsize, and pupilvelocity
 # coloumn, criterion_name, criterion_condition, and criterion_value in String
 find_gaze_mean <- function(input_vector, coloumn, criterion_name, criterion_condition, criterion_value, 
-                           segs_length, sig_figs){
+                           segs_length){
   
   numerator <- 0
   denominator <- 0
-  results <- list(mean = 0, temp_mean = 0)
   
   for(i in 1:segs_length){
     # input_vector[[i]][input_vector[[i]][[criterion_name]]==criterion_value,][[coloumn]]    
@@ -317,19 +434,24 @@ find_gaze_mean <- function(input_vector, coloumn, criterion_name, criterion_cond
     numerator <- numerator + compute_segmean_with_weight(valid_data)
     denominator <- denominator+length(valid_data)
   }
-  results$temp_mean <- numerator/denominator
-  results$mean <- signif(results$temp_mean, digits = sig_figs)
   
-  return(results)
+  if(denominator != 0){
+    mean <- numerator / denominator
+  } else {
+    mean <- -1
+  }
+  
+  return(mean)
 }
 
 # computes the sd for headdistance, pupilsize, and pupilvelocity
 # coloumn, criterion_name, criterion_condition, and criterion_value in String
 find_gaze_sd <- function(input_vector, coloumn, criterion_name, criterion_condition,
-                         criterion_value, segs_length, scene_mean, sig_figs){
+                         criterion_value, segs_length, scene_mean){
   
   numerator <- 0
   denominator <- 0
+  internal_value <- 0
   
   for(i in 1:segs_length){
     # input_vector[[i]][input_vector[[i]][[criterion_name]]==criterion_value,][[coloumn]]    
@@ -344,7 +466,168 @@ find_gaze_sd <- function(input_vector, coloumn, criterion_name, criterion_condit
     numerator <- numerator + compute_segsd_with_weight(valid_data, scene_mean)
     denominator <- denominator+length(valid_data)
   }
-  internal_value <- signif(sqrt(numerator/(denominator-1)), digits = sig_figs)
+  
+  # no valid data case 
+  if(denominator == 0) {
+    internal_value <- -1
+  }
+  
+  if(denominator > 1){
+    
+    internal_value <- sqrt(numerator/(denominator-1))
+  }
   
   return(internal_value)
 }
+
+# Given all particapnts data, returns only the scenes belonging to the given participant
+# This idea of row retrieval is from 
+# http://stackoverflow.com/questions/5553802/get-row-number-for-r-data-frame   
+get_features_df_for_participant <- function(emdat_export_all.df, participant, Sc_ids, last_participant){
+  
+  start_row <- which(Sc_ids==paste(participant, "_allsc", sep = "")) + 1
+  
+  if(participant != last_participant){
+    
+    number_char <- nchar(participant)
+    last_char <- substr(participant, number_char, number_char)
+    
+    if(last_char == "a"){
+      
+      end_row <- which(Sc_ids==paste(substr(participant, 1, number_char-1), "b_allsc", sep = "")) - 1
+    } else {
+      
+      numerical_part <- as.numeric(substr(participant, 1, number_char - 1))
+      
+      # P143 missing; needs to skip 
+      if(numerical_part != 142){
+        numerical_part <- numerical_part + 1
+      } else{
+        numerical_part <- numerical_part + 2
+      }
+      
+      end_row <- which(Sc_ids==paste(numerical_part, "a_allsc", sep = "")) - 1
+    }
+  } else{
+    
+    end_row <- length(Sc_ids)
+  }
+  
+  return(emdat_export_all.df[start_row : end_row, ])
+}
+
+# generate a list of participants in the givne range in string    
+generate_participant_list <- function(p_range){
+  
+  participants <- list()
+  last_index = 0
+  
+  for(i in p_range){
+    
+    participant_a = paste(as.character(i), "a", sep = "")
+    participant_b = paste(as.character(i), "b", sep = "")
+    
+    last_index = last_index + 1
+    participants[last_index] = participant_a
+    
+    last_index = last_index + 1
+    participants[last_index] = participant_b
+  }
+  
+  return(participants)
+} 
+
+
+# converts an element, specified by numeral 1 or 2, of a given string tuple 
+# of the form "number1, number2" into the corresponding number 
+get_tuple_element <- function(tuple, tuples) {
+  
+  tuples <- as.character(tuples)
+  comma_index <- gregexpr(pattern = paste(",", sep = ""), tuples)[[1]][1]
+  
+  if(tuple == 1){
+    return(as.numeric(substr(tuples, 1, comma_index - 1)))
+  } 
+  else{
+    return(as.numeric(substr(tuples, comma_index + 1, nchar(tuples))))
+  }
+}
+
+get_seg_start_and_end_times <- function(seg) {
+  
+  start_and_end <- list(start = 0, end = 0)
+  
+  timestamps <- seg$timestamp
+  start_and_end$start <- timestamps[1]
+  start_and_end$end <- timestamps[length(timestamps)]
+  
+  return(start_and_end)
+}
+
+# tells which elements of fix_data_set is inside the rectangle specified by the
+# values of the reamining arguments 
+is_inside <-  function(fix_data_set, x_left, x_right, y_bottom, y_top) {
+  
+  fix_data_set$mappedfixationpointx > x_left &
+  fix_data_set$mappedfixationpointx <= x_right &
+  fix_data_set$mappedfixationpointy <= y_bottom &   
+  fix_data_set$mappedfixationpointy > y_top 
+}
+
+# computes the number of incoming saccades from inside aoi2 to those points inside aoi1
+trans_from <- function(fix_data_set, aoi1, aoi2){
+  
+  inside_indices <- which(is_inside(fix_data_set, aoi1$x_left, aoi1$x_right, aoi1$y_bottom, aoi1$y_top))
+  
+  count_per_aoi <- 0
+  
+  # disregard first element in inside_indices
+  for(i in setdiff(inside_indices, 1)){
+    
+    if(is_inside(fix_data_set[i-1,], aoi2$x_left, aoi2$x_right, aoi2$y_bottom, aoi2$y_top)){
+      
+      count_per_aoi <- count_per_aoi + 1
+    }
+  }
+  return(count_per_aoi) 
+}
+
+# extracts the boundaries of a rectangular aoi with the given name
+# from df of the form col.names = c("aoi_name","TL","TR","BR", "BL")
+extract_aoi_coordinate <- function(aoi_file.df, aoi_name){
+  
+  aoi <- aoi_file.df[aoi_file.df$aoi_name == aoi_name,]
+  aoi_element <- list(aoi_name = aoi_name, left = 0, right = 0, bottom = 0, top = 0)
+  aoi_element$left <- get_tuple_element(1, aoi$TL)
+  aoi_element$right <- get_tuple_element(1, aoi$TR)
+  aoi_element$bottom <- get_tuple_element(2, aoi$BR)
+  aoi_element$top <-  get_tuple_element(2, aoi$TR)
+  
+  return(aoi_element) 
+}
+
+# Given all particapnts data, returns only the scenes belonging to the given participant
+# Used for three participants study
+# This idea of row retrieval is from 
+# http://stackoverflow.com/questions/5553802/get-row-number-for-r-data-frame   
+get_features_df_for_participant_for_3 <- function(emdat_export_all.df, participant, Sc_ids, last_participant){
+  
+  start_row <- which(Sc_ids==paste(participant, "_allsc", sep = "")) + 1
+  
+  if(participant != last_participant){
+    
+    participant <- as.numeric(participant) + 1
+    participant <- as.character(participant)
+    end_row <- which(Sc_ids==paste(participant, "_allsc", sep = "")) - 1
+  } else{
+    
+    end_row <- length(Sc_ids)
+  }
+  return(emdat_export_all.df[start_row : end_row, ])
+}
+
+set_root_name <- function(root){
+  
+  return(paste(root, "_", sep = ""))
+}
+
