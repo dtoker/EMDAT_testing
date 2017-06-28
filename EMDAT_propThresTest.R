@@ -17,11 +17,9 @@ Sc_ids <- as.character(emdat_export_all.df[,1])
 cumulative_counter <- 0
 
 valid_prop_threshold <- 0.8
+p_threshold <- 0.8
 
 test_param <- function(participant, seg_file, last_participant){
-  
-  # reads the pertinent part of the features file for the given participant (*)
-  emdat_export.df <- get_features_df_for_participant(emdat_export_all.df, participant, Sc_ids, last_participant)
   
   # reads in the needed internal EMDAT data files once for the given participant 
   fixation_data.df <- read.csv(paste(internal_data_files_path,"EMDATinternaldata_fixations_", participant, ".csv", sep=""), sep=",")
@@ -30,15 +28,20 @@ test_param <- function(participant, seg_file, last_participant){
   tobii_export.df <- read.csv(paste(export_files_root, participant, "_Data_Export.tsv", sep = ""), sep="\t")
   tobii_all.df <- subset(tobii_export.df, 
                          MediaName == 'ScreenRec'&
-                         ValidityLeft != ''&
-                         ValidityRight != '')
+                           ValidityLeft != ''&
+                           ValidityRight != '')
   
   seg_file.df <- read.csv(seg_file, sep="\t", header = FALSE, col.names = c("scene","segment","start","end"))
   
   # extracts scene names
   scene.names <- unique(seg_file.df[,"scene"])
   
-  # loops over the scenes
+  # loops over the scenes while keeping track of validity both at participant and scene levels   
+  validity_seq <- list()
+  p_total_data_size <- 0
+  p_valid_data_size <- 0
+  p_validity <- 0
+  
   for (a_scene in scene.names) {
     
     total_data_size <- 0
@@ -48,9 +51,6 @@ test_param <- function(participant, seg_file, last_participant){
     # extracts segments within a given scene
     segment.names <- unique(subset(seg_file.df, scene==a_scene)[,"segment"])
     
-    # reads the pertinent part of the file from (*) above for the given scene 
-    emdat_export.df.scene <- subset(emdat_export.df, Sc_id == a_scene)
-    
     for(seg in segment.names){
       
       start_time <- subset(seg_file.df, segment == seg)$start
@@ -58,7 +58,7 @@ test_param <- function(participant, seg_file, last_participant){
       tobii_seg.df <- subset(tobii_all.df,
                              (RecordingTimestamp >= start_time) & (RecordingTimestamp <= end_time))
       
-      if(nrow(tobii_seg.df) != 0 & nrow(fixation_data.df) != 0){
+      if(nrow(tobii_seg.df) != 0){
         
         total_data_size <- total_data_size + nrow(tobii_seg.df)
         
@@ -67,24 +67,70 @@ test_param <- function(participant, seg_file, last_participant){
       } 
     }
     
+    p_total_data_size <- p_total_data_size + total_data_size
+    p_valid_data_size <- p_valid_data_size + valid_data_size
+    
     if(total_data_size != 0) {
       
       internal_value <- valid_data_size / total_data_size
     }
     
-    if(internal_value > valid_prop_threshold) {
-      
-      # above the threshold; the scene is valid and should be in the generated file   
-      assert_true(nrow(emdat_export.df.scene) > 0, participant, a_scene, as.character(internal_value))
-    }else {
-      
-      # below the threshold; the scene is invalid and should not be in the generated file
-      assert_true(nrow(emdat_export.df.scene) == 0, participant, a_scene, as.character(internal_value))
-    }
+    validity_seq[[a_scene]] <- internal_value
   }
+  
+  if(p_total_data_size != 0) {
+    
+    p_validity <- p_valid_data_size / p_total_data_size
+  }
+  
+  if(p_validity > p_threshold){
+    
+    # reads the pertinent part of the features file for the given participant (*)
+    emdat_export.df <- get_features_df_for_participant(emdat_export_all.df, participant, Sc_ids, last_participant)
+    
+    assert_true(nrow(emdat_export.df) > 0, participant, "allsc", as.character(p_validity))
+    
+    for(a_scene in scene.names){
+      
+      # reads the pertinent part of the file from (*) above for the given scene 
+      emdat_export.df.scene <- subset(emdat_export.df, Sc_id == a_scene)
+      
+      internal_value <- validity_seq[[a_scene]]
+      
+      if(internal_value > valid_prop_threshold) {
+        
+        # above the threshold; the scene is valid and should be in the generated file
+        assert_true(nrow(emdat_export.df.scene) > 0, participant, a_scene, as.character(internal_value))
+      }else {
+        
+        # below the threshold; the scene is invalid and should not be in the generated file
+        assert_true(nrow(emdat_export.df.scene) == 0, participant, a_scene, as.character(internal_value))
+      }
+    }
+  } else{
+    
+    assert_true(!Reduce("|", grepl(participant, emdat_export_all.df$Sc_id)), participant, "allsc", as.character(p_validity)) 
+  }
+  
   report_success(participant, cumulative_counter)
 }
 
+get_features_df_for_participant <- function(emdat_export_all.df, participant, Sc_ids, last_participant){
+  
+  start_row <- which(Sc_ids==paste(participant, "_allsc", sep = "")) + 1
+  
+  
+  if(participant != last_participant){
+    
+    emdat_export.df <- emdat_export_all.df[start_row: nrow(emdat_export_all.df),]
+    end_row <- start_row + which(grepl("_allsc", emdat_export.df$Sc_id))[1] - 2
+  } else{
+    
+    end_row <- length(Sc_ids)
+  }
+  
+  return(emdat_export_all.df[start_row : end_row, ])
+}
 ##########################################################################################
 
 # When called, commences the tests for the given list of participants
@@ -107,10 +153,10 @@ run_parameterTest <- function(participants, last_participant){
 
 # Set up the tests: choose the range of particpants to run the tests on
 
-participants <- generate_participant_list(103:103)
+participants <- generate_participant_list(101:104)
 
 # Run
 # Note: second argument takes the last participant of the study, not necessarily the
 #       last element in the list of participants given to the first argument
 
-run_parameterTest(participants, "162b")
+run_parameterTest(participants, "104b")
