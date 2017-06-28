@@ -1,4 +1,4 @@
-### TEST SCRIPT ###
+### Set up tests ###
 
 source("EMDAT_testUtils.R")
 
@@ -14,10 +14,20 @@ emdat_export_all.df <- read.csv(paste(feature_files_path,
                                       sep=""), 
                                 sep="\t")
 Sc_ids <- as.character(emdat_export_all.df[,1])
+
+emdat_export_all_null_prop.df <- read.csv(paste(feature_files_path, 
+                                      "tobiiv3_sample_features",  
+                                      ".tsv", 
+                                      sep=""), 
+                                sep="\t")
+Sc_ids_null_prop <- as.character(emdat_export_all_null_prop.df[,1])
+
 cumulative_counter <- 0
 
 valid_prop_threshold <- 0.8
 p_threshold <- 0.8
+
+### Test script ###
 
 test_param <- function(participant, seg_file, last_participant){
   
@@ -36,13 +46,15 @@ test_param <- function(participant, seg_file, last_participant){
   # extracts scene names
   scene.names <- unique(seg_file.df[,"scene"])
   
+  missing_scenes <- find_missing(participant, scene.names, last_participant)
+    
   # loops over the scenes while keeping track of validity both at participant and scene levels   
   validity_seq <- list()
   p_total_data_size <- 0
   p_valid_data_size <- 0
   p_validity <- 0
   
-  for (a_scene in scene.names) {
+  for (a_scene in setdiff(scene.names, missing_scenes)) {
     
     total_data_size <- 0
     valid_data_size <- 0
@@ -90,7 +102,7 @@ test_param <- function(participant, seg_file, last_participant){
     
     assert_true(nrow(emdat_export.df) > 0, participant, "allsc", as.character(p_validity))
     
-    for(a_scene in scene.names){
+    for(a_scene in setdiff(scene.names, missing_scenes)){
       
       # reads the pertinent part of the file from (*) above for the given scene 
       emdat_export.df.scene <- subset(emdat_export.df, Sc_id == a_scene)
@@ -131,6 +143,24 @@ get_features_df_for_participant <- function(emdat_export_all.df, participant, Sc
   
   return(emdat_export_all.df[start_row : end_row, ])
 }
+
+find_missing <- function(participant, scene.names, last_participant){
+  
+  missing_scenes <- list()
+  emdat_export_null_prop.df <- get_features_df_for_participant(emdat_export_all_null_prop.df, participant, Sc_ids_null_prop, last_participant)
+  
+  # loop over the scenes
+  for(a_scene in scene.names){
+    
+    emdat_export_null_prop.df.scene <- subset(emdat_export_null_prop.df, Sc_id == a_scene)
+    
+    if(nrow(emdat_export_null_prop.df.scene) == 0){
+      
+      missing_scenes[[a_scene]] <- a_scene
+    } 
+  }
+  return(missing_scenes)
+}
 ##########################################################################################
 
 # When called, commences the tests for the given list of participants
@@ -153,10 +183,10 @@ run_parameterTest <- function(participants, last_participant){
 
 # Set up the tests: choose the range of particpants to run the tests on
 
-participants <- generate_participant_list(101:104)
+participants <- generate_participant_list(144:162)
 
 # Run
 # Note: second argument takes the last participant of the study, not necessarily the
 #       last element in the list of participants given to the first argument
 
-run_parameterTest(participants, "104b")
+run_parameterTest(participants, "162b")
