@@ -1,1 +1,7 @@
 .Rhistory
+
+# do not want to commit large data files 
+**/intervention_study_data/EMDAT_internal_data/*
+**/intervention_study_data/features/*
+**/intervention_study_data/seg_files/*
+# **/intervention_study_data/seg_and_export

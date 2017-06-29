@@ -83,7 +83,7 @@ find_missing <- function(participant, seg_file, last_participant){
   }
 }
 
-participants <- generate_participant_list(101:142)
+participants <- generate_participant_list(101:105)
 
 run_tests <- function(participants, last_participant){
   
@@ -96,5 +96,5 @@ run_tests <- function(participants, last_participant){
   }
 }
 
-run_tests(participants, "162b")
+run_tests(participants, "105b")
 
