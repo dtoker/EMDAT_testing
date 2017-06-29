@@ -116,13 +116,13 @@ test_param <- function(participant, seg_file, last_participant){
       }else {
         
         # below the threshold; the scene is invalid and should not be in the generated file
-        assert_true(nrow(emdat_export.df.scene) == 0, participant, a_scene, as.character(internal_value))
+        assert_true(nrow(emdat_export.df.scene) == 0, participant, a_scene, as.character(internal_value), " dropped")
       }
     }
   } else{
     
     # checks that the invalid participant was in fact dropped
-    assert_true(!Reduce("|", grepl(participant, Sc_ids)), participant, "allsc", as.character(p_validity)) 
+    assert_true(!Reduce("|", grepl(participant, Sc_ids)), participant, "allsc", as.character(p_validity), " dropped") 
   }
   
   report_success(participant, cumulative_counter)

@@ -29,7 +29,7 @@ cumulative_counter <- 0
 valid_prop_threshold <- 0.8
 p_threshold <- 0.8
 
-### Tests ###
+### Tests (Note: participants in this context referes to participant parts such as 101a and 102b) ###
 test_param <- function(participant, seg_file, last_participant){
   
   # reads in the needed internal EMDAT data file once for the given participant 
@@ -126,34 +126,34 @@ test_param <- function(participant, seg_file, last_participant){
       }else {
         
         # below the threshold; the scene is invalid and should not be in the generated file
-        assert_true(nrow(emdat_export.df.scene) == 0, participant, a_scene, as.character(internal_value))
+        assert_true(nrow(emdat_export.df.scene) == 0, participant, a_scene, as.character(internal_value), " dropped")
       }
     }
   } else{
     
     # checks that the invalid participant was in fact dropped
-    assert_true(!Reduce("|", grepl(participant, Sc_ids)), participant, "allsc", as.character(p_validity)) 
+    assert_true(!Reduce("|", grepl(participant, Sc_ids)), participant, "allsc", as.character(p_validity), " dropped") 
   }
   
   report_success(participant, cumulative_counter)
 }
 
-get_features_df_for_participant <- function(emdat_export_all.df, participant, Sc_ids, last_participant){
-  
-  start_row <- which(Sc_ids==paste(participant, "_allsc", sep = "")) + 1
-  
-  if(participant != last_participant){
-    
-    emdat_export.df <- emdat_export_all.df[start_row: nrow(emdat_export_all.df),]
-    # subtract 2 to offset the extra rows, whcih are simply an artifcat of the addition    
-    end_row <- start_row + which(grepl("_allsc", emdat_export.df$Sc_id))[1] - 2    
-  } else{
-    
-    end_row <- length(Sc_ids)
-  }
-  
-  return(emdat_export_all.df[start_row : end_row, ])
-}
+# get_features_df_for_participant <- function(emdat_export_all.df, participant, Sc_ids, last_participant){
+#   
+#   start_row <- which(Sc_ids==paste(participant, "_allsc", sep = "")) + 1
+#   
+#   if(participant != last_participant){
+#     
+#     emdat_export.df <- emdat_export_all.df[start_row: nrow(emdat_export_all.df),]
+#     # subtract 2 to offset the extra rows, whcih are simply an artifcat of the addition    
+#     end_row <- start_row + which(grepl("_allsc", emdat_export.df$Sc_id))[1] - 2    
+#   } else{
+#     
+#     end_row <- length(Sc_ids)
+#   }
+#   
+#   return(emdat_export_all.df[start_row : end_row, ])
+# }
 
 find_missing <- function(participant, scene.names, last_participant){
   
@@ -194,10 +194,10 @@ run_parameterTest <- function(participants, last_participant){
 
 # Set up the tests: choose the range of particpants to run the tests on
 
-participants <- generate_participant_list(105:105)
+participants <- generate_participant_list(101:142)
 
 # Run
 # Note: second argument takes the last participant of the study, not necessarily the
 #       last element in the list of participants given to the first argument
 
-run_parameterTest(participants, "105b")
+run_parameterTest(participants, "162b")

@@ -63,7 +63,8 @@ verify_equivalence <- function(internal_value, output_value, participant, a_scen
 }
 
 assert_true <- function(boolean_value, participant, a_scene, 
-                        debugging_value = "no debugging value specified"){
+                        debugging_value = "",
+                        message = ""){
   
   total_counter <<- total_counter + 1
   
@@ -83,18 +84,21 @@ assert_true <- function(boolean_value, participant, a_scene,
                  participant,
                  " scene: ",
                  a_scene,
-                 " debugging value: ",
+                 " validity value: ",
                  debugging_value,
                  sep = ""))
     } else{
       
-      # writeLines(paste( "participant: ",
-      #                   participant,
-      #                   " scene: ",
-      #                   a_scene,
-      #                   " debugging value: ",
-      #                   debugging_value,
-      #                   sep = ""))
+      # comment out to print out validity values
+      
+      writeLines(paste( "participant: ",
+                        participant,
+                        " scene: ",
+                        a_scene,
+                        " validity value: ",
+                        debugging_value,
+                        paste(" ", message, sep = ""),
+                        sep = ""))
       
       success_counter <<- success_counter + 1
     }
@@ -483,31 +487,48 @@ find_gaze_sd <- function(input_vector, coloumn, criterion_name, criterion_condit
 # Given all particapnts data, returns only the scenes belonging to the given participant
 # This idea of row retrieval is from 
 # http://stackoverflow.com/questions/5553802/get-row-number-for-r-data-frame   
+# get_features_df_for_participant <- function(emdat_export_all.df, participant, Sc_ids, last_participant){
+#   
+#   start_row <- which(Sc_ids==paste(participant, "_allsc", sep = "")) + 1
+#   
+#   if(participant != last_participant){
+#     
+#     number_char <- nchar(participant)
+#     last_char <- substr(participant, number_char, number_char)
+#     
+#     if(last_char == "a"){
+#       
+#       end_row <- which(Sc_ids==paste(substr(participant, 1, number_char-1), "b_allsc", sep = "")) - 1
+#     } else {
+#       
+#       numerical_part <- as.numeric(substr(participant, 1, number_char - 1))
+#       
+#       # P143 missing; needs to skip 
+#       if(numerical_part != 142){
+#         numerical_part <- numerical_part + 1
+#       } else{
+#         numerical_part <- numerical_part + 2
+#       }
+#       
+#       end_row <- which(Sc_ids==paste(numerical_part, "a_allsc", sep = "")) - 1
+#     }
+#   } else{
+#     
+#     end_row <- length(Sc_ids)
+#   }
+#   
+#   return(emdat_export_all.df[start_row : end_row, ])
+# }
+
 get_features_df_for_participant <- function(emdat_export_all.df, participant, Sc_ids, last_participant){
   
   start_row <- which(Sc_ids==paste(participant, "_allsc", sep = "")) + 1
   
   if(participant != last_participant){
     
-    number_char <- nchar(participant)
-    last_char <- substr(participant, number_char, number_char)
-    
-    if(last_char == "a"){
-      
-      end_row <- which(Sc_ids==paste(substr(participant, 1, number_char-1), "b_allsc", sep = "")) - 1
-    } else {
-      
-      numerical_part <- as.numeric(substr(participant, 1, number_char - 1))
-      
-      # P143 missing; needs to skip 
-      if(numerical_part != 142){
-        numerical_part <- numerical_part + 1
-      } else{
-        numerical_part <- numerical_part + 2
-      }
-      
-      end_row <- which(Sc_ids==paste(numerical_part, "a_allsc", sep = "")) - 1
-    }
+    emdat_export.df <- emdat_export_all.df[start_row: nrow(emdat_export_all.df),]
+    # subtract 2 to offset the extra rows, whcih are simply an artifcat of the addition    
+    end_row <- start_row + which(grepl("_allsc", emdat_export.df$Sc_id))[1] - 2    
   } else{
     
     end_row <- length(Sc_ids)
@@ -524,14 +545,14 @@ generate_participant_list <- function(p_range){
   
   for(i in p_range){
     
-    participant_a = paste(as.character(i), "a", sep = "")
-    participant_b = paste(as.character(i), "b", sep = "")
+    participant_a <- paste(as.character(i), "a", sep = "")
+    participant_b <- paste(as.character(i), "b", sep = "")
     
     last_index = last_index + 1
-    participants[last_index] = participant_a
+    participants[last_index] <- participant_a
     
     last_index = last_index + 1
-    participants[last_index] = participant_b
+    participants[last_index] <- participant_b
   }
   
   return(participants)
