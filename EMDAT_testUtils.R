@@ -91,14 +91,14 @@ assert_true <- function(boolean_value, participant, a_scene,
       
       # comment out to print out validity values
       
-      writeLines(paste( "participant: ",
-                        participant,
-                        " scene: ",
-                        a_scene,
-                        " validity value: ",
-                        debugging_value,
-                        paste(" ", message, sep = ""),
-                        sep = ""))
+      # writeLines(paste( "participant: ",
+      #                   participant,
+      #                   " scene: ",
+      #                   a_scene,
+      #                   " validity value: ",
+      #                   debugging_value,
+      #                   paste(" ", message, sep = ""),
+      #                   sep = ""))
       
       success_counter <<- success_counter + 1
     }
