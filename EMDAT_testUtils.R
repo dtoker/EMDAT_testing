@@ -19,7 +19,7 @@ find_path_length_vector <- function(x_cord_vector, y_cord_vector){
 # Checks whether the value computed from the internal data actually matches EMDAT output value
 # ,to the given number of significant figures, which is currently set to eight  
 # First argument: expected value. Second: actual value.  
-verify_equivalence <- function(internal_value, output_value, participant, a_scene, error_name){
+verify_equivalence <- function(internal_value, output_value, participant, a_scene, error_name, scene_or_seg = " and scene:"){
 
   total_counter <<- total_counter + 1
 
@@ -36,7 +36,7 @@ verify_equivalence <- function(internal_value, output_value, participant, a_scen
 
       stop(paste(error_specification,
                  participant,
-                 " and scene: ",
+                 scene_or_seg,
                  a_scene,
                  " internal_value: ",
                  formatC(internal_value, format="e", digits = 15),
@@ -49,7 +49,7 @@ verify_equivalence <- function(internal_value, output_value, participant, a_scen
         
         # To pintout values for confirmation:
         # writeLines(paste(participant,
-        #                  " and scene: ",
+        #                  scene_or_seg,
         #                  a_scene,
         #                  " ",
         #                  error_name,
