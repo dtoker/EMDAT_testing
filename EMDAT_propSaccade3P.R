@@ -9,10 +9,10 @@ seg_files_path <- paste(root, "seg_files/P", sep = "")
 cumulative_counter <- 0
 
 # sets the values of the tested parameters
-valid_samples_prop_saccade <- 1.0  # for now 
+valid_samples_prop_saccade <- 0.5  # for now 
 
 ### Tests ### 
-test_param <- function(participant, seg_file, last_participant){
+test_param <- function(participant, seg_file){
   
   seg_file.df <- read.csv(seg_file, sep="\t", header = FALSE, col.names = c("scene","segment","start","end"))
   
@@ -30,7 +30,7 @@ test_param <- function(participant, seg_file, last_participant){
   in_fixation <- FALSE
   last_gaze_time <- 0
   last_valid <- FALSE
-  time_stamps <- numeric()
+  
   next_index <- 1
     
   nb_invalid_temp <- 0
@@ -40,6 +40,8 @@ test_param <- function(participant, seg_file, last_participant){
   tobii_all.df <- subset(tobii_export.df, 
                          MediaName == 'ScreenRec'&
                          !is.na(RecordingTimestamp))
+  tobii_saccades_bound <- nrow(subset(tobii_all.df, GazeEventType == "Saccade"))
+  time_stamps <- rep(-1, tobii_saccades_bound)
   
   for(i in 1:nrow(tobii_all.df)){
     
@@ -52,14 +54,12 @@ test_param <- function(participant, seg_file, last_participant){
         nb_invalid_temp <- 0
       } else if(current_row$GazeEventType == "Saccade"){
         
-        in_fixation <- FALSE
-        in_saccade <- TRUE
+        in_fixation <- !in_fixation
+        in_saccade <- !in_saccade
         last_gaze_time <- last_gaze_time_temp
         nb_valid_sample <- 0
         
-        if((current_row$ValidityLeft < 2 | current_row$ValidityRight < 2) &
-           !is.na(current_row$GazePointX..ADCSpx.) &
-           !is.na(current_row$GazePointY..ADCSpx.)){
+        if(is_valid_gazesample(current_row)){
           
           nb_valid_sample <- nb_valid_sample + 1
         }
@@ -71,7 +71,7 @@ test_param <- function(participant, seg_file, last_participant){
         
         nb_sample <- 2 + nb_invalid_temp
         nb_invalid_temp <- 0
-      } else {
+      } else{
         
         nb_invalid_temp <- nb_invalid_temp + 1
       } 
@@ -79,16 +79,13 @@ test_param <- function(participant, seg_file, last_participant){
       
       if(current_row$GazeEventType == "Fixation"){
         
-        in_fixation <- TRUE
-        in_saccade <- FALSE
+        in_fixation <- !in_fixation
+        in_saccade <- !in_saccade
         
-        if((current_row$ValidityLeft < 2 | current_row$ValidityRight < 2) &
-           !is.na(current_row$GazePointX..ADCSpx.) &
-           !is.na(current_row$GazePointY..ADCSpx.)){
+        if(is_valid_gazesample(current_row)){
           
           nb_valid_sample <- nb_valid_sample + 1
-        } else if(!is.na(current_row$FixationPointX..MCSpx.) &
-                  !is.na(current_row$FixationPointY..MCSpx.)){
+        } else if(exist_points(current_row, "FixationPointX..MCSpx.", "FixationPointY..MCSpx.")){
           
           nb_valid_sample <- nb_valid_sample + 1
         }
@@ -103,9 +100,7 @@ test_param <- function(participant, seg_file, last_participant){
         }
       } else if(current_row$GazeEventType == "Saccade"){
         
-            if((current_row$ValidityLeft < 2 | current_row$ValidityRight < 2) &
-               !is.na(current_row$GazePointX..ADCSpx.) &
-               !is.na(current_row$GazePointY..ADCSpx.)){
+            if(is_valid_gazesample(current_row)){
               
               nb_valid_sample <- nb_valid_sample + 1
             }
@@ -119,18 +114,17 @@ test_param <- function(participant, seg_file, last_participant){
       
       if(current_row$GazeEventType == "Fixation"){
         
-        in_fixation <- TRUE
+        in_fixation <- !in_fixation
       }
     }
     
-    if(!is.na(current_row$GazePointX..ADCSpx.) &
-       !is.na(current_row$GazePointY..ADCSpx.)){
+    if(exist_points(current_row,"GazePointX..ADCSpx.", "GazePointY..ADCSpx.")){
       
       last_gaze_time_temp <- current_row$RecordingTimestamp
       last_valid <- current_row$ValidityLeft < 2 | current_row$ValidityRight < 2 
-    } else if(current_row$GazeEventType == "Fixation" &
-              !is.na(current_row$FixationPointX..MCSpx.) &
-              !is.na(current_row$FixationPointY..MCSpx.)) {
+    } else if(current_row$GazeEventType == "Fixation" & 
+              exist_points(current_row, "FixationPointX..MCSpx.", "FixationPointY..MCSpx.")
+              ){
       
       last_gaze_time_temp <- current_row$RecordingTimestamp
       last_valid <- TRUE
@@ -154,7 +148,7 @@ test_param <- function(participant, seg_file, last_participant){
       
       seg_saccade <- subset(saccade_data_scene.df, grepl(seg, scene))
       
-      verify_equivalence(length(time_stamps_seg), nrow(seg_saccade), participant, seg, "saccade numbers", " and seg:")
+      verify_equivalence(length(time_stamps_seg), nrow(seg_saccade), participant, seg, "valid saccades", " and seg:")
     }
   }
   
@@ -163,17 +157,26 @@ test_param <- function(participant, seg_file, last_participant){
 
 ##########################################################################################
 
+is_valid_gazesample <- function(current_row){
+  
+  (current_row$ValidityLeft < 2 | current_row$ValidityRight < 2) &
+  exist_points(current_row, "GazePointX..ADCSpx.", "GazePointY..ADCSpx.")
+}
+
+exist_points <- function(current_row, x_point, y_point) {
+  
+  !is.na(current_row[,x_point]) & !is.na(current_row[,y_point])
+}   
+
+
 # When called, commences the tests for the given list of participants
-# last_participant refers to the last in the given study, not necessarily that
-# in the list of participants
-run_parameterTest <- function(participants, last_participant){
+run_parameterTest <- function(participants){
   
   for(i in 1:length(participants)){
     
     participant <- participants[i]
     test_param(participant,
-               paste(seg_files_path, participant, ".seg", sep = ""),
-               last_participant)
+               paste(seg_files_path, participant, ".seg", sep = ""))
   }
   writeLines(paste("####### cumulative total number of tests run: ", cumulative_counter, " #######"))
   cumulative_counter <<- 0
@@ -182,14 +185,10 @@ run_parameterTest <- function(participants, last_participant){
 ##### To Run #####
 
 # Set up the tests: choose the range of particpants to run the tests on
-
-participants <- list("16")
+participants <- list("17")
 
 # Run
-# Note: second argument takes the last participant of the study, not necessarily the
-#       last element in the list of participants given to the first argument
-
-run_parameterTest(participants, "18")
+run_parameterTest(participants)
 
 
 
