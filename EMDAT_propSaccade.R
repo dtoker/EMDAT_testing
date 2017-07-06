@@ -31,14 +31,12 @@ test_param <- function(participant, seg_file){
   # reads in tobii_export file for the participant and process it for all saccade data     
   tobii_export.df <- read.csv(paste(export_files_root, participant, "_Data_Export.tsv", sep = ""), sep="\t")
   
-  # extract all saccaade data
+  ## extract all saccaade data and then compare with the actual values ##
   in_saccade <- FALSE
   in_fixation <- FALSE
   last_gaze_time <- 0
   last_valid <- FALSE
-  
   next_index <- 1
-    
   nb_invalid_temp <- 0
   nb_valid_sample <- 0
   nb_sample <- 0
@@ -46,6 +44,8 @@ test_param <- function(participant, seg_file){
   tobii_all.df <- subset(tobii_export.df, 
                          MediaName == 'ScreenRec'&
                          !is.na(RecordingTimestamp))
+  
+  # initalize the numeric vector, time_stamps, into which valid sacccde times are collected           
   tobii_saccades_bound <- nrow(subset(tobii_all.df, GazeEventType == "Saccade"))
   time_stamps <- rep(-1, tobii_saccades_bound)
   
@@ -60,8 +60,10 @@ test_param <- function(participant, seg_file){
         nb_invalid_temp <- 0
       } else if(current_row$GazeEventType == "Saccade"){
         
+        # switch the boolean values
         in_fixation <- !in_fixation
         in_saccade <- !in_saccade
+        
         last_gaze_time <- last_gaze_time_temp
         nb_valid_sample <- 0
         
@@ -85,6 +87,7 @@ test_param <- function(participant, seg_file){
       
       if(current_row$GazeEventType == "Fixation"){
         
+        # switch the boolean values
         in_fixation <- !in_fixation
         in_saccade <- !in_saccade
         
@@ -144,11 +147,11 @@ test_param <- function(participant, seg_file){
     segment.names <- unique(subset(seg_file.df, scene==a_scene)[,"segment"])
     
     #saccade_data_scene.df <- subset(saccade_data.df, grepl(a_scene, scene))
-    
     saccade_data_scene.df <- subset(saccade_data.df, scene == a_scene)
     
     for(seg in segment.names){
       
+      # extract timestamps of the valid saccades belonging to the seg 
       start_time <- subset(seg_file.df, segment == seg)$start
       end_time <- subset(seg_file.df, segment == seg)$end
       time_stamps_seg <- subset(time_stamps,
@@ -165,12 +168,14 @@ test_param <- function(participant, seg_file){
 
 ##########################################################################################
 
+# helper function to check validity of points  
 is_valid_gazesample <- function(current_row){
   
   (current_row$ValidityLeft < 2 | current_row$ValidityRight < 2) &
   exist_points(current_row, "GazePointX..ADCSpx.", "GazePointY..ADCSpx.")
 }
 
+# helper function to check that the cells in the file are not NA     
 exist_points <- function(current_row, x_point, y_point) {
   
   !is.na(current_row[,x_point]) & !is.na(current_row[,y_point])
