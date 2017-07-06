@@ -1,14 +1,20 @@
 ### Set up tests ###
 source("EMDAT_testUtils.R")
 
-root <- "Part2_EMDATInternal_EMDATOutput/three_parts_study_data/"
-export_files_root <- "Part1_TobiiV3Output_EMDATInternal/three_parts_study_data/seg_and_export/P"
+### for 3P study data ###
+# root <- "Part2_EMDATInternal_EMDATOutput/three_parts_study_data/"
+# export_files_root <- "Part1_TobiiV3Output_EMDATInternal/three_parts_study_data/seg_and_export/P"
+
+### for intervention study data  ###
+root <- "Part2_EMDATInternal_EMDATOutput/intervention_study_data/"
+export_files_root <- "Part1_TobiiV3Output_EMDATInternal/intervention_study_data/seg_and_export/P"
+
 internal_data_files_path <- paste(root, "EMDAT_int_data_saccade_param/", sep = "")
 seg_files_path <- paste(root, "seg_files/P", sep = "")
 
 cumulative_counter <- 0
 
-# sets the values of the tested parameters
+# sets the values of the parameter to be tested
 valid_samples_prop_saccade <- 0.5  
 
 ### Tests ### 
@@ -137,7 +143,9 @@ test_param <- function(participant, seg_file){
     # extracts segments within a given scene
     segment.names <- unique(subset(seg_file.df, scene==a_scene)[,"segment"])
     
-    saccade_data_scene.df <- subset(saccade_data.df, grepl(a_scene, scene))
+    #saccade_data_scene.df <- subset(saccade_data.df, grepl(a_scene, scene))
+    
+    saccade_data_scene.df <- subset(saccade_data.df, scene == a_scene)
     
     for(seg in segment.names){
       
@@ -184,7 +192,8 @@ run_parameterTest <- function(participants){
 ##### To Run #####
 
 # Set up the tests: choose the range of particpants to run the tests on
-participants <- list("17")
+#participants <- list("16")
+participants <- generate_participant_list(101:101)
 
 # Run
 run_parameterTest(participants)
