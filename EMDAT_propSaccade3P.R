@@ -9,7 +9,7 @@ seg_files_path <- paste(root, "seg_files/P", sep = "")
 cumulative_counter <- 0
 
 # sets the values of the tested parameters
-valid_samples_prop_saccade <- 0.5  # for now 
+valid_samples_prop_saccade <- 0.5  
 
 ### Tests ### 
 test_param <- function(participant, seg_file){
@@ -167,7 +167,6 @@ exist_points <- function(current_row, x_point, y_point) {
   
   !is.na(current_row[,x_point]) & !is.na(current_row[,y_point])
 }   
-
 
 # When called, commences the tests for the given list of participants
 run_parameterTest <- function(participants){
