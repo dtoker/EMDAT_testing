@@ -23,24 +23,40 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
   # reads the pertinent part of the features file for the given participant (*)
   emdat_export.df <- get_features_df_for_participant(emdat_export_all.df, participant, Sc_ids, last_participant)
   
-  aoi_file.df <- read.csv(aoi_file, sep="\t", header = FALSE, col.names = c("aoi_name","TL","TR","BR", "BL"))
+  # reads the aoi file with active intervals indicated by '#' 
+  aoi_file.df_temp <- read.csv(aoi_file, sep="\t", header = FALSE, col.names = c("aoi_name","TL","TR","BR", "BL"))
   
-  names <- aoi_file.df$aoi_name
-  aoi_file.df_temp <- aoi_file.df[aoi_file.df$aoi_name != "#",]
+  # removes active interval rows  
+  aoi_file.df <- aoi_file.df_temp[aoi_file.df_temp$aoi_name != "#",]
+  
+  # The loop below extracts active time intervals for each row (aoi) in aoi_file_df and also mark
+  # always active aoi with an empty string, "". The information is stored and returned in
+  # the list interval_vector
   names_temp <- aoi_file.df_temp$aoi_name
-  
+  names <- aoi_file.df$aoi_name
   interval_vector <- list()
   
-  
-  for(name in names_temp) {
+  for(name in names) {
+    
+    if(names_temp[which(names_temp == name) + 1] == "#"){
       
-      if(names[which(names == name) + 1] == "#"){
-          interval_vector[[which(names_temp == name)]] <-  aoi_file.df[which(names == name) +1,]
-      } else {
-          interval_vector[[which(names_temp == name)]] <- " "   
-      }  
-  } 
+      row.df <- aoi_file.df_temp[which(names_temp == name) +1,]
+      row_vector <- as.vector(t(row.df))[c(2:5)]
+      interval_vector[[which(names == name)]] <- row_vector[which(row_vector != "")]
+    } else {
+      
+      interval_vector[[which(names == name)]] <- ""   
+    }  
+  }
   
+  # for(name in names) {
+  #     
+  #     if(names_temp[which(names_temp == name) + 1] == "#"){
+  #         interval_vector[[which(names == name)]] <-  aoi_file.df_temp[which(names_temp == name) +1,]
+  #     } else {
+  #         interval_vector[[which(names == name)]] <- " "   
+  #     }  
+  # }
   
   # extracts scene names
   seg_file.df <- read.csv(seg_file, sep="\t", header = FALSE, col.names = c("scene","segment","start","end"))
@@ -493,7 +509,7 @@ participants <- generate_participant_list(101:101)
 # Run
 # Note: last_participant refers to the last in the EMDAT output file used, not necessarily that
 #       in the list of participants
-run_aoiTest(participants, "16" , "101a")  
+run_aoiTest(participants, "grid2x2_dynamic" , "101a")  
 
 #### To debug #####
 
