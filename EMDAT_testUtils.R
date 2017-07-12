@@ -652,3 +652,40 @@ set_root_name <- function(root){
   return(paste(root, "_", sep = ""))
 }
 
+test_dynamic_aoi_fix_default <- function(emdat_output.df,participant, a_scene){
+  
+  output_value <- subset(emdat_output.df, select = single_numfixations)[1,]
+  verify_equivalence(0 ,output_value, participant, a_scene, "single_numfixations")
+  
+  output_value <- subset(emdat_output.df, select = single_proportionnum)[1,]
+  verify_equivalence(0 ,output_value, participant, a_scene, "single_proportionnum")
+  
+  output_value <- subset(emdat_output.df, select = single_fixationrate)[1,]
+  verify_equivalence(0 ,output_value, participant, a_scene, "single_fixationrate")
+  
+  output_value <- subset(emdat_output.df, select = single_totaltimespent)[1,]
+  verify_equivalence(0, output_value, participant, a_scene, "single_totaltimespent")
+  
+  output_value <- subset(emdat_output.df, select = single_proportiontime)[1,]
+  verify_equivalence(0, output_value, participant, a_scene, "single_proportiontime")
+  
+  output_value <- subset(emdat_output.df, select = single_meanfixationduration)[1,]
+  verify_equivalence(-1, output_value, participant, a_scene, "single_meanfixationduration")
+  
+  output_value <- subset(emdat_output.df, select = single_stddevfixationduration)[1,]
+  verify_equivalence(0, output_value, participant, a_scene, "single_stddevfixationduration")
+  
+  output_value <- subset(emdat_output.df, select = single_longestfixation)[1,]
+  verify_equivalence(-1, output_value, participant, a_scene, "single_longestfixation")
+  
+  output_value <- subset(emdat_output.df, select = single_timetofirstfixation)[1,]
+  verify_equivalence(-1, output_value, participant, a_scene, "single_timetofirstfixation")
+  
+  output_value <- subset(emdat_output.df, select = single_timetolastfixation)[1,]
+  verify_equivalence(-1, output_value, participant, a_scene, "single_timetolastfixation")
+  
+  output_value <- subset(emdat_output.df, select = single_numtransfrom_single)[1,]
+  verify_equivalence(0, output_value, participant, a_scene, "single_proptransfrom_single")
+  
+} 
+
