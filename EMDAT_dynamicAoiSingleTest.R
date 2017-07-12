@@ -23,15 +23,14 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
   # reads the pertinent part of the features file for the given participant (*)
   emdat_export.df <- get_features_df_for_participant(emdat_export_all.df, participant, Sc_ids, last_participant)
   
-  # reads the aoi file with active intervals indicated by '#' 
+  # reads the aoi file with active time intervals indicated by '#' 
   aoi_file.df_temp <- read.csv(aoi_file, sep="\t", header = FALSE, col.names = c("aoi_name","TL","TR","BR", "BL"))
   
-  # removes active interval rows  
+  # removes active time interval rows  
   aoi_file.df <- aoi_file.df_temp[aoi_file.df_temp$aoi_name != "#",]
   
   # The loop below extracts active time intervals for each row (aoi) in aoi_file_df and also mark
-  # always active aoi with an empty string, "". The information is stored and returned in
-  # the list interval_vector
+  # always active aoi with an empty string, "". The information is stored in the list interval_vector
   names_temp <- aoi_file.df_temp$aoi_name
   names <- aoi_file.df$aoi_name
   interval_vector <- list()
@@ -48,15 +47,6 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
       interval_vector[[which(names == name)]] <- ""   
     }  
   }
-  
-  # for(name in names) {
-  #     
-  #     if(names_temp[which(names_temp == name) + 1] == "#"){
-  #         interval_vector[[which(names == name)]] <-  aoi_file.df_temp[which(names_temp == name) +1,]
-  #     } else {
-  #         interval_vector[[which(names == name)]] <- " "   
-  #     }  
-  # }
   
   # extracts scene names
   seg_file.df <- read.csv(seg_file, sep="\t", header = FALSE, col.names = c("scene","segment","start","end"))
@@ -100,6 +90,7 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
                                          a_scene,
                                          segment.names,
                                          aoi_file.df,
+                                         interval_vector,
                                          gazesample_data_scene.df,
                                          fixation_data_scene.df)
         
@@ -144,10 +135,52 @@ check_aoi_fix <- function(emdat_output.df,
                           a_scene, 
                           segment.names,
                           aoi_file.df,
+                          interval_vector,
                           gazesample_data_scene.df,
                           fixation_data_scene.df){
   
   ### set up the tests ###
+  
+  # get start and end times of all_data for the scene (same as for seg in this case) 
+  start_and_end_times <- get_seg_start_and_end_times(gazesample_data_scene.df)
+  seg_start <- start_and_end_times$start
+  seg_end <- start_and_end_times$end
+  length <- seg_end - seg_start
+  
+  inactive <- TRUE
+  
+  fixation_data_scene.df_temp <- fixation_data_scene.df
+  
+  for(i in 1:length(interval_vector[[1]])){
+      
+    if(interval_vector[[1]][i] != ""){
+        
+      interval_start <- get_tuple_element(1, interval_vector[[1]][i])
+      interval_end <- get_tuple_element(2, interval_vector[[1]][i])
+      
+      if(interval_start <= seg_start && seg_end <= interval_end) {
+        
+        break   
+      }
+      
+      if(seg_start <= interval_end && interval_start <= seg_end){
+        
+        start <- max(seg_start, interval_start)
+        end <- min(seg_end, interval_end)
+        
+        fixation_data_scene.df_temp <- subset(fixation_data_scene.df_temp, start <= timestamp & timestamp <= end)
+        inactive <- FALSE
+      }
+    }
+    fixation_data_scene.df <- fixation_data_scene.df_temp
+  }
+  
+  if(inactive){
+    
+    print(a_scene)
+    return()
+  } 
+  
   left <- get_tuple_element(1, aoi_file.df$TL)
   right <- get_tuple_element(1, aoi_file.df$TR)
   bottom <- get_tuple_element(2, aoi_file.df$BR)
@@ -155,13 +188,9 @@ check_aoi_fix <- function(emdat_output.df,
   
   internal_data.df <- subset(fixation_data_scene.df,
                              mappedfixationpointx > left &
-                               mappedfixationpointx <= right &
-                               mappedfixationpointy <= bottom &
-                               mappedfixationpointy > top)
-  
-  # get start and end times of all_data for the scene
-  start_and_end_times <- get_seg_start_and_end_times(gazesample_data_scene.df)
-  length <- start_and_end_times$end - start_and_end_times$start
+                             mappedfixationpointx <= right &
+                             mappedfixationpointy <= bottom &
+                             mappedfixationpointy > top)
   
   # stores the data by segment into vectors
   # internal_data_vector <- c()
@@ -504,92 +533,111 @@ run_aoiTest <- function(participants, aoi_file_name, last_participant){
 ##### To Run #####
 
 # Set up the tests: choose the range of particpants to run the tests on
-participants <- generate_participant_list(101:101)
+participants <- list('101a') #generate_participant_list(101:101)
 
 # Run
 # Note: last_participant refers to the last in the EMDAT output file used, not necessarily that
 #       in the list of participants
-run_aoiTest(participants, "grid2x2_dynamic" , "101a")  
+# run_aoiTest(participants, "single_aoi_dynamic" , "101a")  
 
 #### To debug #####
 
 # Runs tests on a given individual participant and scene
 
-# ##############
-# part <- "147b"
-# test_scene <- "Event_79"
-# ##############
-# 
-# seg_file <- paste(seg_file_path, "P", part, ".seg", sep = "")
-# aoi_file <- paste(aoi_file_path, "single_aoi", ".aoi", sep = "")
-# 
-# readfiles_aoi_debug <- function(participant, seg_file, aoi_file, last_participant, a_scene){
-# 
-#   # reads the pertinent part of the features file for the given participant (*)
-#   emdat_export.df <- get_features_df_for_participant(emdat_export_all.df, participant, Sc_ids, last_participant)
-# 
-#   aoi_file.df <- read.csv(aoi_file, sep="\t", header = FALSE, col.names = c("aoi_name","TL","TR","BR", "BL"))
-# 
-#   top_left <- aoi_file.df$TL
-#   top_right <- aoi_file.df$TR
-#   bottom_right <- aoi_file.df$BR
-#   bottom_left <-  aoi_file.df$BL
-# 
-#   seg_file.df <- read.csv(seg_file, sep="\t", header = FALSE, col.names = c("scene","segment","start","end"))
-# 
-#   # reads in the internal EMDAT data files necessary for computing expecetd values,
-#   # once for the given participant
-#   fixation_data.df <- read.csv(paste(internal_data_path,"EMDATinternaldata_fixations_", participant, ".csv", sep=""), sep=",")
-#   events_data.df <- read.csv(paste(internal_data_path, "EMDATinternaldata_events_", participant, ".csv", sep=""), sep=",")
-#   gazesample_data.df <- read.csv(paste(internal_data_path, "EMDATinternaldata_gazesamples_", participant, ".csv", sep=""), sep=",")
-# 
-#   # replaces None vlaue in x_ and y_coords with NA to elegantly handle inequality comparisons later
-#   # in check_aoi_eve
-#   if(participant == "147b"){
-#     events_data.df$x_coord <- replace(events_data.df$x_coord, which(events_data.df$x_coord == 'None'), NA)
-#     events_data.df$y_coord <- replace(events_data.df$y_coord, which(events_data.df$y_coord == 'None'), NA)
-#   }
-# 
-#   # extracts segments within a given scene
-#   segment.names <- unique(subset(seg_file.df, scene==a_scene)[,"segment"])
-# 
-#   # reads the pertinent part of the file from (*) above for the given scene
-#   emdat_export.df.scene <- subset(emdat_export.df, Sc_id == a_scene)
-# 
-#   # if-statement below guards aginst missing scenes in the files
-#   if(nrow(emdat_export.df.scene) != 0) {
-# 
-#     # keeps all segments belonging to the scene in data frame format
-#     gazesample_data_scene.df <- subset(gazesample_data.df, scene == a_scene)
-#     fixation_data_scene.df <- subset(fixation_data.df, scene == a_scene)
-#     events_data_scene.df <- subset(events_data.df, scene == a_scene)
-# 
-# 
-#     if(nrow(fixation_data_scene.df) != 0 &
-#       nrow(gazesample_data_scene.df) != 0){
-# 
-#       check_aoi_fix(emdat_export.df.scene,
-#                     participant,
-#                     a_scene,
-#                     segment.names,
-#                     aoi_file.df,
-#                     gazesample_data_scene.df,
-#                     fixation_data_scene.df)
-#     }
-# 
-#     if(nrow(events_data_scene.df) != 0 &
-#        nrow(gazesample_data_scene.df) != 0){
-# 
-#        check_aoi_eve(emdat_export.df.scene,
-#                      participant,
-#                      a_scene,
-#                      segment.names,
-#                      aoi_file.df,
-#                      events_data_scene.df,
-#                      gazesample_data_scene.df)
-#     }
-#   }
-#   report_success(participant, cumulative_counter)
-# }
-# 
-# readfiles_aoi_debug(part, seg_file, aoi_file, "162b", test_scene)
+##############
+part <- "101a"
+test_scene <- "Event_70"
+##############
+
+seg_file <- paste(seg_file_path, "P", part, ".seg", sep = "")
+aoi_file <- paste(aoi_file_path, "single_aoi_dynamic", ".aoi", sep = "")
+
+readfiles_aoi_debug <- function(participant, seg_file, aoi_file, last_participant, a_scene){
+
+  # reads the pertinent part of the features file for the given participant (*)
+  emdat_export.df <- get_features_df_for_participant(emdat_export_all.df, participant, Sc_ids, last_participant)
+
+  # reads the aoi file with active time intervals indicated by '#'
+  aoi_file.df_temp <- read.csv(aoi_file, sep="\t", header = FALSE, col.names = c("aoi_name","TL","TR","BR", "BL"))
+
+  # removes active time interval rows
+  aoi_file.df <- aoi_file.df_temp[aoi_file.df_temp$aoi_name != "#",]
+
+  # The loop below extracts active time intervals for each row (aoi) in aoi_file_df and also mark
+  # always active aoi with an empty string, "". The information is stored in the list interval_vector
+  names_temp <- aoi_file.df_temp$aoi_name
+  names <- aoi_file.df$aoi_name
+  interval_vector <- list()
+
+  for(name in names) {
+
+    if(names_temp[which(names_temp == name) + 1] == "#"){
+
+      row.df <- aoi_file.df_temp[which(names_temp == name) +1,]
+      row_vector <- as.vector(t(row.df))[c(2:5)]
+      interval_vector[[which(names == name)]] <- row_vector[which(row_vector != "")]
+    } else {
+
+      interval_vector[[which(names == name)]] <- ""
+    }
+  }
+
+  seg_file.df <- read.csv(seg_file, sep="\t", header = FALSE, col.names = c("scene","segment","start","end"))
+
+  # reads in the internal EMDAT data files necessary for computing expecetd values,
+  # once for the given participant
+  fixation_data.df <- read.csv(paste(internal_data_path,"EMDATinternaldata_fixations_", participant, ".csv", sep=""), sep=",")
+  events_data.df <- read.csv(paste(internal_data_path, "EMDATinternaldata_events_", participant, ".csv", sep=""), sep=",")
+  gazesample_data.df <- read.csv(paste(internal_data_path, "EMDATinternaldata_gazesamples_", participant, ".csv", sep=""), sep=",")
+
+  # replaces None vlaue in x_ and y_coords with NA to elegantly handle inequality comparisons later
+  # in check_aoi_eve
+  if(participant == "147b"){
+    events_data.df$x_coord <- replace(events_data.df$x_coord, which(events_data.df$x_coord == 'None'), NA)
+    events_data.df$y_coord <- replace(events_data.df$y_coord, which(events_data.df$y_coord == 'None'), NA)
+  }
+
+  # extracts segments within a given scene
+  segment.names <- unique(subset(seg_file.df, scene==a_scene)[,"segment"])
+
+  # reads the pertinent part of the file from (*) above for the given scene
+  emdat_export.df.scene <- subset(emdat_export.df, Sc_id == a_scene)
+
+  # if-statement below guards aginst missing scenes in the files
+  if(nrow(emdat_export.df.scene) != 0) {
+
+    # keeps all segments belonging to the scene in data frame format
+    gazesample_data_scene.df <- subset(gazesample_data.df, scene == a_scene)
+    fixation_data_scene.df <- subset(fixation_data.df, scene == a_scene)
+    events_data_scene.df <- subset(events_data.df, scene == a_scene)
+
+
+    if(nrow(fixation_data_scene.df) != 0 &
+      nrow(gazesample_data_scene.df) != 0){
+
+      check_aoi_fix(emdat_export.df.scene,
+                    participant,
+                    a_scene,
+                    segment.names,
+                    aoi_file.df,
+                    interval_vector,
+                    gazesample_data_scene.df,
+                    fixation_data_scene.df)
+    }
+
+    # if(nrow(events_data_scene.df) != 0 &
+    #    nrow(gazesample_data_scene.df) != 0){
+    #
+    #    check_aoi_eve(emdat_export.df.scene,
+    #                  participant,
+    #                  a_scene,
+    #                  segment.names,
+    #                  aoi_file.df,
+    #                  events_data_scene.df,
+    #                  gazesample_data_scene.df)
+    # }
+  }
+  report_success(participant, cumulative_counter)
+}
+
+readfiles_aoi_debug(part, seg_file, aoi_file, "101a", test_scene)
