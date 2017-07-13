@@ -687,6 +687,9 @@ test_dynamic_aoi_default <- function(emdat_output.df,participant, a_scene, categ
   
     output_value <- subset(emdat_output.df, select = single_timetolastfixation)[1,]
     verify_equivalence(-1, output_value, participant, a_scene, "single_timetolastfixation")
+    
+    output_value <- subset(emdat_output.df, select = single_numtransfrom_single)[1,]
+    verify_equivalence(0, output_value, participant, a_scene, "single_numtransfrom_single")
   
     output_value <- subset(emdat_output.df, select = single_numtransfrom_single)[1,]
     verify_equivalence(0, output_value, participant, a_scene, "single_proptransfrom_single")
