@@ -29,6 +29,9 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
   # removes active time interval rows  
   aoi_file.df <- aoi_file.df_temp[aoi_file.df_temp$aoi_name != "#",]
   
+  # stores aoi name and boundaries in list
+  aoi <- extract_aoi_coordinate(aoi_file.df, "single")
+  
   # The loop below extracts active time intervals for each row (aoi) in aoi_file_df and also mark
   # always active aoi with an empty string, "". The information is stored in the list interval_vector
   names_temp <- aoi_file.df_temp$aoi_name
@@ -90,6 +93,7 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
                                          a_scene,
                                          segment.names,
                                          aoi_file.df,
+                                         aoi,
                                          interval_vector,
                                          gazesample_data_scene.df,
                                          fixation_data_scene.df)
@@ -103,6 +107,7 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
                                          a_scene,
                                          segment.names,
                                          aoi_file.df,
+                                         aoi,
                                          interval_vector,
                                          gazesample_data_scene.df,
                                          events_data_scene.df)
@@ -121,7 +126,6 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
 # single_totaltimespent
 # single_proportiontime
 # single_meanfixationduration
-
 # single_longestfixation
 # single_timetofirstfixation
 # single_timetolastfixation
@@ -129,7 +133,6 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
 # single_proptransfrom_single
 
 ### TODO ###
-
 # single_stddevfixationduration
 
 check_aoi_fix <- function(emdat_output.df, 
@@ -137,6 +140,7 @@ check_aoi_fix <- function(emdat_output.df,
                           a_scene, 
                           segment.names,
                           aoi_file.df,
+                          aoi,
                           interval_vector,
                           gazesample_data_scene.df,
                           fixation_data_scene.df){
@@ -148,6 +152,8 @@ check_aoi_fix <- function(emdat_output.df,
   seg_start <- start_and_end_times$start
   seg_end <- start_and_end_times$end
   length <- seg_end - seg_start
+  
+  # the loop below get data inside the intersection of seg/scene and active intervals  
   
   inactive <- TRUE
   
@@ -184,34 +190,20 @@ check_aoi_fix <- function(emdat_output.df,
   
   fixation_data_scene.df <- fixation_data_scene.df_cumulative
   
+  # aoi inactive; yields default feature values
   if(inactive){
     
     test_dynamic_aoi_default(emdat_output.df,participant, a_scene, "fix")
     return()
   }
   
-  left <- get_tuple_element(1, aoi_file.df$TL)
-  right <- get_tuple_element(1, aoi_file.df$TR)
-  bottom <- get_tuple_element(2, aoi_file.df$BR)
-  top <- get_tuple_element(2, aoi_file.df$TL)
-  
-  internal_data.df <- subset(fixation_data_scene.df,
-                             mappedfixationpointx > left &
-                             mappedfixationpointx <= right &
-                             mappedfixationpointy <= bottom &
-                             mappedfixationpointy > top)
-  
-  # stores the data by segment into vectors
-  # internal_data_vector <- c()
-  # fixation_data_vector <- c()
-  # gazesample_data_vector <- c()
-  # segs_length <- length(segment.names)
-  # for(i in 1:segs_length) {
-  # 
-  #   internal_data_vector[[i]] <- subset(internal_data.df, grepl(segment.names[i], scene))
-  #   fixation_data_vector[[i]] <- subset(fixation_data_scene.df, grepl(segment.names[i], scene))
-  #   gazesample_data_vector[[i]] <- subset(gazesample_data_scene.df, grepl(segment.names[i], scene))
-  # }
+  # get data inside aoi
+  left <- aoi$left
+  right <- aoi$right
+  bottom <- aoi$bottom
+  top <- aoi$top
+  internal_data.df <- subset(fixation_data_scene.df, 
+                             is_inside(fixation_data_scene.df, left, right, bottom, top))
   
   ### single_numfixations ###
   output_value <- subset(emdat_output.df, select = single_numfixations)[1,]
@@ -375,7 +367,7 @@ check_aoi_fix <- function(emdat_output.df,
 # single_timetofirstleftclic
 # single_timetofirstrightclic
 
-# Not tested; these are set to -1 in the emdat code:	
+# TODO:
 # single_timetolastdoubleclic	
 # single_timetolastleftclic	
 # single_timetolastrightclic	
@@ -385,6 +377,7 @@ check_aoi_eve <- function(emdat_output.df,
                           a_scene, 
                           segment.names,
                           aoi_file.df,
+                          aoi,
                           interval_vector,
                           gazesample_data_scene.df,
                           events_data_scene.df){
@@ -396,6 +389,8 @@ check_aoi_eve <- function(emdat_output.df,
   seg_start <- start_and_end_times$start
   seg_end <- start_and_end_times$end
   length <- seg_end - seg_start
+  
+  # the loop below get data inside the intersection of seg/scene and active intervals
   
   inactive <- TRUE
   
@@ -431,35 +426,20 @@ check_aoi_eve <- function(emdat_output.df,
   
   events_data_scene.df <- events_data_scene.df_cumulative
   
+  # aoi inactive; yields default feature values   
   if(inactive){
     
     test_dynamic_aoi_default(emdat_output.df,participant, a_scene, "event")
     return()
   }
   
-  # get aoi coordinates
-  top_left <- aoi_file.df$TL
-  top_right <- aoi_file.df$TR
-  bottom_right <- aoi_file.df$BR
-  bottom_left <-  aoi_file.df$BL
-  
+  # get data inside aoi
   internal_data.df <- subset(events_data_scene.df,
                              grepl('MouseClick', event) &
-                             as.numeric(as.character(x_coord)) > get_tuple_element(1, top_left) &
-                             as.numeric(as.character(x_coord)) <= get_tuple_element(1, top_right) &
-                             as.numeric(as.character(y_coord)) <= get_tuple_element(2, bottom_right) &
-                             as.numeric(as.character(y_coord)) > get_tuple_element(2, top_right))
-  
-  # stores the data by segment into vectors
-  # internal_data_vector <- c()
-  # events_data_vector <- c()
-  # gazesample_data_vector <- c()
-  # segs_length <- length(segment.names)
-  # for(i in 1:segs_length) {
-  # 
-  #   internal_data_vector[[i]] <- subset(internal_data.df, grepl(segment.names[i], scene))
-  #   gazesample_data_vector[[i]] <- subset(gazesample_data_scene.df, grepl(segment.names[i], scene))
-  # }
+                             as.numeric(as.character(x_coord)) > aoi$left &
+                             as.numeric(as.character(x_coord)) <= aoi$right &
+                             as.numeric(as.character(y_coord)) <= aoi$bottom &
+                             as.numeric(as.character(y_coord)) > aoi$top)
   
   ### single_numevents ###
   output_value <- subset(emdat_output.df, select = single_numevents)[1,]
@@ -590,12 +570,12 @@ run_aoiTest <- function(participants, aoi_file_name, last_participant){
 ##### To Run #####
 
 # Set up the tests: choose the range of particpants to run the tests on
-participants <- generate_participant_list(144:162)
+participants <- list("101a") #generate_participant_list(144:162)
 
 # Run
 # Note: last_participant refers to the last in the EMDAT output file used, not necessarily that
 #       in the list of participants
-run_aoiTest(participants, "single_aoi_dynamic" , "162b")  
+run_aoiTest(participants, "single_aoi_dynamic" , "101a")  
 
 #### To debug #####
 
