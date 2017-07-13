@@ -221,8 +221,14 @@ check_aoi_fix <- function(emdat_output.df,
   
   ### single_proportionnum ###
   output_value <- subset(emdat_output.df, select = single_proportionnum)[1,]
-  internal_value <- numfixs / nrow(fixation_data_scene.df)
   
+  if(nrow(fixation_data_scene.df) != 0){
+    
+    internal_value <- numfixs / nrow(fixation_data_scene.df)
+  } else{
+    
+    internal_value <- 0
+  }
   verify_equivalence(internal_value ,output_value, participant, a_scene, "single_proportionnum")
   
   ### single_fixationrate ###
@@ -584,20 +590,20 @@ run_aoiTest <- function(participants, aoi_file_name, last_participant){
 ##### To Run #####
 
 # Set up the tests: choose the range of particpants to run the tests on
-participants <- list('101a') #generate_participant_list(101:101)
+participants <- generate_participant_list(144:162)
 
 # Run
 # Note: last_participant refers to the last in the EMDAT output file used, not necessarily that
 #       in the list of participants
-run_aoiTest(participants, "single_aoi_dynamic" , "101a")  
+run_aoiTest(participants, "single_aoi_dynamic" , "162b")  
 
 #### To debug #####
 
 # Runs tests on a given individual participant and scene
 
 # ##############
-# part <- "101a"
-# test_scene <- "Event_14"
+# part <- "105a"
+# test_scene <- "Event_54"
 # ##############
 # 
 # seg_file <- paste(seg_file_path, "P", part, ".seg", sep = "")
@@ -691,4 +697,4 @@ run_aoiTest(participants, "single_aoi_dynamic" , "101a")
 #   report_success(participant, cumulative_counter)
 # }
 # 
-# readfiles_aoi_debug(part, seg_file, aoi_file, "101a", test_scene)
+# readfiles_aoi_debug(part, seg_file, aoi_file, "162b", test_scene)
