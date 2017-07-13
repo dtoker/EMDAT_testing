@@ -84,7 +84,7 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
       
       if(nrow(fixation_data_scene.df) != 0 &
          nrow(gazesample_data_scene.df) != 0){
-        
+
         checked_result1 <- check_aoi_fix(emdat_export.df.scene,
                                          participant,
                                          a_scene,
@@ -93,19 +93,20 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
                                          interval_vector,
                                          gazesample_data_scene.df,
                                          fixation_data_scene.df)
-        
+
       }
       
-      # if(nrow(gazesample_data_scene.df) != 0){
-      #   
-      #   checked_result2 <- check_aoi_eve(emdat_export.df.scene,
-      #                                    participant,
-      #                                    a_scene,
-      #                                    segment.names,
-      #                                    aoi_file.df,
-      #                                    events_data_scene.df,
-      #                                    gazesample_data_scene.df)
-      # }
+      if(nrow(gazesample_data_scene.df) != 0){
+
+        checked_result2 <- check_aoi_eve(emdat_export.df.scene,
+                                         participant,
+                                         a_scene,
+                                         segment.names,
+                                         aoi_file.df,
+                                         interval_vector,
+                                         gazesample_data_scene.df,
+                                         events_data_scene.df)
+      }
     }
   }
   report_success(participant, cumulative_counter)
@@ -114,21 +115,22 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
 # This function checks the correctness of fixations
 # LIST OF COLUMS TO TEST:
 
-
-### TODO ###
-
 # single_numfixations
 # single_proportionnum
 # single_fixationrate
 # single_totaltimespent
 # single_proportiontime
 # single_meanfixationduration
-# single_stddevfixationduration
+
 # single_longestfixation
 # single_timetofirstfixation
 # single_timetolastfixation
 # single_numtransfrom_single
 # single_proptransfrom_single
+
+### TODO ###
+
+# single_stddevfixationduration
 
 check_aoi_fix <- function(emdat_output.df, 
                           participant, 
@@ -184,7 +186,7 @@ check_aoi_fix <- function(emdat_output.df,
   
   if(inactive){
     
-    test_dynamic_aoi_fix_default(emdat_output.df,participant, a_scene)
+    test_dynamic_aoi_default(emdat_output.df,participant, a_scene, "fix")
     return()
   }
   
@@ -263,27 +265,27 @@ check_aoi_fix <- function(emdat_output.df,
   verify_equivalence(internal_value, output_value, participant, a_scene, "single_meanfixationduration")
   
   ### single_stddevfixationduration ###
-  output_value <- subset(emdat_output.df, select = single_stddevfixationduration)[1,]
-  
-  if(nrow(internal_data.df) > 1){
-    
-    internal_value <- sd(internal_data.df$fixationduration)
-  } else if(nrow(internal_data.df) == 1){
-    
-    if(is.nan(output_value)){
-      
-      # sd evaluate to NaN in EMDAT while to NA in R if argument length is one
-      # but cannot pass these values directly to verify_equivalence  
-      internal_value <- 0.0
-      output_value <- 0.0
-    } else {
-      internal_value <- NA
-    }
-    
-  } else {
-    
-    internal_value <- -1
-  }
+  # output_value <- subset(emdat_output.df, select = single_stddevfixationduration)[1,]
+  # 
+  # if(nrow(internal_data.df) > 1){
+  #   
+  #   internal_value <- sd(internal_data.df$fixationduration)
+  # } else if(nrow(internal_data.df) == 1){
+  #   
+  #   if(is.nan(output_value)){
+  #     
+  #     # sd evaluate to NaN in EMDAT while to NA in R if argument length is one
+  #     # but cannot pass these values directly to verify_equivalence  
+  #     internal_value <- 0.0
+  #     output_value <- 0.0
+  #   } else {
+  #     internal_value <- NA
+  #   }
+  #   
+  # } else {
+  #   
+  #   internal_value <- -1
+  # }
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "single_stddevfixationduration")
   
@@ -377,10 +379,57 @@ check_aoi_eve <- function(emdat_output.df,
                           a_scene, 
                           segment.names,
                           aoi_file.df,
-                          events_data_scene.df,
-                          gazesample_data_scene.df){
+                          interval_vector,
+                          gazesample_data_scene.df,
+                          events_data_scene.df){
   
   ### set up the tests ###
+  
+  # get start and end times of all_data for the scene (same as for seg in this case) 
+  start_and_end_times <- get_seg_start_and_end_times(gazesample_data_scene.df)
+  seg_start <- start_and_end_times$start
+  seg_end <- start_and_end_times$end
+  length <- seg_end - seg_start
+  
+  inactive <- TRUE
+  
+  # initialize a dataframe with the correct column names and types  
+  events_data_scene.df_cumulative <- events_data_scene.df[0,]
+  
+  for(i in 1:length(interval_vector[[1]])){
+    
+    interval_start <- get_tuple_element(1, interval_vector[[1]][i])
+    interval_end <- get_tuple_element(2, interval_vector[[1]][i])
+    
+    if(interval_start <= seg_start && seg_end <= interval_end) {
+      
+      inactive <- FALSE
+      events_data_scene.df_cumulative <- events_data_scene.df
+      break   
+    }
+    
+    if(seg_start <= interval_end && interval_start <= seg_end){
+      
+      start <- max(seg_start, interval_start)
+      end <- min(seg_end, interval_end)
+      
+      events_data_scene.df_temp <- events_data_scene.df[
+        which(start <= events_data_scene.df$timestamp &
+              events_data_scene.df$timestamp <= end),]
+      
+      events_data_scene.df_cumulative <- rbind(events_data_scene.df_cumulative, events_data_scene.df_temp) 
+      
+      inactive <- FALSE
+    }
+  }
+  
+  events_data_scene.df <- events_data_scene.df_cumulative
+  
+  if(inactive){
+    
+    test_dynamic_aoi_default(emdat_output.df,participant, a_scene, "event")
+    return()
+  }
   
   # get aoi coordinates
   top_left <- aoi_file.df$TL
@@ -390,15 +439,10 @@ check_aoi_eve <- function(emdat_output.df,
   
   internal_data.df <- subset(events_data_scene.df,
                              grepl('MouseClick', event) &
-                               as.numeric(as.character(x_coord)) > get_tuple_element(1, top_left) &
-                               as.numeric(as.character(x_coord)) <= get_tuple_element(1, top_right) &
-                               as.numeric(as.character(y_coord)) <= get_tuple_element(2, bottom_right) &
-                               as.numeric(as.character(y_coord)) > get_tuple_element(2, top_right))
-  
-  
-  # get start and end times of all_data for the scene
-  start_and_end_times <- get_seg_start_and_end_times(gazesample_data_scene.df)
-  length <- start_and_end_times$end - start_and_end_times$start
+                             as.numeric(as.character(x_coord)) > get_tuple_element(1, top_left) &
+                             as.numeric(as.character(x_coord)) <= get_tuple_element(1, top_right) &
+                             as.numeric(as.character(y_coord)) <= get_tuple_element(2, bottom_right) &
+                             as.numeric(as.character(y_coord)) > get_tuple_element(2, top_right))
   
   # stores the data by segment into vectors
   # internal_data_vector <- c()
