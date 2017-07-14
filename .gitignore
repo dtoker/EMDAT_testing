@@ -8,3 +8,5 @@
 **/three_parts_study_data/EMDAT_int_data_saccade_param/*
 **/intervention_study_data/EMDAT_int_data_saccade_param/*
 *.aoi
+*.aois
+*.tsv
