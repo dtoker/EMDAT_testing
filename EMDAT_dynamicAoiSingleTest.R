@@ -570,12 +570,12 @@ run_aoiTest <- function(participants, aoi_file_name, last_participant){
 ##### To Run ##### 
 
 # Set up the tests: choose the range of particpants to run the tests on
-participants <- generate_participant_list(144:162)
+participants <- list("101a") #generate_participant_list(144:162)
 
 # Run
 # Note: last_participant refers to the last in the EMDAT output file used, not necessarily that
 #       in the list of participants
-run_aoiTest(participants, "single_aoi_dynamic" , "162b")  
+run_aoiTest(participants, "single_aoi_dynamic" , "101a")  
 
 #### To debug #####
 

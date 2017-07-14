@@ -654,78 +654,182 @@ set_root_name <- function(root){
 
 # check default values for dynamic aoi tests
 # category is either "fix" or "event"
-test_dynamic_aoi_default <- function(emdat_output.df,participant, a_scene, category){
+# test_dynamic_aoi_default <- function(emdat_output.df,participant, a_scene, category){
+#   
+#   if(category == "fix"){
+#   
+#     output_value <- subset(emdat_output.df, select = single_numfixations)[1,]
+#     verify_equivalence(0 ,output_value, participant, a_scene, "single_numfixations")
+#   
+#     output_value <- subset(emdat_output.df, select = single_proportionnum)[1,]
+#     verify_equivalence(0 ,output_value, participant, a_scene, "single_proportionnum")
+#   
+#     output_value <- subset(emdat_output.df, select = single_fixationrate)[1,]
+#     verify_equivalence(0 ,output_value, participant, a_scene, "single_fixationrate")
+#   
+#     output_value <- subset(emdat_output.df, select = single_totaltimespent)[1,]
+#     verify_equivalence(0, output_value, participant, a_scene, "single_totaltimespent")
+#   
+#     output_value <- subset(emdat_output.df, select = single_proportiontime)[1,]
+#     verify_equivalence(0, output_value, participant, a_scene, "single_proportiontime")
+#   
+#     output_value <- subset(emdat_output.df, select = single_meanfixationduration)[1,]
+#     verify_equivalence(-1, output_value, participant, a_scene, "single_meanfixationduration")
+#   
+#     output_value <- subset(emdat_output.df, select = single_stddevfixationduration)[1,]
+#     verify_equivalence(0, output_value, participant, a_scene, "single_stddevfixationduration")
+#   
+#     output_value <- subset(emdat_output.df, select = single_longestfixation)[1,]
+#     verify_equivalence(-1, output_value, participant, a_scene, "single_longestfixation")
+#   
+#     output_value <- subset(emdat_output.df, select = single_timetofirstfixation)[1,]
+#     verify_equivalence(-1, output_value, participant, a_scene, "single_timetofirstfixation")
+#   
+#     output_value <- subset(emdat_output.df, select = single_timetolastfixation)[1,]
+#     verify_equivalence(-1, output_value, participant, a_scene, "single_timetolastfixation")
+#     
+#     output_value <- subset(emdat_output.df, select = single_numtransfrom_single)[1,]
+#     verify_equivalence(0, output_value, participant, a_scene, "single_numtransfrom_single")
+#   
+#     output_value <- subset(emdat_output.df, select = single_numtransfrom_single)[1,]
+#     verify_equivalence(0, output_value, participant, a_scene, "single_proptransfrom_single")
+#   }
+#   
+#   if(category == "event") {
+#     
+#     output_value <- subset(emdat_output.df, select = single_numevents)[1,]
+#     verify_equivalence(0, output_value, participant, a_scene, "single_numevents")
+#     
+#     output_value <- subset(emdat_output.df, select = single_numrightclic)[1,]
+#     verify_equivalence(0, output_value, participant, a_scene, "single_numrightclic")
+#     
+#     output_value <- subset(emdat_output.df, select = single_rightclicrate)[1,]
+#     verify_equivalence(0, output_value, participant, a_scene, "single_rightclicrate")
+#     
+#     output_value <- subset(emdat_output.df, select = single_numdoubleclic)[1,]
+#     verify_equivalence(0, output_value, participant, a_scene, "single_numdoubleclic")
+#     
+#     output_value <- subset(emdat_output.df, select = single_doubleclicrate)[1,] 
+#     verify_equivalence(0, output_value, participant, a_scene, "single_doubleclicrate")
+#     
+#     output_value <- subset(emdat_output.df, select = single_numleftclic)[1,]
+#     verify_equivalence(0, output_value, participant, a_scene, "single_numleftclic")
+#     
+#     output_value <- subset(emdat_output.df, select = single_leftclicrate)[1,]
+#     verify_equivalence(0, output_value, participant, a_scene, "single_leftclicrate")
+#     
+#     output_value <- subset(emdat_output.df, select = single_timetofirstdoubleclic)[1,]
+#     verify_equivalence(-1, output_value, participant, a_scene, "single_timetofirstdoubleclic")
+#     
+#     output_value <- subset(emdat_output.df, select = single_timetofirstleftclic)[1,]
+#     verify_equivalence(-1, output_value, participant, a_scene, "single_timetofirstleftclic")
+#     
+#     output_value <- subset(emdat_output.df, select = single_timetofirstrightclic)[1,]
+#     verify_equivalence(-1, output_value, participant, a_scene, "single_timetofirstrightclic")
+#   }
+# }
+
+test_dynamic_aoi_default <- function(emdat_output.df,participant, a_scene, category, 
+                                     name_root="single_", trans_from_names=list("single")){
   
   if(category == "fix"){
-  
-    output_value <- subset(emdat_output.df, select = single_numfixations)[1,]
-    verify_equivalence(0 ,output_value, participant, a_scene, "single_numfixations")
-  
-    output_value <- subset(emdat_output.df, select = single_proportionnum)[1,]
-    verify_equivalence(0 ,output_value, participant, a_scene, "single_proportionnum")
-  
-    output_value <- subset(emdat_output.df, select = single_fixationrate)[1,]
-    verify_equivalence(0 ,output_value, participant, a_scene, "single_fixationrate")
-  
-    output_value <- subset(emdat_output.df, select = single_totaltimespent)[1,]
-    verify_equivalence(0, output_value, participant, a_scene, "single_totaltimespent")
-  
-    output_value <- subset(emdat_output.df, select = single_proportiontime)[1,]
-    verify_equivalence(0, output_value, participant, a_scene, "single_proportiontime")
-  
-    output_value <- subset(emdat_output.df, select = single_meanfixationduration)[1,]
-    verify_equivalence(-1, output_value, participant, a_scene, "single_meanfixationduration")
-  
-    output_value <- subset(emdat_output.df, select = single_stddevfixationduration)[1,]
-    verify_equivalence(0, output_value, participant, a_scene, "single_stddevfixationduration")
-  
-    output_value <- subset(emdat_output.df, select = single_longestfixation)[1,]
-    verify_equivalence(-1, output_value, participant, a_scene, "single_longestfixation")
-  
-    output_value <- subset(emdat_output.df, select = single_timetofirstfixation)[1,]
-    verify_equivalence(-1, output_value, participant, a_scene, "single_timetofirstfixation")
-  
-    output_value <- subset(emdat_output.df, select = single_timetolastfixation)[1,]
-    verify_equivalence(-1, output_value, participant, a_scene, "single_timetolastfixation")
     
-    output_value <- subset(emdat_output.df, select = single_numtransfrom_single)[1,]
-    verify_equivalence(0, output_value, participant, a_scene, "single_numtransfrom_single")
-  
-    output_value <- subset(emdat_output.df, select = single_numtransfrom_single)[1,]
-    verify_equivalence(0, output_value, participant, a_scene, "single_proptransfrom_single")
+    feature_name <- paste(name_root, "numfixations", sep = "")
+    output_value <- subset(emdat_output.df, select = feature_name)[1,]
+    verify_equivalence(0 ,output_value, participant, a_scene, feature_name)
+    
+    feature_name <- paste(name_root, "proportionnum", sep = "")
+    output_value <- subset(emdat_output.df, select = feature_name)[1,]
+    verify_equivalence(0 ,output_value, participant, a_scene, feature_name)
+    
+    feature_name <- paste(name_root, "fixationrate", sep = "")
+    output_value <- subset(emdat_output.df, select = feature_name)[1,]
+    verify_equivalence(0 ,output_value, participant, a_scene, feature_name)
+    
+    feature_name <- paste(name_root, "totaltimespent", sep = "")
+    output_value <- subset(emdat_output.df, select = feature_name)[1,]
+    verify_equivalence(0, output_value, participant, a_scene, feature_name)
+    
+    feature_name <- paste(name_root, "proportiontime", sep = "")
+    output_value <- subset(emdat_output.df, select = feature_name)[1,]
+    verify_equivalence(0, output_value, participant, a_scene, feature_name)
+    
+    feature_name <- paste(name_root, "meanfixationduration", sep = "")
+    output_value <- subset(emdat_output.df, select = feature_name)[1,]
+    verify_equivalence(-1, output_value, participant, a_scene, feature_name)
+    
+    # feature_name <- paste(name_root, "stddevfixationduration", sep = "")
+    # output_value <- subset(emdat_output.df, select = feature_name)[1,]
+    # verify_equivalence(0, output_value, participant, a_scene, feature_name)
+    
+    feature_name <- paste(name_root, "longestfixation", sep = "")
+    output_value <- subset(emdat_output.df, select = feature_name)[1,]
+    verify_equivalence(-1, output_value, participant, a_scene, feature_name)
+    
+    feature_name <- paste(name_root, "timetofirstfixation", sep = "")
+    output_value <- subset(emdat_output.df, select = feature_name)[1,]
+    verify_equivalence(-1, output_value, participant, a_scene, feature_name)
+    
+    feature_name <- paste(name_root, "timetolastfixation", sep = "")
+    output_value <- subset(emdat_output.df, select = feature_name)[1,]
+    verify_equivalence(-1, output_value, participant, a_scene, feature_name)
+    
+    for(name in trans_from_names){
+      
+      feature_name <- paste(name_root, "numtransfrom_", name, sep = "")
+      output_value <- subset(emdat_output.df, select = feature_name)[1,]
+      verify_equivalence(0, output_value, participant, a_scene, feature_name)
+    }
+    
+    for(name in trans_from_names){
+      
+      feature_name <- paste(name_root, "proptransfrom_", name, sep = "")
+      output_value <- subset(emdat_output.df, select = feature_name)[1,]
+      verify_equivalence(0, output_value, participant, a_scene, feature_name)
+    }
   }
   
   if(category == "event") {
     
-    output_value <- subset(emdat_output.df, select = single_numevents)[1,]
-    verify_equivalence(0, output_value, participant, a_scene, "single_numevents")
+    feature_name <- paste(name_root, "numevents", sep = "")
+    output_value <- subset(emdat_output.df, select = feature_name)[1,]
+    verify_equivalence(0, output_value, participant, a_scene, feature_name)
     
-    output_value <- subset(emdat_output.df, select = single_numrightclic)[1,]
-    verify_equivalence(0, output_value, participant, a_scene, "single_numrightclic")
+    feature_name <- paste(name_root, "numrightclic", sep = "")
+    output_value <- subset(emdat_output.df, select = feature_name)[1,]
+    verify_equivalence(0, output_value, participant, a_scene, feature_name)
     
-    output_value <- subset(emdat_output.df, select = single_rightclicrate)[1,]
-    verify_equivalence(0, output_value, participant, a_scene, "single_rightclicrate")
+    feature_name <- paste(name_root, "rightclicrate", sep = "")
+    output_value <- subset(emdat_output.df, select = feature_name)[1,]
+    verify_equivalence(0, output_value, participant, a_scene, feature_name)
     
-    output_value <- subset(emdat_output.df, select = single_numdoubleclic)[1,]
-    verify_equivalence(0, output_value, participant, a_scene, "single_numdoubleclic")
+    feature_name <- paste(name_root, "numdoubleclic", sep = "")
+    output_value <- subset(emdat_output.df, select = feature_name)[1,]
+    verify_equivalence(0, output_value, participant, a_scene, feature_name)
     
-    output_value <- subset(emdat_output.df, select = single_doubleclicrate)[1,] 
-    verify_equivalence(0, output_value, participant, a_scene, "single_doubleclicrate")
+    feature_name <- paste(name_root, "doubleclicrate", sep = "")
+    output_value <- subset(emdat_output.df, select = feature_name)[1,] 
+    verify_equivalence(0, output_value, participant, a_scene, feature_name)
     
-    output_value <- subset(emdat_output.df, select = single_numleftclic)[1,]
-    verify_equivalence(0, output_value, participant, a_scene, "single_numleftclic")
+    feature_name <- paste(name_root, "numleftclic", sep = "")
+    output_value <- subset(emdat_output.df, select = feature_name)[1,]
+    verify_equivalence(0, output_value, participant, a_scene, feature_name)
     
-    output_value <- subset(emdat_output.df, select = single_leftclicrate)[1,]
-    verify_equivalence(0, output_value, participant, a_scene, "single_leftclicrate")
+    feature_name <- paste(name_root, "leftclicrate", sep = "")
+    output_value <- subset(emdat_output.df, select = feature_name)[1,]
+    verify_equivalence(0, output_value, participant, a_scene, feature_name)
     
-    output_value <- subset(emdat_output.df, select = single_timetofirstdoubleclic)[1,]
-    verify_equivalence(-1, output_value, participant, a_scene, "single_timetofirstdoubleclic")
+    feature_name <- paste(name_root, "timetofirstdoubleclic", sep = "")
+    output_value <- subset(emdat_output.df, select = feature_name)[1,]
+    verify_equivalence(-1, output_value, participant, a_scene, feature_name)
     
-    output_value <- subset(emdat_output.df, select = single_timetofirstleftclic)[1,]
-    verify_equivalence(-1, output_value, participant, a_scene, "single_timetofirstleftclic")
+    feature_name <- paste(name_root, "timetofirstleftclic", sep = "")
+    output_value <- subset(emdat_output.df, select = feature_name)[1,]
+    verify_equivalence(-1, output_value, participant, a_scene, feature_name)
     
-    output_value <- subset(emdat_output.df, select = single_timetofirstrightclic)[1,]
-    verify_equivalence(-1, output_value, participant, a_scene, "single_timetofirstrightclic")
+    feature_name <- paste(name_root, "timetofirstrightclic", sep = "")
+    output_value <- subset(emdat_output.df, select = feature_name)[1,]
+    verify_equivalence(-1, output_value, participant, a_scene, feature_name)
   }
 } 
 

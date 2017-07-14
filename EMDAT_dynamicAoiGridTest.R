@@ -98,14 +98,14 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
 
         for(aoi_name in aoi.names){
 
-          active_interval <- interval_vector[which(aoi.names == aoi_name)]
+          active_intervals <- interval_vector[which(aoi.names == aoi_name)]
 
           check_aoi_fix(emdat_export.df.scene,
                         participant,
                         a_scene,
                         aoi_name,
                         aois.data,
-                        active_interval,
+                        active_intervals,
                         segment.names,
                         gazesample_data_scene.df,
                         fixation_data_scene.df)
@@ -116,15 +116,15 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
       if(nrow(gazesample_data_scene.df) != 0){
 
         for(aoi_name in aoi.names){
-          
-          active_interval <- interval_vector[which(aoi.names == aoi_name)]
+
+          active_intervals <- interval_vector[which(aoi.names == aoi_name)]
 
           check_aoi_eve(emdat_export.df.scene,
                         participant,
                         a_scene,
                         aoi_name,
                         aois.data,
-                        active_interval,
+                        active_intervals,
                         segment.names,
                         events_data_scene.df,
                         gazesample_data_scene.df)
@@ -156,14 +156,13 @@ check_aoi_fix <- function(emdat_output.df,
                           a_scene,
                           aoi_name,
                           aois.data,
-                          active_interval,
+                          active_intervals,
                           segment.names,
                           gazesample_data_scene.df,
                           fixation_data_scene.df){
   
   ### set up the tests ###
   aoi <- aois.data[aois.data[,"aoi_name"] == aoi_name,]
-  
   aoi_feature_name_root <- set_root_name(paste("X", aoi_name, sep = ""))
   
   # get start and end times of all_data for the scene (same as for seg in this case) 
@@ -174,17 +173,18 @@ check_aoi_fix <- function(emdat_output.df,
   
   inactive <- TRUE
   
-  if(active_interval[[1]][1] != ""){
+  if(active_intervals[[1]][1] != ""){
     # the loop below get data inside the intersection of seg/scene and active intervals  
   
     # initialize a dataframe with the correct column names and types  
     fixation_data_scene.df_cumulative <- fixation_data_scene.df[0,]
   
-    for(i in 1:length(active_interval[[1]])){
+    for(i in 1:length(active_intervals[[1]])){
     
-      interval_start <- get_tuple_element(1, active_interval[[1]][i])
-      interval_end <- get_tuple_element(2, active_interval[[1]][i])
-    
+      interval_start <- get_tuple_element(1, active_intervals[[1]][i])
+      interval_end <- get_tuple_element(2, active_intervals[[1]][i])
+      
+      # seg time interval is subset of the active interval    
       if(interval_start <= seg_start && seg_end <= interval_end) {
       
         inactive <- FALSE
@@ -217,7 +217,8 @@ check_aoi_fix <- function(emdat_output.df,
   # aoi inactive; yields default feature values
   if(inactive){
     
-    #test_dynamic_aoi_default(emdat_output.df,participant, a_scene, "fix")
+    test_dynamic_aoi_default(emdat_output.df,participant, a_scene, 
+                             "fix", aoi_feature_name_root, aois.data[,1])
     return()
   }
   
@@ -423,7 +424,7 @@ check_aoi_eve <- function(emdat_output.df,
                           a_scene,
                           aoi_name,
                           aois.data,
-                          active_interval,
+                          active_intervals,
                           segment.names,
                           events_data_scene.df,
                           gazesample_data_scene.df){
@@ -441,16 +442,16 @@ check_aoi_eve <- function(emdat_output.df,
   
   inactive <- TRUE
   
-  if(active_interval[[1]][1] != ""){
+  if(active_intervals[[1]][1] != ""){
     # the loop below get data inside the intersection of seg/scene and active intervals  
     
     # initialize a dataframe with the correct column names and types  
     events_data_scene.df_cumulative <- events_data_scene.df[0,]
     
-    for(i in 1:length(active_interval[[1]])){
+    for(i in 1:length(active_intervals[[1]])){
       
-      interval_start <- get_tuple_element(1, active_interval[[1]][i])
-      interval_end <- get_tuple_element(2, active_interval[[1]][i])
+      interval_start <- get_tuple_element(1, active_intervals[[1]][i])
+      interval_end <- get_tuple_element(2, active_intervals[[1]][i])
       
       if(interval_start <= seg_start && seg_end <= interval_end) {
         
@@ -483,7 +484,8 @@ check_aoi_eve <- function(emdat_output.df,
   # aoi inactive; yields default feature values
   if(inactive){
     
-    #test_dynamic_aoi_default(emdat_output.df,participant, a_scene, "fix")
+    test_dynamic_aoi_default(emdat_output.df,participant, a_scene, 
+                             "event", aoi_feature_name_root, aois.data[,1])
     return()
   }
   
