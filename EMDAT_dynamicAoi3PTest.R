@@ -95,11 +95,14 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
         
         for(aoi_name in aoi.names){
           
+          active_intervals <- interval_vector[which(aoi.names == aoi_name)]
+          
           check_aoi_fix(emdat_export.df.scene,
                         participant,
                         a_scene,
                         aoi_name,
                         aois.data,
+                        active_intervals,
                         segment.names,
                         gazesample_data_scene.df,
                         fixation_data_scene.df)
@@ -107,20 +110,20 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
         
       }
       
-      if(nrow(gazesample_data_scene.df) != 0){
-        
-        for(aoi_name in aoi.names){
-          
-          check_aoi_eve(emdat_export.df.scene,
-                        participant,
-                        a_scene,
-                        aoi_name,
-                        aois.data,
-                        segment.names,
-                        events_data_scene.df,
-                        gazesample_data_scene.df)
-        }
-      }
+      # if(nrow(gazesample_data_scene.df) != 0){
+      #   
+      #   for(aoi_name in aoi.names){
+      #     
+      #     check_aoi_eve(emdat_export.df.scene,
+      #                   participant,
+      #                   a_scene,
+      #                   aoi_name,
+      #                   aois.data,
+      #                   segment.names,
+      #                   events_data_scene.df,
+      #                   gazesample_data_scene.df)
+      #   }
+      # }
     }
   }
   report_success(participant, cumulative_counter)
@@ -147,20 +150,14 @@ check_aoi_fix <- function(emdat_output.df,
                           a_scene,
                           aoi_name,
                           aois.data,
+                          active_intervals,
                           segment.names,
                           gazesample_data_scene.df,
                           fixation_data_scene.df){
   
   ### set up the tests ###
   aoi <- aois.data[aois.data[,"aoi_name"] == aoi_name,]
-  
-  if(class(aoi_name) == "integer"){
-    
-    aoi_feature_name_root <- set_root_name(paste("X", aoi_name, sep = ""))
-  } else {
-    
-    aoi_feature_name_root <- set_root_name(aoi_name)
-  }
+  aoi_feature_name_root <- set_root_name(aoi_name)
   
   internal_data.df <- subset(fixation_data_scene.df, 
                              is_inside(fixation_data_scene.df, aoi$left, aoi$right, aoi$bottom, aoi$top))
@@ -177,13 +174,22 @@ check_aoi_fix <- function(emdat_output.df,
     gazesample_data_vector[[i]] <- subset(gazesample_data_scene.df, grepl(segment.names[i], scene))
   }
   
-  # get start and end times of all_data for the scene
+  # get start and end times of all_data's for the scene
   length <- 0
+  starts <- numeric(segs_length)
+  ends <- numeric(segs_length)
   for(i in 1:segs_length){
     
     start_and_end_times <- get_seg_start_and_end_times(gazesample_data_vector[[i]])
+    starts[i] <- start_and_end_times$start
+    ends[i] <- start_and_end_times$end
     length <- length + start_and_end_times$end - start_and_end_times$start
   }
+  
+  ####### TODO: ############
+  # 1) Apply the logic for finding an intersection to each seg (so returning the full set for "" case in particular).
+  # 2) Handle inactive interval case individually in computaiton of each feature; do not use 'break' in this case.       
+  ##########################
   
   ### numfixations ###
   feature_name <- paste(aoi_feature_name_root, "numfixations", sep = "")
@@ -680,7 +686,7 @@ run_aoiTest <- function(participants, last_participant){
 ##### To Run #####
 
 # Set up the tests: choose the range of particpants to run the tests on
-participants <- list("16", "17", "18")
+participants <- list("18")
 
 # Run
 # Note: last_participant refers to the last in the EMDAT output file used, not necessarily that
