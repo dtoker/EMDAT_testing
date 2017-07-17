@@ -186,15 +186,10 @@ check_aoi_fix <- function(emdat_output.df,
     length <- length + start_and_end_times$end - start_and_end_times$start
   }
   
-  ####### TODO: ############
-  # 1) Apply the logic for finding an intersection to each seg (so returning the full set for "" case in particular).
-  # 2) Handle inactive interval case individually in computaiton of each feature; do not use 'break' in this case.       
-  ##########################
-  
-  for(j in 1:length(segs_length)){
+  for(j in 1:segs_length){
     
     if(active_intervals[[1]][1] != "" && active_intervals[[1]][1] != "-1,-1"){
-      # the loop below get data inside the intersection of seg/scene and active intervals  
+      # the loop below get data inside the intersection of seg and active intervals  
     
       # initialize a dataframe with the correct column names and types  
       fixation_data_seg.df_cumulative <- fixation_data_vector[[1]][0,]
@@ -244,6 +239,18 @@ check_aoi_fix <- function(emdat_output.df,
     return()
   }
   
+  internal_data.df_temp <- data.frame()
+  fixation_data_scene.df_temp <- data.frame()
+    
+  for(i in 1:segs_length){
+    
+    internal_data.df_temp <- rbind(internal_data.df_temp, internal_data_vector[[i]])
+    fixation_data_scene.df_temp <- rbind(fixation_data_scene.df_temp, fixation_data_vector[[i]])
+  }
+  
+  internal_data.df <- internal_data.df_temp
+  fixation_data_scene.df <- fixation_data_scene.df_temp
+  
   ### numfixations ###
   feature_name <- paste(aoi_feature_name_root, "numfixations", sep = "")
   output_value <- subset(emdat_output.df, select = feature_name)[1,]
@@ -252,13 +259,19 @@ check_aoi_fix <- function(emdat_output.df,
   
   verify_equivalence(numfixs ,output_value, participant, a_scene, feature_name)
   
-  ### proportionnum ###
-  feature_name <- paste(aoi_feature_name_root, "proportionnum", sep = "")
-  output_value <- subset(emdat_output.df, select = feature_name)[1,]
-  
-  internal_value <- numfixs / nrow(fixation_data_scene.df)
-  
-  verify_equivalence(internal_value ,output_value, participant, a_scene, feature_name)
+  # ## proportionnum ###
+  # feature_name <- paste(aoi_feature_name_root, "proportionnum", sep = "")
+  # output_value <- subset(emdat_output.df, select = feature_name)[1,]
+  # 
+  # if(nrow(fixation_data_scene.df) != 0){
+  # 
+  #   internal_value <- numfixs / nrow(fixation_data_scene.df)
+  # } else{
+  # 
+  #   internal_value <- 0
+  # }
+  # 
+  # verify_equivalence(internal_value ,output_value, participant, a_scene, feature_name)
   
   ### fixationrate ###
   feature_name <- paste(aoi_feature_name_root, "fixationrate", sep = "")
@@ -310,30 +323,30 @@ check_aoi_fix <- function(emdat_output.df,
   verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
   
   ### stddevfixationduration ###
-  feature_name <- paste(aoi_feature_name_root, "stddevfixationduration", sep = "")
-  output_value <- subset(emdat_output.df, select = feature_name)[1,]
-  
-  if(nrow(internal_data_vector[[1]]) > 1){
-    
-    internal_value <- sd(internal_data_vector[[1]]$fixationduration)
-  } else if(nrow(internal_data_vector[[1]]) == 1){
-    
-    if(is.nan(output_value)){
-      
-      # sd evaluate to NaN in EMDAT while to NA in R if argument length is one
-      # but cannot pass these values directly to verify_equivalence  
-      internal_value <- 0.0
-      output_value <- 0.0
-    } else {
-      internal_value <- NA
-    }
-    
-  } else {
-    
-    internal_value <- -1
-  }
-  
-  verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
+  # feature_name <- paste(aoi_feature_name_root, "stddevfixationduration", sep = "")
+  # output_value <- subset(emdat_output.df, select = feature_name)[1,]
+  # 
+  # if(nrow(internal_data_vector[[1]]) > 1){
+  #   
+  #   internal_value <- sd(internal_data_vector[[1]]$fixationduration)
+  # } else if(nrow(internal_data_vector[[1]]) == 1){
+  #   
+  #   if(is.nan(output_value)){
+  #     
+  #     # sd evaluate to NaN in EMDAT while to NA in R if argument length is one
+  #     # but cannot pass these values directly to verify_equivalence  
+  #     internal_value <- 0.0
+  #     output_value <- 0.0
+  #   } else {
+  #     internal_value <- NA
+  #   }
+  #   
+  # } else {
+  #   
+  #   internal_value <- -1
+  # }
+  # 
+  # verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
   
   ### longestfixation ###
   feature_name <- paste(aoi_feature_name_root, "longestfixation", sep = "")
@@ -361,7 +374,7 @@ check_aoi_fix <- function(emdat_output.df,
   output_value <- subset(emdat_output.df, select = feature_name)[1,]
   
   internal_values <- numeric(segs_length)
-  
+  print(a_scene)
   for(i in 1:segs_length){
     
     if(nrow(internal_data_vector[[i]]) != 0){
@@ -739,12 +752,12 @@ run_aoiTest <- function(participants, last_participant){
 ##### To Run #####
 
 # Set up the tests: choose the range of particpants to run the tests on
-participants <- list("16")
+participants <- list("17")
 
 # Run
 # Note: last_participant refers to the last in the EMDAT output file used, not necessarily that
 #       in the list of participants
-run_aoiTest(participants, "16")
+run_aoiTest(participants, "17")
 
 
 
