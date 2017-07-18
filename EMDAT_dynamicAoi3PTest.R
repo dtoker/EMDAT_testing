@@ -90,24 +90,24 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
       fixation_data_scene.df <- subset(fixation_data.df, grepl(a_scene, scene) & !grepl(participant, scene))
       events_data_scene.df <- subset(events_data.df, grepl(a_scene, scene) & !grepl(participant, scene))
       
-      # if(nrow(fixation_data_scene.df) != 0 &
-      #    nrow(gazesample_data_scene.df) != 0){
-      # 
-      #   for(aoi_name in aoi.names){
-      # 
-      #     active_intervals <- interval_vector[which(aoi.names == aoi_name)]
-      # 
-      #     check_aoi_fix(emdat_export.df.scene,
-      #                   participant,
-      #                   a_scene,
-      #                   aoi_name,
-      #                   aois.data,
-      #                   active_intervals,
-      #                   segment.names,
-      #                   gazesample_data_scene.df,
-      #                   fixation_data_scene.df)
-      #   }
-      # }
+      if(nrow(fixation_data_scene.df) != 0 &
+         nrow(gazesample_data_scene.df) != 0){
+
+        for(aoi_name in aoi.names){
+
+          active_intervals <- interval_vector[which(aoi.names == aoi_name)]
+
+          check_aoi_fix(emdat_export.df.scene,
+                        participant,
+                        a_scene,
+                        aoi_name,
+                        aois.data,
+                        active_intervals,
+                        segment.names,
+                        gazesample_data_scene.df,
+                        fixation_data_scene.df)
+        }
+      }
       
       if(nrow(gazesample_data_scene.df) != 0){
 
@@ -188,6 +188,8 @@ check_aoi_fix <- function(emdat_output.df,
     length <- length + start_and_end_times$end - start_and_end_times$start
   }
   
+  isActives <- logical(segs_length)
+  
   for(j in 1:segs_length){
     
     if(active_intervals[[1]][1] != "" && active_intervals[[1]][1] != "-1,-1"){
@@ -205,6 +207,7 @@ check_aoi_fix <- function(emdat_output.df,
         if(interval_start <= starts[j] && ends[j] <= interval_end) {
         
           fixation_data_seg.df_cumulative <- fixation_data_vector[[j]]
+          isActives[j] <- TRUE
           break   
         }
       
@@ -212,7 +215,8 @@ check_aoi_fix <- function(emdat_output.df,
         
           start <- max(starts[j], interval_start)
           end <- min(ends[j], interval_end)
-        
+          
+          isActives[j] <- TRUE
           fixation_data_seg.df_temp <- fixation_data_vector[[j]][
             which(start <= fixation_data_vector[[j]]$timestamp &
                     fixation_data_vector[[j]]$timestamp + 
@@ -225,21 +229,10 @@ check_aoi_fix <- function(emdat_output.df,
       fixation_data_vector[[j]] <- fixation_data_seg.df_cumulative
       internal_data_vector[[j]] <- merge(fixation_data_vector[[j]], internal_data_vector[[j]], sort = FALSE)
     } else if (active_intervals[[1]][1] == "-1,-1"){
-      
+        
         internal_data_vector[[j]] <- fixation_data_vector[[1]][0,]
     }
   }
-  
-  # #all_inactive <- Reduce("&", internal_data_vector)
-  # active_part_size <- Reduce(sum, Map(nrow, internal_data_vector))
-  # 
-  # # aoi inactive; yields default feature values
-  # if(active_part_size == 0){
-  #   
-  #   test_dynamic_aoi_default(emdat_output.df,participant, a_scene, 
-  #                            "fix", aoi_feature_name_root, aois.data[,1])
-  #   return()
-  # }
   
   internal_data.df_temp <- data.frame()
   fixation_data_scene.df_temp <- data.frame()
@@ -261,38 +254,34 @@ check_aoi_fix <- function(emdat_output.df,
   
   verify_equivalence(numfixs ,output_value, participant, a_scene, feature_name)
   
-  ## proportionnum ###
-  feature_name <- paste(aoi_feature_name_root, "proportionnum", sep = "")
-  output_value <- subset(emdat_output.df, select = feature_name)[1,]
-
-  if(nrow(fixation_data_scene.df) != 0){
-
-    internal_value <- numfixs / nrow(fixation_data_scene.df)
-  } else{
-
-    internal_value <- 0
-  }
-
-  verify_equivalence(internal_value ,output_value, participant, a_scene, feature_name)
+  # ## proportionnum ###
+  # feature_name <- paste(aoi_feature_name_root, "proportionnum", sep = "")
+  # output_value <- subset(emdat_output.df, select = feature_name)[1,]
+  # 
+  # if(nrow(fixation_data_scene.df) != 0){
+  # 
+  #   internal_value <- numfixs / nrow(fixation_data_scene.df)
+  # } else{
+  # 
+  #   internal_value <- 0
+  # }
+  # 
+  # verify_equivalence(internal_value ,output_value, participant, a_scene, feature_name)
   
   ### fixationrate ###
   feature_name <- paste(aoi_feature_name_root, "fixationrate", sep = "")
   output_value <- subset(emdat_output.df, select = feature_name)[1,]
   
   fix_duration <- sum(internal_data.df$fixationduration)
+  internal_value <- 0
   
+  # else clause looks a little ad hoc, but that is for P18 when merge happens with fixation_duration = 0
   if(nrow(internal_data.df) != 0){
     
     internal_value <- numfixs / fix_duration
-  } else {
+  } else if(!is.na(isActives[2]) & isActives[2] == TRUE & fix_duration == 0){
     
-    if(segs_length > 1){
-      
-      internal_value <- -1
-    } else{
-      
-      internal_value <- 0
-    }
+      internal_value <- -1    
   }
   
   verify_equivalence(internal_value ,output_value, participant, a_scene, feature_name)
@@ -306,6 +295,13 @@ check_aoi_fix <- function(emdat_output.df,
   ### proportiontime ###
   feature_name <- paste(aoi_feature_name_root, "proportiontime", sep = "")
   output_value <- subset(emdat_output.df, select = feature_name)[1,]
+  
+  # no merge case for P18 
+  if(!is.na(isActives[2]) & isActives[2] == FALSE) {
+    
+    length <- ends[1] - starts[1]
+  }
+  
   internal_value <- fix_duration / length
   
   verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
@@ -677,6 +673,12 @@ check_aoi_eve <- function(emdat_output.df,
   ### leftclicrate ###
   feature_name <- paste(aoi_feature_name_root, "leftclicrate", sep = "")
   output_value <- subset(emdat_output.df, select = feature_name)[1,]
+  
+  # no merge case for P18 
+  if(segs_length == 2 && nrow(internal_data_vector[[2]]) == 0) {
+    
+    length <- ends[1] - starts[1]
+  }
   
   if(length != 0){
     
