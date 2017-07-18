@@ -90,40 +90,42 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
       fixation_data_scene.df <- subset(fixation_data.df, grepl(a_scene, scene) & !grepl(participant, scene))
       events_data_scene.df <- subset(events_data.df, grepl(a_scene, scene) & !grepl(participant, scene))
       
-      if(nrow(fixation_data_scene.df) != 0 &
-         nrow(gazesample_data_scene.df) != 0){
-        
+      # if(nrow(fixation_data_scene.df) != 0 &
+      #    nrow(gazesample_data_scene.df) != 0){
+      # 
+      #   for(aoi_name in aoi.names){
+      # 
+      #     active_intervals <- interval_vector[which(aoi.names == aoi_name)]
+      # 
+      #     check_aoi_fix(emdat_export.df.scene,
+      #                   participant,
+      #                   a_scene,
+      #                   aoi_name,
+      #                   aois.data,
+      #                   active_intervals,
+      #                   segment.names,
+      #                   gazesample_data_scene.df,
+      #                   fixation_data_scene.df)
+      #   }
+      # }
+      
+      if(nrow(gazesample_data_scene.df) != 0){
+
         for(aoi_name in aoi.names){
-          
+
           active_intervals <- interval_vector[which(aoi.names == aoi_name)]
-          
-          check_aoi_fix(emdat_export.df.scene,
+
+          check_aoi_eve(emdat_export.df.scene,
                         participant,
                         a_scene,
                         aoi_name,
                         aois.data,
                         active_intervals,
                         segment.names,
-                        gazesample_data_scene.df,
-                        fixation_data_scene.df)
+                        events_data_scene.df,
+                        gazesample_data_scene.df)
         }
-        
       }
-      
-      # if(nrow(gazesample_data_scene.df) != 0){
-      #   
-      #   for(aoi_name in aoi.names){
-      #     
-      #     check_aoi_eve(emdat_export.df.scene,
-      #                   participant,
-      #                   a_scene,
-      #                   aoi_name,
-      #                   aois.data,
-      #                   segment.names,
-      #                   events_data_scene.df,
-      #                   gazesample_data_scene.df)
-      #   }
-      # }
     }
   }
   report_success(participant, cumulative_counter)
@@ -221,23 +223,23 @@ check_aoi_fix <- function(emdat_output.df,
       }
     
       fixation_data_vector[[j]] <- fixation_data_seg.df_cumulative
-      internal_data_vector[[j]] <- merge(fixation_data_vector[[j]], internal_data_vector[[j]])
+      internal_data_vector[[j]] <- merge(fixation_data_vector[[j]], internal_data_vector[[j]], sort = FALSE)
     } else if (active_intervals[[1]][1] == "-1,-1"){
       
-        internal_data_vector[[j]] <- data.frame()
+        internal_data_vector[[j]] <- fixation_data_vector[[1]][0,]
     }
   }
   
-  #all_inactive <- Reduce("&", internal_data_vector)
-  active_part_size <- Reduce(sum, Map(nrow, internal_data_vector))
-  
-  # aoi inactive; yields default feature values
-  if(active_part_size == 0){
-    
-    test_dynamic_aoi_default(emdat_output.df,participant, a_scene, 
-                             "fix", aoi_feature_name_root, aois.data[,1])
-    return()
-  }
+  # #all_inactive <- Reduce("&", internal_data_vector)
+  # active_part_size <- Reduce(sum, Map(nrow, internal_data_vector))
+  # 
+  # # aoi inactive; yields default feature values
+  # if(active_part_size == 0){
+  #   
+  #   test_dynamic_aoi_default(emdat_output.df,participant, a_scene, 
+  #                            "fix", aoi_feature_name_root, aois.data[,1])
+  #   return()
+  # }
   
   internal_data.df_temp <- data.frame()
   fixation_data_scene.df_temp <- data.frame()
@@ -259,19 +261,19 @@ check_aoi_fix <- function(emdat_output.df,
   
   verify_equivalence(numfixs ,output_value, participant, a_scene, feature_name)
   
-  # ## proportionnum ###
-  # feature_name <- paste(aoi_feature_name_root, "proportionnum", sep = "")
-  # output_value <- subset(emdat_output.df, select = feature_name)[1,]
-  # 
-  # if(nrow(fixation_data_scene.df) != 0){
-  # 
-  #   internal_value <- numfixs / nrow(fixation_data_scene.df)
-  # } else{
-  # 
-  #   internal_value <- 0
-  # }
-  # 
-  # verify_equivalence(internal_value ,output_value, participant, a_scene, feature_name)
+  ## proportionnum ###
+  feature_name <- paste(aoi_feature_name_root, "proportionnum", sep = "")
+  output_value <- subset(emdat_output.df, select = feature_name)[1,]
+
+  if(nrow(fixation_data_scene.df) != 0){
+
+    internal_value <- numfixs / nrow(fixation_data_scene.df)
+  } else{
+
+    internal_value <- 0
+  }
+
+  verify_equivalence(internal_value ,output_value, participant, a_scene, feature_name)
   
   ### fixationrate ###
   feature_name <- paste(aoi_feature_name_root, "fixationrate", sep = "")
@@ -374,7 +376,7 @@ check_aoi_fix <- function(emdat_output.df,
   output_value <- subset(emdat_output.df, select = feature_name)[1,]
   
   internal_values <- numeric(segs_length)
-  print(a_scene)
+  
   for(i in 1:segs_length){
     
     if(nrow(internal_data_vector[[i]]) != 0){
@@ -510,6 +512,7 @@ check_aoi_eve <- function(emdat_output.df,
                           a_scene,
                           aoi_name,
                           aois.data,
+                          active_intervals,
                           segment.names,
                           events_data_scene.df,
                           gazesample_data_scene.df){
@@ -517,20 +520,14 @@ check_aoi_eve <- function(emdat_output.df,
   ### set up the tests ###
   aoi <- aois.data[aois.data[,"aoi_name"] == aoi_name,]
   
-  if(class(aoi_name) == "integer"){
-    
-    aoi_feature_name_root <- set_root_name(paste("X", aoi_name, sep = ""))
-  } else {
-    
-    aoi_feature_name_root <- set_root_name(aoi_name)
-  }
+  aoi_feature_name_root <- set_root_name(aoi_name)
   
   internal_data.df <- subset(events_data_scene.df,
                              grepl('MouseClick', event) &
-                               as.numeric(as.character(x_coord)) > aoi$left &
-                               as.numeric(as.character(x_coord)) <= aoi$right &
-                               as.numeric(as.character(y_coord)) <= aoi$bottom &
-                               as.numeric(as.character(y_coord)) > aoi$top)
+                             as.numeric(as.character(x_coord)) > aoi$left &
+                             as.numeric(as.character(x_coord)) <= aoi$right &
+                             as.numeric(as.character(y_coord)) <= aoi$bottom &
+                             as.numeric(as.character(y_coord)) > aoi$top)
   
   # stores the data by segment into vectors
   internal_data_vector <- c()
@@ -542,13 +539,66 @@ check_aoi_eve <- function(emdat_output.df,
     gazesample_data_vector[[i]] <- subset(gazesample_data_scene.df, grepl(segment.names[i], scene))
   }
   
-  # get start and end times of all_data for the scene
+  # get start and end times of all_data's for the scene
   length <- 0
+  starts <- numeric(segs_length)
+  ends <- numeric(segs_length)
   for(i in 1:segs_length){
     
     start_and_end_times <- get_seg_start_and_end_times(gazesample_data_vector[[i]])
+    starts[i] <- start_and_end_times$start
+    ends[i] <- start_and_end_times$end
     length <- length + start_and_end_times$end - start_and_end_times$start
   }
+  
+  for(j in 1:segs_length){
+    
+    if(active_intervals[[1]][1] != "" && active_intervals[[1]][1] != "-1,-1"){
+      # the loop below get data inside the intersection of seg and active intervals  
+      
+      # initialize a dataframe with the correct column names and types  
+      events_data_seg.df_cumulative <- internal_data_vector[[1]][0,]
+      
+      for(i in 1:length(active_intervals[[1]])){
+        
+        interval_start <- get_tuple_element(1, active_intervals[[1]][i])
+        interval_end <- get_tuple_element(2, active_intervals[[1]][i])
+        
+        # seg time interval is subset of the active interval    
+        if(interval_start <= starts[j] && ends[j] <= interval_end) {
+          
+          events_data_seg.df_cumulative <- internal_data_vector[[j]]
+          break   
+        }
+        
+        if(starts[j] <= interval_end && interval_start <= ends[j]){
+          
+          start <- max(starts[j], interval_start)
+          end <- min(ends[j], interval_end)
+          
+          events_data_seg.df_temp <- internal_data_vector[[j]][
+            which(start <= internal_data_vector[[j]]$timestamp &
+                  internal_data_vector[[j]]$timestamp <= end),]
+          
+          events_data_seg.df_cumulative <- rbind(events_data_seg.df_cumulative, events_data_seg.df_temp)           
+        }
+      }
+      
+      internal_data_vector[[j]] <- events_data_seg.df_cumulative
+    }else if(active_intervals[[1]][1] == "-1,-1"){
+      
+      internal_data_vector[[j]] <- internal_data_vector[[1]][0,]
+    }
+  }
+  
+  internal_data.df_temp <- data.frame()
+  
+  for(i in 1:segs_length){
+    
+    internal_data.df_temp <- rbind(internal_data.df_temp, internal_data_vector[[i]])
+  }
+  
+  internal_data.df <- internal_data.df_temp
   
   ### numevents ###
   feature_name <- paste(aoi_feature_name_root, "numevents", sep = "")
@@ -752,12 +802,12 @@ run_aoiTest <- function(participants, last_participant){
 ##### To Run #####
 
 # Set up the tests: choose the range of particpants to run the tests on
-participants <- list("17")
+participants <- list("16", "17", "18")
 
 # Run
 # Note: last_participant refers to the last in the EMDAT output file used, not necessarily that
 #       in the list of participants
-run_aoiTest(participants, "17")
+run_aoiTest(participants, "18")
 
 
 
