@@ -756,5 +756,31 @@ test_dynamic_aoi_default <- function(emdat_output.df,participant, a_scene, categ
     output_value <- subset(emdat_output.df, select = feature_name)[1,]
     verify_equivalence(-1, output_value, participant, a_scene, feature_name)
   }
-} 
+}
+
+# For dynamic aois, extracts active time intervals for each row (aoi) in 
+# aoi_file_df and also mark always active aoi with an empty string, "".
+# aoi_file_df_temp contains rows with # <intervals>, which are removed for aoi_file_df. 
+# Returns the list interval_vector, which contains the intervals information 
+extract_active_time_intervals <- function(aoi_file.df_temp, aoi_file.df){
+  
+  names_temp <- aoi_file.df_temp$aoi_name
+  names <- aoi_file.df$aoi_name
+  interval_vector <- list()
+  
+  for(name in names) {
+    
+    if(names_temp[which(names_temp == name) + 1] == "#"){
+      
+      row.df <- aoi_file.df_temp[which(names_temp == name) +1,]
+      row_vector <- as.vector(t(row.df))[c(2:5)]
+      interval_vector[[which(names == name)]] <- row_vector[which(row_vector != "")]
+    } else {
+      
+      interval_vector[[which(names == name)]] <- ""   
+    }  
+  }
+  
+  return(interval_vector)
+}
 

@@ -43,24 +43,8 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
   aois <- lapply(aoi.names, extract_aoi_coordinate, aoi_file.df= aoi_file.df)
   aois.data <- Reduce(rbind2, aois)
   
-  # The loop below extracts active time intervals for each row (aoi) in aoi_file_df and also mark
-  # always active aoi with an empty string, "". The information is stored in the list interval_vector
-  names_temp <- aoi_file.df_temp$aoi_name
-  names <- aoi_file.df$aoi_name
-  interval_vector <- list()
-  
-  for(name in names) {
-    
-    if(names_temp[which(names_temp == name) + 1] == "#"){
-      
-      row.df <- aoi_file.df_temp[which(names_temp == name) +1,]
-      row_vector <- as.vector(t(row.df))[c(2:5)]
-      interval_vector[[which(names == name)]] <- row_vector[which(row_vector != "")]
-    } else {
-      
-      interval_vector[[which(names == name)]] <- ""   
-    }  
-  }
+  # extracts # <active intevals> 
+  interval_vector <- extract_active_time_intervals(aoi_file.df_temp, aoi_file.df)
   
   # reads in the internal EMDAT data files necessary for computing expecetd values, 
   # once for the given participant 
@@ -161,6 +145,7 @@ check_aoi_fix <- function(emdat_output.df,
   aoi <- aois.data[aois.data[,"aoi_name"] == aoi_name,]
   aoi_feature_name_root <- set_root_name(aoi_name)
   
+  # keeps only those points in the aoi boundaries    
   internal_data.df <- subset(fixation_data_scene.df, 
                              is_inside(fixation_data_scene.df, aoi$left, aoi$right, aoi$bottom, aoi$top))
   
@@ -176,7 +161,8 @@ check_aoi_fix <- function(emdat_output.df,
     gazesample_data_vector[[i]] <- subset(gazesample_data_scene.df, grepl(segment.names[i], scene))
   }
   
-  # get start and end times of all_data's for the scene
+  # get start and end times (of all_data's in the python code) as well as the length
+  # for the scene
   length <- 0
   starts <- numeric(segs_length)
   ends <- numeric(segs_length)
@@ -188,29 +174,31 @@ check_aoi_fix <- function(emdat_output.df,
     length <- length + start_and_end_times$end - start_and_end_times$start
   }
   
+  # for each seg, retains only those points in the active intervals of the aoi 
+  # also marks whether the aoi is active or not  
   isActives <- logical(segs_length)
-  
   for(j in 1:segs_length){
     
     if(active_intervals[[1]][1] != "" && active_intervals[[1]][1] != "-1,-1"){
-      # the loop below get data inside the intersection of seg and active intervals  
-    
+      
       # initialize a dataframe with the correct column names and types  
       fixation_data_seg.df_cumulative <- fixation_data_vector[[1]][0,]
       
+      # this inside loop gets data inside the intersection of seg and active intervals
       for(i in 1:length(active_intervals[[1]])){
       
         interval_start <- get_tuple_element(1, active_intervals[[1]][i])
         interval_end <- get_tuple_element(2, active_intervals[[1]][i])
       
-        # seg time interval is subset of the active interval    
+        # seg time interval is subset of an active interval; keeps all points    
         if(interval_start <= starts[j] && ends[j] <= interval_end) {
         
           fixation_data_seg.df_cumulative <- fixation_data_vector[[j]]
           isActives[j] <- TRUE
           break   
         }
-      
+        
+        # some intersection; extract points inside 
         if(starts[j] <= interval_end && interval_start <= ends[j]){
         
           start <- max(starts[j], interval_start)
@@ -227,22 +215,28 @@ check_aoi_fix <- function(emdat_output.df,
       }
     
       fixation_data_vector[[j]] <- fixation_data_seg.df_cumulative
+      
+      # takes only points also in the aoi boundaries     
       internal_data_vector[[j]] <- merge(fixation_data_vector[[j]], internal_data_vector[[j]], sort = FALSE)
-    } else if (active_intervals[[1]][1] == "-1,-1"){
+    } else if(active_intervals[[1]][1] == "-1,-1"){
         
+        # inactive
         internal_data_vector[[j]] <- fixation_data_vector[[1]][0,]
+    } else{
+      
+        # always active
+        isActives[j] <- TRUE
     }
   }
   
+  # bind segs processed above into a whole df again for ease of testing     
   internal_data.df_temp <- data.frame()
   fixation_data_scene.df_temp <- data.frame()
-    
   for(i in 1:segs_length){
     
     internal_data.df_temp <- rbind(internal_data.df_temp, internal_data_vector[[i]])
     fixation_data_scene.df_temp <- rbind(fixation_data_scene.df_temp, fixation_data_vector[[i]])
   }
-  
   internal_data.df <- internal_data.df_temp
   fixation_data_scene.df <- fixation_data_scene.df_temp
   
@@ -518,6 +512,7 @@ check_aoi_eve <- function(emdat_output.df,
   
   aoi_feature_name_root <- set_root_name(aoi_name)
   
+  # keeps only those points in the aoi boundaries
   internal_data.df <- subset(events_data_scene.df,
                              grepl('MouseClick', event) &
                              as.numeric(as.character(x_coord)) > aoi$left &
@@ -535,7 +530,8 @@ check_aoi_eve <- function(emdat_output.df,
     gazesample_data_vector[[i]] <- subset(gazesample_data_scene.df, grepl(segment.names[i], scene))
   }
   
-  # get start and end times of all_data's for the scene
+  # get start and end times (of all_data's in the python code) as well as the length
+  # for the scene
   length <- 0
   starts <- numeric(segs_length)
   ends <- numeric(segs_length)
@@ -547,26 +543,29 @@ check_aoi_eve <- function(emdat_output.df,
     length <- length + start_and_end_times$end - start_and_end_times$start
   }
   
+  # for each seg, retains only those points in the active intervals of the aoi 
   for(j in 1:segs_length){
     
+    # "" for always active
     if(active_intervals[[1]][1] != "" && active_intervals[[1]][1] != "-1,-1"){
-      # the loop below get data inside the intersection of seg and active intervals  
       
       # initialize a dataframe with the correct column names and types  
       events_data_seg.df_cumulative <- internal_data_vector[[1]][0,]
       
+      # this inner loop gets data inside the intersection of seg and active intervals
       for(i in 1:length(active_intervals[[1]])){
         
         interval_start <- get_tuple_element(1, active_intervals[[1]][i])
         interval_end <- get_tuple_element(2, active_intervals[[1]][i])
         
-        # seg time interval is subset of the active interval    
+        # seg time interval is subset of the active interval; keeps all points    
         if(interval_start <= starts[j] && ends[j] <= interval_end) {
           
           events_data_seg.df_cumulative <- internal_data_vector[[j]]
           break   
         }
         
+        # some intersection; extract points inside
         if(starts[j] <= interval_end && interval_start <= ends[j]){
           
           start <- max(starts[j], interval_start)
@@ -581,19 +580,19 @@ check_aoi_eve <- function(emdat_output.df,
       }
       
       internal_data_vector[[j]] <- events_data_seg.df_cumulative
-    }else if(active_intervals[[1]][1] == "-1,-1"){
+    } else if(active_intervals[[1]][1] == "-1,-1"){
       
-      internal_data_vector[[j]] <- internal_data_vector[[1]][0,]
+        # inactive
+        internal_data_vector[[j]] <- internal_data_vector[[1]][0,]
     }
   }
   
+  # bind segs processed above into a whole df again for ease of testing
   internal_data.df_temp <- data.frame()
-  
   for(i in 1:segs_length){
     
     internal_data.df_temp <- rbind(internal_data.df_temp, internal_data_vector[[i]])
   }
-  
   internal_data.df <- internal_data.df_temp
   
   ### numevents ###
