@@ -491,8 +491,6 @@ check_aoi_fix <- function(emdat_output.df,
 # timetofirstdoubleclic
 # timetofirstleftclic
 # timetofirstrightclic
-
-# Not tested; these are set to -1 in the emdat code:	
 # timetolastdoubleclic	
 # timetolastleftclic	
 # timetolastrightclic	
@@ -634,6 +632,8 @@ check_aoi_eve <- function(emdat_output.df,
   left_clicks <- 0
   first_double_clicks <- c()
   first_left_clicks <- c()
+  last_double_clicks <- c()
+  last_left_clicks <- c()
   
   for(i in 1:segs_length){
     
@@ -642,6 +642,8 @@ check_aoi_eve <- function(emdat_output.df,
     left_clicks <- left_clicks + clicks[2]
     first_double_clicks[i] <- clicks[3]
     first_left_clicks[i] <- clicks[4]
+    last_double_clicks[i] <-  clicks[5]
+    last_left_clicks[i] <- clicks[6]
   }
   internal_value <- double_clicks
   
@@ -781,6 +783,101 @@ check_aoi_eve <- function(emdat_output.df,
   }
   
   verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
+  
+  ### timetolastdoubleclic ###
+  feature_name <- paste(aoi_feature_name_root, "timetolastdoubleclic", sep = "")
+  output_value <- subset(emdat_output.df, select = feature_name)[1,]
+  
+  internal_values <- c()
+  
+  for(i in 1:segs_length){
+    
+    if(last_double_clicks[i] != -1){
+      
+      internal_values[i] <- last_double_clicks[i] - gazesample_data_vector[[i]][1,]$timestamp
+    } else{
+      
+      internal_values[i] <- -1
+    }
+  }
+  
+  internal_value <- internal_values[1]
+  i <- 2
+  while(i <= length(internal_data_vector)){
+    
+    if(internal_values[i] != -1){
+      
+      internal_value <- max(internal_value, internal_values[i] + 
+                              (gazesample_data_vector[[i]][1,]$timestamp - gazesample_data_vector[[1]][1,]$timestamp)) 
+    }
+    
+    i <- i + 1
+  }
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
+  
+  ### timetolastleftclic ###
+  feature_name <- paste(aoi_feature_name_root, "timetolastleftclic", sep = "")
+  output_value <- subset(emdat_output.df, select = feature_name)[1,]
+  
+  for(i in 1:segs_length){
+    
+    if(last_left_clicks[i] != -1){
+      
+      internal_values[i] <- last_left_clicks[i] - gazesample_data_vector[[i]][1,]$timestamp
+    } else{
+      
+      internal_values[i] <- -1
+    }
+  }
+  
+  internal_value <- internal_values[1]
+  i <- 2
+  while(i <= length(internal_data_vector)){
+    
+    if(internal_values[i] != -1){
+      
+      internal_value <- max(internal_value, internal_values[i] + 
+                              (gazesample_data_vector[[i]][1,]$timestamp - gazesample_data_vector[[1]][1,]$timestamp)) 
+    }
+    
+    i <- i + 1
+  }
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
+  
+  ### timetolastrightclic ###
+  feature_name <- paste(aoi_feature_name_root, "timetolastrightclic", sep = "")
+  output_value <- subset(emdat_output.df, select = feature_name)[1,]
+  
+  for(i in 1:segs_length){
+    
+    rightclicks.df <- subset(internal_data_vector[[i]], event=="RightMouseClick")
+    rightclick_counts <- nrow(rightclicks.df)
+    
+    if(rightclick_counts != 0){
+      
+      internal_values[i] <- rightclicks.df[rightclick_counts,]$timestamp - gazesample_data_vector[[i]][1,]$timestamp
+    } else{
+      
+      internal_values[i] <- -1
+    }
+  }
+  
+  internal_value <- internal_values[1]
+  i <- 2
+  while(i <= length(internal_data_vector)){
+    
+    if(internal_values[i] != -1){
+      
+      internal_value <- max(internal_value, internal_values[i] + 
+                              (gazesample_data_vector[[i]][1,]$timestamp - gazesample_data_vector[[1]][1,]$timestamp)) 
+    }
+    
+    i <- i + 1
+  }
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
 }
 
 ##########################################################################################
@@ -803,7 +900,7 @@ run_aoiTest <- function(participants, last_participant){
 ##### To Run #####
 
 # Set up the tests: choose the range of particpants to run the tests on
-participants <- list("16", "17", "18")
+participants <- list("16","17","18")
 
 # Run
 # Note: last_participant refers to the last in the EMDAT output file used, not necessarily that

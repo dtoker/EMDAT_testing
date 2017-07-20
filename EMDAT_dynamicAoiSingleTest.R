@@ -534,6 +534,44 @@ check_aoi_eve <- function(emdat_output.df,
   }
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "single_timetofirstrightclic")
+  
+  ### single_timetolastdoubleclic ###
+  output_value <- subset(emdat_output.df, select = single_timetolastdoubleclic)[1,]
+  
+  internal_value <- clicks[5]
+  
+  if(internal_value != -1){
+    
+    internal_value <- internal_value - start_and_end_times$start
+  }
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, "single_timetolastdoubleclic")
+  
+  ### single_timetolastleftclic ###
+  output_value <- subset(emdat_output.df, select = single_timetolastleftclic)[1,]
+  
+  internal_value <- clicks[6]
+  
+  if(internal_value != -1){
+    
+    internal_value <- internal_value - start_and_end_times$start
+  }
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, "single_timetolastleftclic")
+  
+  ### single_timetolastrightclic ###
+  output_value <- subset(emdat_output.df, select = single_timetolastrightclic)[1,]
+  rightclick_counts <- nrow(rightclicks.df)
+  
+  if(rightclick_counts != 0){
+    
+    internal_value <- rightclicks.df[rightclick_counts,]$timestamp - start_and_end_times$start
+  } else{
+    
+    internal_value <- -1
+  }
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, "single_timetolastrightclic")
 }
 ##########################################################################################
 

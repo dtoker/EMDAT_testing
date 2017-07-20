@@ -606,24 +606,46 @@ check_aoi_eve <- function(emdat_output.df,
   
   verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
   
-  # ### timetolastdoubleclic ###
-  # feature_name <- paste(aoi_feature_name_root, "timetolastdoubleclic", sep = "")
-  # output_value <- subset(emdat_output.df, select = feature_name)[1,]
-  # 
-  # verify_equivalence(-1, output_value, participant, a_scene, feature_name)
-  # 
-  # ### timetolastleftclic ###
-  # feature_name <- paste(aoi_feature_name_root, "timetolastleftclic", sep = "")
-  # output_value <- subset(emdat_output.df, select = feature_name)[1,]
-  # 
-  # verify_equivalence(-1, output_value, participant, a_scene, feature_name)
-  # 
-  # ### timetolastrightclic ###
-  # feature_name <- paste(aoi_feature_name_root, "timetolastrightclic", sep = "")
-  # output_value <- subset(emdat_output.df, select = feature_name)[1,]
-  # 
-  # verify_equivalence(-1, output_value, participant, a_scene, feature_name)
+  ### timetolastdoubleclic ###
+  feature_name <- paste(aoi_feature_name_root, "timetolastdoubleclic", sep = "")
+  output_value <- subset(emdat_output.df, select = feature_name)[1,]
   
+  internal_value <- clicks[5]
+  
+  if(internal_value != -1){
+    
+    internal_value <- internal_value - start_and_end_times$start
+  }
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
+  
+  ### timetolastleftclic ###
+  feature_name <- paste(aoi_feature_name_root, "timetolastleftclic", sep = "")
+  output_value <- subset(emdat_output.df, select = feature_name)[1,]
+  
+  internal_value <- clicks[6]
+  
+  if(internal_value != -1){
+    
+    internal_value <- internal_value - start_and_end_times$start
+  }
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
+  
+  ### timetolastrightclic ###
+  feature_name <- paste(aoi_feature_name_root, "timetolastrightclic", sep = "")
+  output_value <- subset(emdat_output.df, select = feature_name)[1,]
+  rightclick_counts <- nrow(rightclicks.df)
+  
+  if(rightclick_counts != 0){
+    
+    internal_value <- rightclicks.df[rightclick_counts,]$timestamp - start_and_end_times$start
+  } else{
+    
+    internal_value <- -1
+  }
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
 }
 ##########################################################################################
 
