@@ -119,17 +119,19 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
 # LIST OF COLUMS TO TEST:
 
 # numfixations
-# proportionnum
 # fixationrate
 # totaltimespent
 # proportiontime
 # meanfixationduration
-# stddevfixationduration
 # longestfixation
 # timetofirstfixation
 # timetolastfixation
 # numtransfrom
 # proptransfrom
+
+# TO REVIEW: 
+# stddevfixationduration(not implemented): the source code formula correct? 
+# proportionnum: the source code def makes sense when scene level aggr takes place?
 
 check_aoi_fix <- function(emdat_output.df, 
                           participant, 
@@ -144,6 +146,8 @@ check_aoi_fix <- function(emdat_output.df,
   ### set up the tests ###
   aoi <- aois.data[aois.data[,"aoi_name"] == aoi_name,]
   aoi_feature_name_root <- set_root_name(aoi_name)
+  
+  scene_numfix <- nrow(fixation_data_scene.df) 
   
   # keeps only those points in the aoi boundaries    
   internal_data.df <- subset(fixation_data_scene.df, 
@@ -261,6 +265,36 @@ check_aoi_fix <- function(emdat_output.df,
   # }
   # 
   # verify_equivalence(internal_value ,output_value, participant, a_scene, feature_name)
+  
+  ## proportionnum ###
+  feature_name <- paste(aoi_feature_name_root, "proportionnum", sep = "")
+  output_value <- subset(emdat_output.df, select = feature_name)[1,]
+
+  if(nrow(fixation_data_vector[[1]]) != 0){
+
+    internal_value <- nrow(internal_data_vector[[1]]) / nrow(fixation_data_vector[[1]])
+  } else{
+
+    internal_value <- 0
+  }
+  
+  if(segs_length > 1) {
+    
+    i <- 2
+    internal_value_numerator <- nrow(internal_data_vector[[1]])
+    
+    while(i <= segs_length){
+    
+      if(isActives[i]){
+      
+        internal_value_numerator <- internal_value_numerator + nrow(internal_data_vector[[i]])
+        internal_value <- internal_value_numerator / scene_numfix
+      }
+      i <- i + 1 
+    }
+  }
+  
+  verify_equivalence(internal_value ,output_value, participant, a_scene, feature_name)
   
   ### fixationrate ###
   feature_name <- paste(aoi_feature_name_root, "fixationrate", sep = "")
@@ -900,7 +934,7 @@ run_aoiTest <- function(participants, last_participant){
 ##### To Run #####
 
 # Set up the tests: choose the range of particpants to run the tests on
-participants <- list("16","17","18")
+participants <- list("16", "17", "18")
 
 # Run
 # Note: last_participant refers to the last in the EMDAT output file used, not necessarily that
