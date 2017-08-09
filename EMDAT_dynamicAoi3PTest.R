@@ -349,30 +349,44 @@ check_aoi_fix <- function(emdat_output.df,
   verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
   
   ### stddevfixationduration ###
-  # feature_name <- paste(aoi_feature_name_root, "stddevfixationduration", sep = "")
-  # output_value <- subset(emdat_output.df, select = feature_name)[1,]
-  # 
-  # if(nrow(internal_data_vector[[1]]) > 1){
-  #   
-  #   internal_value <- sd(internal_data_vector[[1]]$fixationduration)
-  # } else if(nrow(internal_data_vector[[1]]) == 1){
-  #   
-  #   if(is.nan(output_value)){
-  #     
-  #     # sd evaluate to NaN in EMDAT while to NA in R if argument length is one
-  #     # but cannot pass these values directly to verify_equivalence  
-  #     internal_value <- 0.0
-  #     output_value <- 0.0
-  #   } else {
-  #     internal_value <- NA
-  #   }
-  #   
-  # } else {
-  #   
-  #   internal_value <- -1
-  # }
-  # 
-  # verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
+  scene_mean <- internal_value # from the preceding computation
+  feature_name <- paste(aoi_feature_name_root, "stddevfixationduration", sep = "")
+  output_value <- subset(emdat_output.df, select = feature_name)[1,]
+  
+  # helper function for computing stdev for aoi fixation duration, taking into account
+  # scene level aggregation for scenes with multiple segments  
+  find_segsd_with_weight <- function(feature_value_vector, scene_mean){
+    
+    vector_length <- nrow(feature_value_vector)
+    numerator <- 0
+    
+    if(vector_length > 0){
+      
+      stddev <- sd(feature_value_vector$fixationduration)
+      if(is.na(stddev)){
+        
+        stddev <- 0
+      } 
+      
+      numerator <- (vector_length-1)*(stddev^2) + vector_length*(mean(feature_value_vector$fixationduration)-scene_mean)^2
+    }
+    return(numerator)
+  }
+  
+  numerator <- 0
+  denominator <- 0
+  internal_value <- 0
+  
+  for(i in 1:segs_length){
+    
+    numerator <- numerator + find_segsd_with_weight(internal_data_vector[[i]], scene_mean)
+    denominator <- denominator+nrow(internal_data_vector[[i]])
+  }
+  if(denominator > 1){
+    internal_value <- sqrt(numerator/(denominator-1))
+  }
+  
+  verify_equivalence(internal_value, output_value, participant, a_scene, feature_name)
   
   ### longestfixation ###
   feature_name <- paste(aoi_feature_name_root, "longestfixation", sep = "")
