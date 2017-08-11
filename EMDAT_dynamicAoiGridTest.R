@@ -282,26 +282,6 @@ check_aoi_fix <- function(emdat_output.df,
   feature_name <- paste(aoi_feature_name_root, "stddevfixationduration", sep = "")
   output_value <- subset(emdat_output.df, select = feature_name)[1,]
   
-  # if(nrow(internal_data.df) > 1){
-  # 
-  #   internal_value <- sd(internal_data.df$fixationduration)
-  # } else if(nrow(internal_data.df) == 1){
-  # 
-  #   if(is.nan(output_value)){
-  # 
-  #     # sd evaluate to NaN in EMDAT while to NA in R if argument length is one
-  #     # but cannot pass these values directly to verify_equivalence
-  #     internal_value <- 0.0
-  #     output_value <- 0.0
-  #   } else {
-  #     internal_value <- NA
-  #   }
-  # 
-  # } else {
-  # 
-  #   internal_value <- 0.0
-  # }
-  
   if(nrow(internal_data.df) > 1){
 
     internal_value <- sd(internal_data.df$fixationduration)
@@ -675,12 +655,12 @@ run_part2Test <- function(participants, aoi_file_name, last_participant){
 ##### To Run #####
 
 # Set up the tests: choose the range of particpants to run the tests on
-participants <- list("101a", "101b") #generate_participant_list(101:142)
+participants <- generate_participant_list(144:162)
 
 # Run
 # Note: last_participant refers to the last in the EMDAT output file used, not necessarily that
 #       in the list of participants
-run_part2Test(participants, aoi_file_name, "101b")
+run_part2Test(participants, aoi_file_name, "162b")
 
 
 # #### To debug #####
