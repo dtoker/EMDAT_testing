@@ -355,20 +355,20 @@ check_aoi_fix <- function(emdat_output.df,
   
   # helper function for computing stdev for aoi fixation duration, taking into account
   # scene level aggregation for scenes with multiple segments  
-  find_segsd_with_weight <- function(feature_value_vector, scene_mean){
+  find_segsd_with_weight <- function(internal_value_vector, scene_mean){
     
-    vector_length <- nrow(feature_value_vector)
+    vector_length <- nrow(internal_value_vector)
     numerator <- 0
     
     if(vector_length > 0){
       
-      stddev <- sd(feature_value_vector$fixationduration)
+      stddev <- sd(internal_value_vector$fixationduration)
       if(is.na(stddev)){
         
         stddev <- 0
       } 
       
-      numerator <- (vector_length-1)*(stddev^2) + vector_length*(mean(feature_value_vector$fixationduration)-scene_mean)^2
+      numerator <- (vector_length-1)*(stddev^2) + vector_length*(mean(internal_value_vector$fixationduration)-scene_mean)^2
     }
     return(numerator)
   }

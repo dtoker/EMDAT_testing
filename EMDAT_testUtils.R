@@ -295,6 +295,9 @@ compute_scene_length <- function(segment_names,internal_data_vector){
 #   }
 # }
 
+# Computes double and left clicks as defined in EMDAT code. 
+# Also, records the respectvie first and last clicks.
+# Return has the format of vector. 
 find_double_and_left_clicks <- function(internal_data.df){
   
   clicks.df <- subset(internal_data.df, event == "LeftMouseClick")
@@ -778,9 +781,9 @@ test_dynamic_aoi_default <- function(emdat_output.df,participant, a_scene, categ
     output_value <- subset(emdat_output.df, select = feature_name)[1,]
     verify_equivalence(-1, output_value, participant, a_scene, feature_name)
     
-    # feature_name <- paste(name_root, "stddevfixationduration", sep = "")
-    # output_value <- subset(emdat_output.df, select = feature_name)[1,]
-    # verify_equivalence(0, output_value, participant, a_scene, feature_name)
+    feature_name <- paste(name_root, "stddevfixationduration", sep = "")
+    output_value <- subset(emdat_output.df, select = feature_name)[1,]
+    verify_equivalence(0, output_value, participant, a_scene, feature_name)
     
     feature_name <- paste(name_root, "longestfixation", sep = "")
     output_value <- subset(emdat_output.df, select = feature_name)[1,]

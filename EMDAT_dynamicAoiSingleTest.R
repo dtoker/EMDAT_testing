@@ -248,30 +248,30 @@ check_aoi_fix <- function(emdat_output.df,
   
   verify_equivalence(internal_value, output_value, participant, a_scene, "single_meanfixationduration")
   
-  # ## single_stddevfixationduration ###
-  # output_value <- subset(emdat_output.df, select = single_stddevfixationduration)[1,]
-  # 
-  # if(nrow(internal_data.df) > 1){
-  # 
-  #   internal_value <- sd(internal_data.df$fixationduration)
-  # } else if(nrow(internal_data.df) == 1){
-  # 
-  #   if(is.nan(output_value)){
-  # 
-  #     # sd evaluate to NaN in EMDAT while to NA in R if argument length is one
-  #     # but cannot pass these values directly to verify_equivalence
-  #     internal_value <- 0.0
-  #     output_value <- 0.0
-  #   } else {
-  #     internal_value <- NA
-  #   }
-  # 
-  # } else {
-  # 
-  #   internal_value <- -1
-  # }
-  # 
-  # verify_equivalence(internal_value, output_value, participant, a_scene, "single_stddevfixationduration")
+  ## single_stddevfixationduration ###
+  output_value <- subset(emdat_output.df, select = single_stddevfixationduration)[1,]
+
+  if(nrow(internal_data.df) > 1){
+
+    internal_value <- sd(internal_data.df$fixationduration)
+  } else if(nrow(internal_data.df) == 1){
+
+    if(is.nan(output_value)){
+
+      # sd evaluate to NaN in EMDAT while to NA in R if argument length is one
+      # but cannot pass these values directly to verify_equivalence
+      internal_value <- 0.0
+      output_value <- 0.0
+    } else {
+      internal_value <- NA
+    }
+
+  } else {
+
+    internal_value <- 0.0
+  }
+
+  verify_equivalence(internal_value, output_value, participant, a_scene, "single_stddevfixationduration")
   
   ### single_longestfixation ###
   output_value <- subset(emdat_output.df, select = single_longestfixation)[1,]
@@ -352,8 +352,6 @@ check_aoi_fix <- function(emdat_output.df,
 # single_timetofirstdoubleclic
 # single_timetofirstleftclic
 # single_timetofirstrightclic
-
-# TODO:
 # single_timetolastdoubleclic	
 # single_timetolastleftclic	
 # single_timetolastrightclic	
@@ -595,12 +593,12 @@ run_aoiTest <- function(participants, aoi_file_name, last_participant){
 ##### To Run ##### 
 
 # Set up the tests: choose the range of particpants to run the tests on
-participants <- list("101a") #generate_participant_list(144:162)
+participants <- list("101a", "101b") #generate_participant_list(144:162)
 
 # Run
 # Note: last_participant refers to the last in the EMDAT output file used, not necessarily that
 #       in the list of participants
-run_aoiTest(participants, "single_aoi_dynamic" , "101a")  
+run_aoiTest(participants, "single_aoi_dynamic" , "101b")  
 
 #### To debug #####
 
