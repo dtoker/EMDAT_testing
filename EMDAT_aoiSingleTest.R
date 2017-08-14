@@ -116,7 +116,8 @@ check_aoi_fix <- function(emdat_output.df,
   right <- get_tuple_element(1, aoi_file.df$TR)
   bottom <- get_tuple_element(2, aoi_file.df$BR)
   top <- get_tuple_element(2, aoi_file.df$TL)
-    
+  
+  # subsets for data points inside aoi  
   internal_data.df <- subset(fixation_data_scene.df,
                              mappedfixationpointx > left &
                              mappedfixationpointx <= right &
@@ -316,6 +317,7 @@ check_aoi_eve <- function(emdat_output.df,
   bottom_right <- aoi_file.df$BR
   bottom_left <-  aoi_file.df$BL
   
+  # subsets for data points inside aoi 
   internal_data.df <- subset(events_data_scene.df,
                              grepl('MouseClick', event) &
                              as.numeric(as.character(x_coord)) > get_tuple_element(1, top_left) &
@@ -468,7 +470,7 @@ run_aoiTest <- function(participants, aoi_file_name, last_participant){
 ##### To Run #####
 
 # Set up the tests: choose the range of particpants to run the tests on
-participants <- generate_participant_list(101:142)
+participants <- generate_participant_list(144:162)
 
 # Run
 # Note: last_participant refers to the last in the EMDAT output file used, not necessarily that

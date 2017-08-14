@@ -128,10 +128,8 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
 # timetolastfixation
 # numtransfrom
 # proptransfrom
-
-# TO REVIEW: 
-# stddevfixationduration(not implemented): the source code formula correct? 
-# proportionnum: the source code def makes sense when scene level aggr takes place?
+# stddevfixationduration 
+# proportionnum
 
 check_aoi_fix <- function(emdat_output.df, 
                           participant, 
@@ -252,21 +250,7 @@ check_aoi_fix <- function(emdat_output.df,
   
   verify_equivalence(numfixs ,output_value, participant, a_scene, feature_name)
   
-  # ## proportionnum ###
-  # feature_name <- paste(aoi_feature_name_root, "proportionnum", sep = "")
-  # output_value <- subset(emdat_output.df, select = feature_name)[1,]
-  # 
-  # if(nrow(fixation_data_scene.df) != 0){
-  # 
-  #   internal_value <- numfixs / nrow(fixation_data_scene.df)
-  # } else{
-  # 
-  #   internal_value <- 0
-  # }
-  # 
-  # verify_equivalence(internal_value ,output_value, participant, a_scene, feature_name)
-  
-  ## proportionnum ###
+  ### proportionnum ###
   feature_name <- paste(aoi_feature_name_root, "proportionnum", sep = "")
   output_value <- subset(emdat_output.df, select = feature_name)[1,]
 

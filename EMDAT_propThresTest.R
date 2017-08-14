@@ -27,7 +27,7 @@ cumulative_counter <- 0
 
 # sets the values of the tested parameters
 valid_prop_threshold <- 0.8
-p_threshold <- 0.8
+p_threshold <- 0.8 # for aggregation done for all segs belonging to a given participant
 
 ### Tests (Note: participants in this context referes to participant parts such as 101a and 102b) ###
 test_param <- function(participant, seg_file, last_participant){
@@ -194,7 +194,7 @@ run_parameterTest <- function(participants, last_participant){
 
 # Set up the tests: choose the range of particpants to run the tests on
 
-participants <- generate_participant_list(101:142)
+participants <- generate_participant_list(144:162)
 
 # Run
 # Note: second argument takes the last participant of the study, not necessarily the

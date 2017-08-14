@@ -7,8 +7,9 @@ seg_file_path <- paste(root, "seg_files/", sep = "")
 feature_files_path <- paste(root, "features/", sep = "")
 aoi_file_path <- "Part1_TobiiV3Output_EMDATInternal/intervention_study_data/"
 
-#aoi_file_name <- "viz-specific" 
-aoi_file_name <- "grid2x2"
+# choose aois here
+aoi_file_name <- "viz-specific" 
+#aoi_file_name <- "grid2x2"
 
 emdat_export_all.df <- read.csv(paste(feature_files_path, 
                                       "tobiiv3_sample_features_",
@@ -362,6 +363,7 @@ check_aoi_eve <- function(emdat_output.df,
   ### set up the tests ###
   aoi <- aois.data[aois.data[,"aoi_name"] == aoi_name,]
   
+  # preprends X for the aoi name, which is how R represents aoi names of grid2X2
   if(class(aoi_name) == "integer"){
     
     aoi_feature_name_root <- set_root_name(paste("X", aoi_name, sep = ""))
@@ -370,6 +372,7 @@ check_aoi_eve <- function(emdat_output.df,
     aoi_feature_name_root <- set_root_name(aoi_name)
   }
   
+  # subsets for data points inside aoi 
   internal_data.df <- subset(events_data_scene.df,
                              grepl('MouseClick', event) &
                              as.numeric(as.character(x_coord)) > aoi$left &
@@ -551,7 +554,7 @@ run_part2Test <- function(participants, aoi_file_name, last_participant){
 ##### To Run #####
 
 # Set up the tests: choose the range of particpants to run the tests on
-participants <- generate_participant_list(101:142)
+participants <- generate_participant_list(144:162)
 
 # Run
 # Note: last_participant refers to the last in the EMDAT output file used, not necessarily that

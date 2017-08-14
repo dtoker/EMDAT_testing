@@ -18,7 +18,7 @@ cumulative_counter <- 0
 
 # sets the values of the tested parameters
 valid_prop_threshold <- 0.8
-p_threshold <- 0.8 
+p_threshold <- 0.8 # for aggregation done for all segs belonging to a given participant    
 
 ### Tests ### 
 test_param <- function(participant, seg_file, last_participant){

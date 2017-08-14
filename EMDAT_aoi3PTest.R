@@ -7,6 +7,7 @@ seg_file_path <- paste(root, "seg_files/", sep = "")
 feature_files_path <- paste(root, "features/", sep = "")
 aoi_file_path <- "Part1_TobiiV3Output_EMDATInternal/three_parts_study_data/"
 
+# choose aois here
 aoi_file_name <- "viz-specific" 
 #aoi_file_name <- "grid2x2"
 
@@ -136,6 +137,7 @@ check_aoi_fix <- function(emdat_output.df,
   ### set up the tests ###
   aoi <- aois.data[aois.data[,"aoi_name"] == aoi_name,]
   
+  # preprends X for the aoi name, which is how R represents aoi names of grid2X2      
   if(class(aoi_name) == "integer"){
     
     aoi_feature_name_root <- set_root_name(paste("X", aoi_name, sep = ""))
@@ -144,6 +146,7 @@ check_aoi_fix <- function(emdat_output.df,
     aoi_feature_name_root <- set_root_name(aoi_name)
   }
   
+  # gets data points inside aoi
   internal_data.df <- subset(fixation_data_scene.df, 
                              is_inside(fixation_data_scene.df, aoi$left, aoi$right, aoi$bottom, aoi$top))
   
@@ -427,6 +430,7 @@ check_aoi_eve <- function(emdat_output.df,
   ### set up the tests ###
   aoi <- aois.data[aois.data[,"aoi_name"] == aoi_name,]
   
+  # preprends X for the aoi name, which is how R represents aoi names of grid2X2
   if(class(aoi_name) == "integer"){
     
     aoi_feature_name_root <- set_root_name(paste("X", aoi_name, sep = ""))
@@ -435,6 +439,7 @@ check_aoi_eve <- function(emdat_output.df,
     aoi_feature_name_root <- set_root_name(aoi_name)
   }
   
+  # gets data points inside aoi
   internal_data.df <- subset(events_data_scene.df,
                              grepl('MouseClick', event) &
                                as.numeric(as.character(x_coord)) > aoi$left &
