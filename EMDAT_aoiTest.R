@@ -118,7 +118,7 @@ readfiles_aoi <- function(participant, seg_file, aoi_file, last_participant){
 # totaltimespent
 # proportiontime
 # meanfixationduration
-# stddevfixationduration
+# stddevfixationduration (Update the definition if the output file is regenerated)
 # longestfixation
 # timetofirstfixation
 # timetolastfixation
